@@ -6,9 +6,32 @@
 
 ```
 kangarooking-skills/
-├── reshape-your-life/    # 重塑人生技能
+├── reshape-your-life/        # 重塑人生技能
+├── harness-engineering/      # Harness Engineering 框架一键初始化
 └── ...
 ```
+
+## Skills 列表
+
+### harness-engineering
+
+基于 OpenAI (Codex)、Anthropic (三智能体架构)、LangChain (自验证循环) 的 Harness Engineering 框架。
+
+在任意项目中一键初始化 Plan-Build-Verify 开发工作流：
+- **4 个智能体**: Planner / Generator / Evaluator / Doc Gardener
+- **4 个命令**: `/plan` / `/build` / `/qa` / `/sprint`
+- **3 个 Hooks**: 循环检测 / 完成前检查 / 上下文注入
+- **10 条黄金原则**: 无规格不编码、可测试验收标准、契约驱动等
+
+使用: `/harness <项目描述>` 或说 "初始化 harness"
+
+### reshape-your-life
+
+重塑人生技能。
+
+### task-harness
+
+任务管理 Harness。
 
 ## 如何贡献
 
