@@ -1,6 +1,6 @@
 ---
 name: harness-engineering
-description: "Initialize a Harness Engineering framework in the current project. Use when user says 'harness', 'init harness', 'initialize framework', 'setup harness engineering', '/harness', or wants to set up a Plan-Build-Verify development workflow with specialized agents (planner, generator, evaluator). Creates CLAUDE.md, agent definitions, command templates, hooks, and documentation structure for autonomous AI-driven development."
+description: "Initialize a Harness Engineering framework in the current project. Use when user says 'harness', 'init harness', 'initialize framework', 'setup harness engineering', '/harness', or wants to set up a Plan-Build-Verify development workflow with specialized agents (planner, generator, evaluator). Creates AGENTS.md (Codex), CLAUDE.md (Claude), agent definitions, command templates, hooks, and documentation structure for autonomous AI-driven development."
 ---
 
 # Harness Engineering Framework
@@ -10,8 +10,9 @@ One-click initialization of a complete Harness Engineering framework in any proj
 Based on insights from OpenAI (Codex), Anthropic (3-agent GAN architecture), and LangChain (self-verify loops), this skill sets up:
 
 - **3-agent architecture**: Planner (spec), Generator (build), Evaluator (test)
+- **Codex + Claude entry points**: `AGENTS.md` and `CLAUDE.md`
 - **Sprint contracts**: Machine-verifiable "done" criteria before coding
-- **Quality hooks**: Loop detection, pre-completion checklist, context injection
+- **Dual hook runtime**: Claude hooks (`.claude`) + Codex hooks (`.codex`)
 - **Slash commands**: `/plan`, `/build`, `/qa`, `/sprint`
 - **Golden principles**: 10 non-negotiable rules enforced across all agents
 
@@ -45,7 +46,15 @@ This generates the following structure in the current project:
 
 ```
 <project>/
+  AGENTS.md                        # Codex guide / entrypoint
   CLAUDE.md                        # Project map (<80 lines)
+  .codex/
+    config.toml                    # Enable Codex hooks
+    hooks.json                     # Codex hook registry
+    hooks/
+      loop-detector.py             # PreToolUse loop guard
+      pre-completion-check.py      # Stop checklist reminder
+      context-injector.py          # UserPromptSubmit context injection
   .claude/
     agents/
       planner.md                   # Spec creation agent
@@ -73,21 +82,33 @@ This generates the following structure in the current project:
 
 ### Step 3: Configure Hooks
 
-After generating files, merge hook configuration into the project's `.claude/settings.json` (or create it):
-
-```bash
-python3 {{SKILL_PATH}}/scripts/merge_settings.py --target-dir "<CURRENT_PROJECT_DIR>"
-```
-
-This adds hook definitions without overwriting existing settings.
+Hook configuration is auto-configured by `scaffold.py`:
+- Claude hooks: merged into `.claude/settings.json` (or created)
+- Codex hooks: merged into `.codex/hooks.json` (or created) and `.codex/config.toml` is scaffolded
 
 ### Step 4: Verify Installation
 
 Confirm all files were created:
 
 ```bash
-ls -la CLAUDE.md .claude/agents/ .claude/commands/ .claude/hooks/ docs/
+ls -la AGENTS.md CLAUDE.md .codex/ .codex/hooks/ .claude/agents/ .claude/commands/ .claude/hooks/ docs/
 ```
+
+Run Codex hook self-check:
+
+```bash
+test -f .codex/config.toml && \
+test -f .codex/hooks.json && \
+test -f .codex/hooks/context-injector.py && \
+test -f .codex/hooks/loop-detector.py && \
+test -f .codex/hooks/pre-completion-check.py && \
+python3 -m py_compile .codex/hooks/context-injector.py .codex/hooks/loop-detector.py .codex/hooks/pre-completion-check.py && \
+echo "Codex hooks: OK"
+```
+
+Expected result:
+- command exits with code `0`
+- output includes `Codex hooks: OK`
 
 Report to the user what was created and how to start using it.
 
@@ -99,6 +120,19 @@ Report to the user what was created and how to start using it.
 | `/build` | Build the most recent spec using sprint workflow |
 | `/qa` | Run evaluator against current code |
 | `/sprint <description>` | Full Plan-Build-Verify cycle from scratch |
+
+Codex users can run the same workflow by prompting:
+- `plan <description>`
+- `build <spec>`
+- `qa <contract>`
+- `sprint <description>`
+
+Codex hook runtime is scaffolded in:
+- `.codex/config.toml`
+- `.codex/hooks.json`
+- `.codex/hooks/*.py`
+
+Codex execution details (intent routing, output contracts, stop conditions) are defined in the generated `AGENTS.md`.
 
 ## Key Principles
 

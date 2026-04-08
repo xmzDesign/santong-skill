@@ -24,6 +24,7 @@
   [x] 创建 progress.txt（本文件）
   [x] 创建 init.sh（环境初始化脚本）
   [x] 创建 task.json（项目总览）
+  [x] 创建 AGENTS.md（Codex 会话执行契约）
 
 关键发现:
   - {{重要发现 1}}

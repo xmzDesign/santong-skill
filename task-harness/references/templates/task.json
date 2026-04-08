@@ -12,7 +12,8 @@
     "files": {
       "feature_list": "feature_list.json",
       "progress_log": "progress.txt",
-      "init_script": "init.sh"
+      "init_script": "init.sh",
+      "agent_contract": "AGENTS.md"
     },
     "rules": [
       "每个会话只做 1-2 个功能，不要贪多",

@@ -58,7 +58,7 @@ Documentation follows a 3-level pattern: summary → details → references.
 
 **Why**: This is the "map, not encyclopedia" principle. A small entry point with pointers to deeper sources keeps context lean while preserving access to depth. (OpenAI)
 
-**How to apply**: CLAUDE.md is the map (<80 lines). docs/ contains the details. Specs and contracts contain task-specific depth.
+**How to apply**: AGENTS.md (Codex) and CLAUDE.md (Claude) are the maps. docs/ contains the details. Specs and contracts contain task-specific depth.
 
 ## 8. Doc Freshness
 

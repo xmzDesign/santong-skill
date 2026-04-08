@@ -1,0 +1,39 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/env python3 \"$(git rev-parse --show-toplevel 2>/dev/null || pwd)/.codex/hooks/context-injector.py\"",
+            "timeout": 5,
+            "statusMessage": "Injecting project context"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/env python3 \"$(git rev-parse --show-toplevel 2>/dev/null || pwd)/.codex/hooks/loop-detector.py\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/env python3 \"$(git rev-parse --show-toplevel 2>/dev/null || pwd)/.codex/hooks/pre-completion-check.py\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

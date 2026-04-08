@@ -41,7 +41,7 @@ user-invocable: true
 - `passes` 布尔值（初始为 false）
 - `verification` 验证条件
 
-### Step 3: 生成 4 个 Harness 文件
+### Step 3: 生成 5 个 Harness 文件
 
 在项目根目录生成以下文件：
 
@@ -91,9 +91,15 @@ user-invocable: true
 
 完整模板见 [references/templates/task.json](references/templates/task.json)
 
-### Step 4: 配置 AGENTS.md 规则
+#### `AGENTS.md` — Codex 会话执行契约
 
-在项目的 `AGENTS.md` 文件中添加 Task Management System 章节，确保所有 Agent 会话遵循工作流。参考当前项目的 `AGENTS.md` 中的对应章节。
+定义每个会话的固定流程、输出要求和阻塞处理规则，确保 Codex 在多会话下稳定执行。
+
+完整模板见 [references/templates/AGENTS.md](references/templates/AGENTS.md)
+
+### Step 4: 填充 AGENTS.md 规则
+
+根据项目上下文替换 `AGENTS.md` 模板中的占位符（项目名、项目描述），并确保其规则与 `feature_list.json` 保持一致。
 
 ### Step 5: 首次验证
 
@@ -101,6 +107,7 @@ user-invocable: true
 - 脚本可正常执行
 - feature_list.json 解析正确
 - 进度统计准确显示
+- AGENTS.md 已创建且可直接用于 Codex 会话
 
 ### Step 6: 输出下一步指引
 

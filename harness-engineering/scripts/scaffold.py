@@ -111,6 +111,58 @@ def merge_settings(target_dir: Path):
         print(f"  CREATE: {settings_path}")
 
 
+def _hook_group_signature(group: dict):
+    matcher = group.get('matcher', '')
+    hooks = group.get('hooks', [])
+    hook_sigs = []
+    for hook in hooks:
+        hook_sigs.append(f"{hook.get('type', '')}:{hook.get('command', '')}")
+    return f"{matcher}|{'|'.join(hook_sigs)}"
+
+
+def merge_codex_hooks(target_dir: Path):
+    """Merge template .codex/hooks.json into existing hooks config."""
+    hooks_path = target_dir / '.codex' / 'hooks.json'
+    skill_dir = get_skill_dir()
+    template_hooks = skill_dir / 'templates' / 'codex' / 'hooks.json'
+
+    if not template_hooks.exists():
+        print("  SKIP: No Codex hooks template found")
+        return
+
+    template_content = json.loads(template_hooks.read_text(encoding='utf-8'))
+    template_hooks_map = template_content.get('hooks', {})
+
+    if hooks_path.exists():
+        try:
+            existing = json.loads(hooks_path.read_text(encoding='utf-8'))
+        except json.JSONDecodeError:
+            existing = {}
+
+        if 'hooks' not in existing or not isinstance(existing['hooks'], dict):
+            existing['hooks'] = {}
+
+        for event_name, groups in template_hooks_map.items():
+            if event_name not in existing['hooks'] or not isinstance(existing['hooks'][event_name], list):
+                existing['hooks'][event_name] = groups
+                continue
+
+            existing_sigs = {_hook_group_signature(g) for g in existing['hooks'][event_name]}
+            for group in groups:
+                sig = _hook_group_signature(group)
+                if sig not in existing_sigs:
+                    existing['hooks'][event_name].append(group)
+                    existing_sigs.add(sig)
+
+        hooks_path.parent.mkdir(parents=True, exist_ok=True)
+        hooks_path.write_text(json.dumps(existing, indent=2, ensure_ascii=False), encoding='utf-8')
+        print(f"  MERGE: {hooks_path}")
+    else:
+        hooks_path.parent.mkdir(parents=True, exist_ok=True)
+        hooks_path.write_text(json.dumps(template_content, indent=2, ensure_ascii=False), encoding='utf-8')
+        print(f"  CREATE: {hooks_path}")
+
+
 def main():
     args = parse_args()
     target_dir = Path(args.target_dir).resolve()
@@ -131,6 +183,7 @@ def main():
     file_mappings = [
         # Phase 1: Root
         ('CLAUDE.md', 'CLAUDE.md'),
+        ('AGENTS.md', 'AGENTS.md'),
 
         # Phase 2: Documentation
         ('docs/architecture.md', 'docs/architecture.md'),
@@ -154,6 +207,12 @@ def main():
         ('hooks/loop-detector.py', '.claude/hooks/loop-detector.py'),
         ('hooks/pre-completion-check.py', '.claude/hooks/pre-completion-check.py'),
         ('hooks/context-injector.py', '.claude/hooks/context-injector.py'),
+
+        # Phase 6: Codex Hooks
+        ('codex/config.toml', '.codex/config.toml'),
+        ('codex/hooks/context-injector.py', '.codex/hooks/context-injector.py'),
+        ('codex/hooks/loop-detector.py', '.codex/hooks/loop-detector.py'),
+        ('codex/hooks/pre-completion-check.py', '.codex/hooks/pre-completion-check.py'),
     ]
 
     created = 0
@@ -179,12 +238,14 @@ def main():
 
     # Merge settings
     merge_settings(target_dir)
+    merge_codex_hooks(target_dir)
 
     print(f"\nDone! Created {created} files, skipped {skipped} existing files.")
     print(f"\nNext steps:")
-    print(f"  1. Review CLAUDE.md for project overview")
-    print(f"  2. Run /plan <feature-description> to create your first spec")
-    print(f"  3. Run /sprint <feature-description> for a full cycle")
+    print(f"  1. Review AGENTS.md (Codex) or CLAUDE.md (Claude) for workflow entry")
+    print(f"  2. Verify hooks: .claude/settings.json (Claude) and .codex/hooks.json (Codex)")
+    print(f"  3. Run /plan <feature-description> (Claude) or ask 'plan <feature-description>' (Codex)")
+    print(f"  4. Run /sprint <feature-description> (Claude) or ask 'sprint <feature-description>' (Codex)")
 
 
 if __name__ == '__main__':

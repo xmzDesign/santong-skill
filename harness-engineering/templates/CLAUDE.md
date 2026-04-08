@@ -11,6 +11,9 @@
 | `/qa` | Run evaluator against current code |
 | `/sprint <description>` | Full Plan-Build-Verify cycle |
 
+For Codex users, see `AGENTS.md` for equivalent prompt-based workflow.
+Codex hook runtime is configured in `.codex/config.toml` and `.codex/hooks.json`.
+
 ## Architecture
 
 See [docs/architecture.md](docs/architecture.md) for system design.

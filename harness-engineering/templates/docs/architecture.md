@@ -48,26 +48,23 @@ Generator --> completes sprint --> Doc Gardener audits
 ## Hook Injection Points
 
 ```
-UserPromptSubmit --> [context-injector.py] --> adds project state to context
-     |
-     v
-  User prompt processed by Claude
-     |
-     v
-PreToolUse (Edit/Write) --> [loop-detector.py] --> blocks if file edited 5x
-     |
-     v
-  Tool execution
-     |
-     v
-PostToolUse (TaskUpdate) --> [pre-completion-check.py] --> reminds to verify
+Claude Runtime:
+  UserPromptSubmit --> .claude/hooks/context-injector.py
+  PreToolUse(Edit|Write|MultiEdit) --> .claude/hooks/loop-detector.py
+  PostToolUse(TaskUpdate) --> .claude/hooks/pre-completion-check.py
+
+Codex Runtime:
+  UserPromptSubmit --> .codex/hooks/context-injector.py
+  PreToolUse(Edit|Write|MultiEdit) --> .codex/hooks/loop-detector.py
+  Stop --> .codex/hooks/pre-completion-check.py
 ```
 
 ## Component Inventory
 
 | Component | File | Role |
 |-----------|------|------|
-| Project Map | `CLAUDE.md` | Entry point, progressive disclosure hub |
+| Codex Guide | `AGENTS.md` | Codex entry point and workflow rules |
+| Project Map | `CLAUDE.md` | Claude entry point, progressive disclosure hub |
 | Planner Agent | `.claude/agents/planner.md` | Expands prompts into specs |
 | Generator Agent | `.claude/agents/generator.md` | Implements features |
 | Evaluator Agent | `.claude/agents/evaluator.md` | Tests and grades |
@@ -79,6 +76,9 @@ PostToolUse (TaskUpdate) --> [pre-completion-check.py] --> reminds to verify
 | Loop Detector | `.claude/hooks/loop-detector.py` | Prevents edit doom loops |
 | Pre-Completion | `.claude/hooks/pre-completion-check.py` | Quality gate before done |
 | Context Injector | `.claude/hooks/context-injector.py` | Session context awareness |
+| Codex Hook Config | `.codex/hooks.json` | Codex hook registration |
+| Codex Hook Scripts | `.codex/hooks/*.py` | Codex runtime hook handlers |
+| Codex Hook Feature Flag | `.codex/config.toml` | Enables Codex hooks |
 | Golden Principles | `docs/golden-principles.md` | Non-negotiable rules |
 | Sprint Workflow | `docs/sprint-workflow.md` | Process documentation |
 | Contract Template | `docs/contracts/TEMPLATE.md` | Sprint contract structure |
@@ -97,7 +97,7 @@ PostToolUse (TaskUpdate) --> [pre-completion-check.py] --> reminds to verify
 ```
 State: IDLE
   |
-  [/plan or /sprint]
+  [plan/sprint intent from Claude slash command or Codex prompt]
   v
 State: PLANNING  (Planner produces spec)
   |
@@ -130,14 +130,16 @@ State: FIXING  (Generator addresses failures)
 
 1. Create `.claude/agents/<name>.md` with frontmatter (name, description, tools)
 2. Define the agent's role, constraints, and output format
-3. Reference the agent in CLAUDE.md's agent table
+3. Reference the agent in `CLAUDE.md` and/or `AGENTS.md` usage sections
 4. Create a corresponding command in `.claude/commands/<name>.md` if needed
 
 ### Adding a New Hook
 
-1. Create the hook script in `.claude/hooks/<name>.py`
-2. Register it in `.claude/settings.json` under the appropriate hook type
-3. The hook must output valid JSON: `{}` to allow, `{"decision": "block", "reason": "..."}` to block, or `{"systemMessage": "..."}` to inject context
+1. Create the hook script in `.claude/hooks/<name>.py` and/or `.codex/hooks/<name>.py`
+2. Register it in `.claude/settings.json` (Claude) and/or `.codex/hooks.json` (Codex)
+3. Output contract:
+   - Claude: `{}` allow, `{"decision":"block","reason":"..."}` block, `{"systemMessage":"..."}` inject
+   - Codex: prefer `hookSpecificOutput` payloads (e.g. `permissionDecision` / `additionalContext`); legacy `{"decision":"block","reason":"..."}` also accepted
 
 ### Adding a New Command
 

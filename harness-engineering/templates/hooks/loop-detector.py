@@ -19,6 +19,8 @@ import sys
 import time
 from pathlib import Path
 
+MAX_EDITS = 5
+
 
 def get_state_path():
     """Get the path to the edit counts state file."""
@@ -51,9 +53,6 @@ def is_stale(state):
 
 
 def main():
-    MAX_EDITS = int(json.loads(Path(__file__).read_text().split('MAX_EDITS = ')[1].split('\n')[0]) if 'MAX_EDITS' in Path(__file__).read_text() else 5)
-    MAX_EDITS = 5  # Default threshold
-
     # Read hook input from stdin
     try:
         input_data = json.loads(sys.stdin.read())
