@@ -1,43 +1,43 @@
 ---
-description: Run the evaluator agent against current code state
-argument-hint: Optional - specific contract or spec to evaluate against
+description: 让 evaluator 对当前代码状态执行评估
+argument-hint: 可选 - 指定要评估的 contract 或 spec
 ---
 
-# Quality Assurance
+# 质量保障（QA）
 
-Run a full evaluation cycle against the current implementation.
+对当前实现执行完整评估流程。
 
-**Target**: $ARGUMENTS (if empty, evaluate against all contracts in `docs/contracts/`)
+**目标**：$ARGUMENTS（为空时默认对 `docs/contracts/` 中的契约进行评估）
 
-## Process
+## 流程
 
-### 1. Select Target
+### 1. 选择目标
 
-- If argument provided: Evaluate against the specified contract/spec
-- If no argument: List all contracts in `docs/contracts/` and ask user to choose, or evaluate the most recent one
+- 若传入参数：按指定 contract/spec 评估。
+- 若未传参数：列出 `docs/contracts/` 下全部契约让用户选择，或默认评估最新契约。
 
-### 2. Invoke Evaluator
+### 2. 调用 Evaluator
 
-Launch the evaluator agent, which will:
-1. Read the sprint contract criteria
-2. Test with Playwright MCP (E2E browser testing)
-3. Inspect with Chrome DevTools (console errors, network, performance)
-4. Visual check with screenshots (if UI is involved)
-5. Read and verify source code logic
+启动 `evaluator` 智能体，其会：
+1. 读取冲刺契约中的验收标准。
+2. 用 Playwright MCP 做 E2E 浏览器测试。
+3. 用 Chrome DevTools 检查控制台错误、网络与性能。
+4. 若涉及 UI，结合截图进行视觉检查。
+5. 阅读源码并校验逻辑正确性。
 
-### 3. Grade Report
+### 3. 评分报告
 
-The evaluator produces a structured report with:
-- Per-criterion pass/fail status
-- Overall score (0-100)
-- Specific failure details with reproduction steps and suggested fixes
+`evaluator` 会输出结构化报告，包含：
+- 每条标准的通过/失败状态
+- 总分（0-100）
+- 具体失败细节、复现步骤和修复建议
 
-### 4. Next Steps
+### 4. 后续动作
 
-If score < 80:
-- Offer to invoke `/build` to enter the fix loop
-- Show the specific failures that need addressing
+若分数 `< 80`：
+- 提示可执行 `/build` 进入修复循环
+- 展示需要处理的具体失败项
 
-If score >= 80:
-- Report success
-- Offer to run doc-gardener for freshness check
+若分数 `>= 80`：
+- 报告通过
+- 可选执行 `doc-gardener` 做文档新鲜度检查

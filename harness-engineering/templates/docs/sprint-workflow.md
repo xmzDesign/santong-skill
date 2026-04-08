@@ -1,143 +1,143 @@
-# Sprint Workflow
+# 冲刺工作流（Sprint Workflow）
 
-Detailed description of the Plan-Build-Verify-Fix-Complete cycle.
+本文详细说明 `Plan-Build-Verify-Fix-Complete` 的完整闭环。
 
 ---
 
-## Overview
+## 概览
 
-Each feature goes through a 6-phase sprint cycle. The cycle enforces the golden principles: spec before code, testable criteria, self-verify first, and contract-driven development.
+每个功能都应经过 6 个阶段的冲刺循环。该流程落实以下黄金原则：先有 spec、标准可测、先自检、契约驱动。
 
-## Phase 1: Plan
+## 阶段 1：Plan（规划）
 
-**Agent**: Planner
-**Input**: 1-4 sentence description from user
-**Output**: `docs/specs/<feature-name>.md`
+**Agent**：Planner  
+**输入**：用户 1-4 句话描述  
+**输出**：`docs/specs/<feature-name>.md`
 
-The Planner agent:
-1. Reads the brief description
-2. Asks clarifying questions if ambiguous
-3. Researches existing codebase patterns
-4. Produces a structured spec containing:
-   - Problem statement
-   - User stories
-   - Acceptance criteria (each must be machine-verifiable)
-   - Component boundaries
-   - Data flow
-   - Error handling
-   - Edge cases (minimum 3)
-   - Dependencies
+Planner 会：
+1. 阅读简述需求  
+2. 若存在歧义先做澄清  
+3. 调研现有代码模式  
+4. 产出结构化 spec，至少包含：
+   - 问题陈述（Problem statement）
+   - 用户故事（User stories）
+   - 验收标准（每条均可机器验证）
+   - 组件边界（Component boundaries）
+   - 数据流（Data flow）
+   - 错误处理（Error handling）
+   - 边界场景（至少 3 个）
+   - 依赖项（Dependencies）
 
-**Transition criteria**: Spec file written to `docs/specs/` and reviewed by user.
+**阶段准入条件**：spec 已写入 `docs/specs/` 且通过用户评审。
 
-## Phase 2: Contract Negotiation
+## 阶段 2：Contract Negotiation（契约协商）
 
-**Agents**: Generator + Evaluator
-**Output**: `docs/contracts/<feature-name>.md`
+**Agents**：Generator + Evaluator  
+**输出**：`docs/contracts/<feature-name>.md`
 
-Before any code is written:
-1. The Generator proposes what it will build and how success will be verified
-2. The Evaluator reviews the proposal to ensure:
-   - Criteria are truly testable (not subjective)
-   - Scope is bounded (not open-ended)
-   - Verification methods are specified for each criterion
-3. Both iterate until agreement
-4. User approves the final contract
+在任何代码编写前，先完成：
+1. Generator 提出“要实现什么 + 如何验证成功”  
+2. Evaluator 审核，确保：
+   - 标准确实可测试（非主观）
+   - 范围有边界（非开放式）
+   - 每条标准都有验证方法
+3. 双方迭代直到达成一致  
+4. 用户批准最终契约
 
-**Transition criteria**: Contract agreed by Generator, Evaluator, and User.
+**阶段准入条件**：Generator、Evaluator、User 三方对契约达成一致。
 
-## Phase 3: Build
+## 阶段 3：Build（实现）
 
-**Agent**: Generator
-**Input**: Spec + Contract
-**Output**: Source code changes + sprint report
+**Agent**：Generator  
+**输入**：Spec + Contract  
+**输出**：代码改动 + 冲刺报告
 
-The Generator:
-1. Reads only the spec file and relevant existing code (context budget)
-2. Implements ONE sprint (bounded by contract scope)
-3. After implementing, runs self-verification:
-   - Re-read the code
-   - Verify it compiles/builds
-   - Check against acceptance criteria
-   - Run existing tests
-4. Writes a brief sprint report (what was done, what was verified, what needs attention)
+Generator 会：
+1. 只读取 spec 与必要相关代码（控制上下文预算）
+2. 在契约范围内完成一个 Sprint
+3. 实现后执行自检：
+   - 复读代码
+   - 检查编译/构建
+   - 对照验收标准
+   - 运行已有测试
+4. 输出简短冲刺报告（做了什么、验证了什么、待关注点）
 
-**Transition criteria**: Generator declares sprint complete with self-verification results.
+**阶段准入条件**：Generator 提交“已完成 + 自检结果”。
 
-## Phase 4: Verify
+## 阶段 4：Verify（验证）
 
-**Agent**: Evaluator
-**Input**: Contract + Source code + Running application
-**Output**: Grade report (0-100 scale)
+**Agent**：Evaluator  
+**输入**：Contract + 源码 + 运行中的应用  
+**输出**：评分报告（0-100）
 
-The Evaluator uses a four-layer testing strategy:
-1. **Unit level**: Read source code, verify logic correctness
-2. **Integration level**: Use Playwright MCP for E2E testing
-3. **Visual level**: Use zai-mcp-server for UI screenshot comparison (if applicable)
-4. **Console level**: Use Chrome DevTools for errors, warnings, network issues
+Evaluator 使用四层测试策略：
+1. **单元层**：读源码校验逻辑
+2. **集成层**：Playwright MCP 做 E2E
+3. **视觉层**：zai-mcp-server 做截图对比（如适用）
+4. **控制台层**：Chrome DevTools 检查错误、告警、网络
 
-For each acceptance criterion:
-- PASS: Criterion met, evidence documented
-- FAIL: Criterion not met, specific failure details, reproduction steps, suggested fix
+每条验收标准都要给出结果：
+- PASS：标准满足，且有证据
+- FAIL：标准未满足，附失败细节、复现步骤、修复建议
 
-**Scoring**: Score = (passed criteria / total criteria) * 100
-**Threshold**: 80/100
+**评分公式**：`Score = (passed criteria / total criteria) * 100`  
+**通过阈值**：`80/100`
 
-**Transition criteria**:
-- Score >= 80: Proceed to Phase 6 (Complete)
-- Score < 80: Proceed to Phase 5 (Fix)
+**阶段流转条件**：
+- `Score >= 80`：进入阶段 6（Complete）
+- `Score < 80`：进入阶段 5（Fix）
 
-## Phase 5: Fix Loop
+## 阶段 5：Fix Loop（修复循环）
 
-**Agent**: Generator (with Evaluator feedback)
-**Max iterations**: 3
+**Agent**：Generator（基于 Evaluator 反馈）  
+**最大迭代次数**：3
 
-1. Evaluator's failure report is fed to the Generator
-2. Generator analyzes each failure, identifies root cause
-3. Generator implements fixes
-4. Generator self-verifies fixes
-5. Return to Phase 4 (Verify)
+1. 将 Evaluator 失败报告回传给 Generator  
+2. Generator 分析每条失败并定位根因  
+3. Generator 实施修复  
+4. Generator 对修复结果自检  
+5. 回到阶段 4（Verify）
 
-**If 3 iterations fail**:
-- Pause the sprint
-- Report accumulated failures to user
-- Suggest: (a) simplify the scope, (b) break into smaller sprints, (c) manual intervention
-- Do NOT continue iterating — context is likely polluted
+**若 3 轮仍失败**：
+- 暂停冲刺
+- 向用户汇总全部失败项
+- 给出建议：a) 缩小范围 b) 拆分更小冲刺 c) 人工介入
+- 不要继续硬迭代（当前上下文很可能已污染）
 
-**Context reset guidance**: If the Generator has been working for a long time and shows signs of context anxiety (premature wrap-up, repetitive mistakes), consider:
-- Summarizing progress to a file
-- Starting a fresh session
-- Having the new session read the spec, contract, and sprint log from files
+**上下文重置建议**：如果 Generator 工作过久并出现上下文焦虑（提前收尾、重复错误），可考虑：
+- 将当前进展写入文件
+- 开启全新会话
+- 让新会话读取 spec、contract、sprint log 继续工作
 
-## Phase 6: Complete
+## 阶段 6：Complete（完成）
 
-**Agent**: Doc Gardener (automatic)
-**Output**: Updated documentation
+**Agent**：Doc Gardener（自动）  
+**输出**：更新后的文档
 
-1. Doc Gardener audits documentation freshness:
-   - Code paths in docs still exist
-   - New code has corresponding docs
-   - Examples are current
-2. Sprint log is recorded in the contract file
-3. Tasks are marked complete
-4. Sprint summary is produced:
-   - What was built
-   - Final evaluator score
-   - Iterations used
-   - Any remaining issues or tech debt noted
+1. Doc Gardener 审计文档新鲜度：
+   - 文档引用路径是否仍存在
+   - 新代码是否有对应文档
+   - 示例是否仍有效
+2. 在 contract 文件中记录 sprint log
+3. 标记任务完成
+4. 产出冲刺总结：
+   - 本次构建内容
+   - 最终评估分数
+   - 迭代次数
+   - 剩余问题或技术债
 
-## Context Reset vs Compaction
+## Context Reset 与 Compaction 的取舍
 
-| Strategy | When to Use | Pros | Cons |
+| 策略 | 适用时机 | 优点 | 缺点 |
 |----------|-------------|------|------|
-| **Compaction** | Normal operation, short sprints | Preserves continuity | Doesn't eliminate context anxiety |
-| **Context Reset** | Long sessions, 3+ fix iterations, context anxiety | Clean slate, fresh attention | Requires handoff artifact to be thorough |
+| **Compaction** | 常规、短冲刺 | 连续性好 | 不能彻底消除上下文焦虑 |
+| **Context Reset** | 长会话、3 轮以上修复、上下文焦虑 | 干净重启、注意力恢复 | 需要高质量交接材料 |
 
-**Handoff artifact** (written to file before reset):
-- Current sprint contract status
-- What's been implemented
-- What's still failing
-- Next steps
-- Key decisions made
+**交接材料（重置前写入文件）**应包含：
+- 当前 sprint contract 状态
+- 已实现内容
+- 未解决失败项
+- 下一步计划
+- 关键决策记录
 
-The handoff artifact IS the spec + contract + sprint log files — this is why we persist them to disk rather than keeping them only in context.
+交接材料本质上就是 spec + contract + sprint log 文件，这也是为什么它们必须落盘，而不是只存在于上下文中。

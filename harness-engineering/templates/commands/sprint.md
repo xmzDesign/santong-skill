@@ -1,75 +1,75 @@
 ---
-description: Execute a full Plan-Build-Verify sprint from a brief description
-argument-hint: Feature description (1-4 sentences)
+description: 基于简短描述执行完整 Plan-Build-Verify 冲刺
+argument-hint: 功能描述（1-4 句话）
 ---
 
-# Full Sprint
+# 全流程冲刺
 
-Execute the complete Plan -> Build -> Verify cycle for: $ARGUMENTS
+针对以下需求执行完整 `Plan -> Build -> Verify` 周期：$ARGUMENTS
 
-## Sprint Phases
+## 冲刺阶段
 
-### Phase 1: Plan
+### 阶段 1：Plan（规划）
 
-Invoke the planner agent with the description. The planner will:
-- Clarify ambiguities (ask the user questions first)
-- Research the codebase
-- Produce a spec in `docs/specs/<feature-name>.md`
-- Create sprint tasks
+调用 `planner` 智能体，`planner` 会：
+- 澄清歧义（先向用户提问）
+- 调研代码库
+- 在 `docs/specs/<feature-name>.md` 产出规格说明
+- 创建冲刺任务
 
-**Gate**: User must approve the spec before proceeding.
+**门禁**：用户必须先批准规格，才能进入下一阶段。
 
-### Phase 2: Contract Negotiation
+### 阶段 2：契约协商（Contract Negotiation）
 
-Generate a sprint contract in `docs/contracts/<feature-name>.md`:
-- Extract acceptance criteria from the spec
-- Define scope (In Scope / Out of Scope)
-- Specify verification methods for each criterion
-- Set threshold: 80/100
-- Set max iterations: 3
+在 `docs/contracts/<feature-name>.md` 生成冲刺契约：
+- 从规格中提取验收标准
+- 明确范围（In Scope / Out of Scope）
+- 为每条标准指定验证方法
+- 设置通过阈值：`80/100`
+- 设置最大迭代：`3`
 
-Present the contract to the user for approval.
+将契约提交给用户审批。
 
-**Gate**: User must approve the contract before proceeding.
+**门禁**：用户必须先批准契约，才能继续。
 
-### Phase 3: Build
+### 阶段 3：Build（实现）
 
-Invoke the generator agent:
-- Reads spec + contract
-- Implements one sprint
-- Self-verifies (re-read code, check build, verify against criteria)
+调用 `generator` 智能体：
+- 读取 spec + contract
+- 完成一个冲刺范围内的实现
+- 自检（复读代码、检查构建、逐条对照标准）
 
-### Phase 4: Verify
+### 阶段 4：Verify（验证）
 
-Invoke the evaluator agent:
-- Reads contract
-- Tests via four-layer strategy (unit, integration, visual, console)
-- Grades each acceptance criterion
-- Calculates score
+调用 `evaluator` 智能体：
+- 读取契约
+- 按四层策略测试（单元、集成、视觉、控制台）
+- 对每条验收标准评分
+- 计算总分
 
-### Phase 5: Fix Loop
+### 阶段 5：Fix Loop（修复循环）
 
-If score < threshold (max 3 iterations):
-1. Feed evaluator's failure report to generator
-2. Generator analyzes root cause and fixes
-3. Generator self-verifies fixes
-4. Return to Phase 4
+若分数低于阈值（最多 3 轮）：
+1. 将 evaluator 的失败报告回传给 generator
+2. generator 分析根因并完成修复
+3. generator 对修复结果执行自检
+4. 返回阶段 4 重新验证
 
-If 3 iterations fail:
-- **STOP**. Do not continue.
-- Report all accumulated failures to user
-- Suggest: simplify scope, break into smaller sprints, manual intervention
-- The context is likely polluted — a fresh session may help
+若 3 轮后仍失败：
+- **STOP（停止）**，不要继续。
+- 向用户汇总所有累计失败项。
+- 建议：缩小范围、拆分更小冲刺、人工介入。
+- 提示当前上下文可能已污染，可考虑新会话重试。
 
-### Phase 6: Complete
+### 阶段 6：Complete（完成）
 
-If sprint passes:
-1. Update contract sprint log with final results
-2. Mark tasks as completed
-3. Invoke doc-gardener agent for freshness check
-4. Produce sprint summary:
-   - Feature built
-   - Final evaluator score
-   - Iterations used
-   - Remaining issues or tech debt
-   - Time to next sprint recommendation
+若冲刺通过：
+1. 在 contract 的 Sprint Log 里写入最终结果
+2. 将任务标记为已完成
+3. 调用 doc-gardener 智能体执行新鲜度审计
+4. 产出冲刺总结：
+   - 已构建功能
+   - 最终评估分数
+   - 使用迭代次数
+   - 剩余问题或技术债
+   - 下一次冲刺建议时机

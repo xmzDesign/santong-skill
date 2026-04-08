@@ -1,125 +1,125 @@
-# {{PROJECT_NAME}} Agent Guide
+# {{PROJECT_NAME}} Agent 指南
 
-This project uses a Harness Engineering workflow. In Codex, treat this file as the operational contract for Plan -> Build -> Verify execution.
+本项目采用 Harness Engineering 工作流。在 Codex 中，请将此文件视为 `Plan -> Build -> Verify` 的执行契约。
 
-## Quick Start (Codex)
+## 快速开始（Codex）
 
-Use one of these intents:
+可使用以下任一意图：
 
-1. `plan <feature description>`
-2. `build <spec file or latest spec>`
-3. `qa <contract file or latest contract>`
-4. `sprint <feature description>` (full cycle)
+1. `plan <功能描述>`
+2. `build <spec 文件或最新 spec>`
+3. `qa <contract 文件或最新 contract>`
+4. `sprint <功能描述>`（完整周期）
 
-## Codex Intent Router
+## Codex 意图路由
 
-When a user request matches one of the intents below, execute the corresponding flow.
+当用户请求匹配下列意图时，执行对应流程。
 
-| Intent | Trigger Examples | Required Actions | Required Outputs |
+| 意图 | 触发示例 | 必要动作 | 必要输出 |
 |---|---|---|---|
-| `plan` | "plan login flow", "write spec for X" | Clarify ambiguity, inspect relevant code, author spec | `docs/specs/<feature>.md` |
-| `build` | "build latest spec", "implement checkout spec" | Read spec + contract, implement scoped sprint, self-verify | Code changes + sprint report |
-| `qa` | "qa latest contract", "evaluate feature X" | Read contract, test and grade each criterion | Structured QA report + score |
-| `sprint` | "sprint build auth", "full cycle for X" | Run plan + contract + build + qa + fix loop | Spec + contract + implementation + score |
+| `plan` | “plan login flow”, “write spec for X” | 澄清歧义、检查相关代码、编写 spec | `docs/specs/<feature>.md` |
+| `build` | “build latest spec”, “implement checkout spec” | 读取 spec+contract，按范围实现并自检 | 代码改动 + 冲刺报告 |
+| `qa` | “qa latest contract”, “evaluate feature X” | 读取 contract，逐条测试并评分 | 结构化 QA 报告 + 分数 |
+| `sprint` | “sprint build auth”, “full cycle for X” | 依次执行 plan+contract+build+qa+fix | spec + contract + 实现 + 分数 |
 
-## Execution Contract
+## 执行契约
 
-### Plan Contract
+### Plan 契约
 
-- Do not write implementation code.
-- Spec must include:
-  - Problem statement
-  - User stories
-  - Machine-verifiable acceptance criteria
-  - Component boundaries
-  - Data flow
-  - Error handling
-  - At least 3 edge cases
-  - Dependencies
-- Store to: `docs/specs/<feature-name>.md`
+- 不允许编写实现代码。
+- Spec 必须包含：
+  - 问题陈述（Problem statement）
+  - 用户故事（User stories）
+  - 可机器验证的验收标准
+  - 组件边界（Component boundaries）
+  - 数据流（Data flow）
+  - 错误处理（Error handling）
+  - 至少 3 个边界场景
+  - 依赖项（Dependencies）
+- 保存路径：`docs/specs/<feature-name>.md`
 
-### Build Contract
+### Build 契约
 
-- Read target spec from `docs/specs/`.
-- Read target contract from `docs/contracts/`.
-- If contract is missing, create it from `docs/contracts/TEMPLATE.md` before implementation.
-- Implement only in-scope items from the contract.
-- Self-verify before handing off:
-  - Build/compile passes
-  - Tests pass (existing + new)
-  - Acceptance criteria checked one-by-one
-  - No debug artifacts
+- 从 `docs/specs/` 读取目标 spec。
+- 从 `docs/contracts/` 读取目标 contract。
+- 若 contract 缺失，先基于 `docs/contracts/TEMPLATE.md` 创建再实现。
+- 只允许实现 contract 范围内内容。
+- 交付前必须自检：
+  - 构建/编译通过
+  - 测试通过（既有 + 新增）
+  - 验收标准逐条核对
+  - 无调试残留
 
-### QA Contract
+### QA 契约
 
-- Grade only against the contract criteria.
-- Use status per criterion: `PASS`, `FAIL`, `PARTIAL`.
-- Score formula:
+- 评分只依据 contract 标准。
+- 每条标准状态仅允许：`PASS` / `FAIL` / `PARTIAL`。
+- 评分公式：
   - `score = (pass + 0.5 * partial) / total * 100`
-- Threshold: `80`.
-- Include for every FAIL:
-  - expected behavior
-  - actual behavior
-  - reproduction steps
-  - suggested fix
+- 阈值：`80`。
+- 每个 FAIL 必须包含：
+  - 预期行为
+  - 实际行为
+  - 复现步骤
+  - 修复建议
 
-### Sprint Contract
+### Sprint 契约
 
-- Order is strict:
+- 顺序必须严格遵守：
   1. Plan
   2. Contract
   3. Build
   4. QA
-  5. Fix loop (if needed)
-  6. Doc freshness
-- Fix loop max iterations: `3`.
-- If still below threshold after 3 iterations:
-  - stop
-  - summarize unresolved failures
-  - ask for scope reduction or manual intervention
+  5. Fix loop（必要时）
+  6. 文档新鲜度检查
+- Fix loop 最大迭代：`3`。
+- 若 3 轮后仍未达阈值：
+  - 停止
+  - 汇总未解决失败项
+  - 请求缩范围或人工介入
 
-## Operational Rules
+## 操作规则
 
-- Spec before code.
-- Contract before build.
-- One sprint at a time.
-- No hidden scope expansion.
-- Fail loudly with evidence.
-- Prefer boring, reversible solutions.
+- 先 spec 后代码。
+- 先 contract 后 build。
+- 一次只做一个 sprint。
+- 禁止隐式扩范围。
+- 问题必须显式暴露并附证据。
+- 优先可回滚、低风险的朴素方案。
 
-## Codex Hook Runtime
+## Codex Hook 运行时
 
-- Codex hooks are defined in `.codex/hooks.json`.
-- Hook scripts live in `.codex/hooks/`.
-- Feature flag is enabled in `.codex/config.toml`.
-- Hook goals:
-  - PreToolUse loop detection
-  - UserPromptSubmit context injection
-  - Stop-time completion checklist reminder
+- Codex hooks 定义在 `.codex/hooks.json`
+- hook 脚本位于 `.codex/hooks/`
+- 功能开关位于 `.codex/config.toml`
+- 主要目标：
+  - PreToolUse 循环检测
+  - UserPromptSubmit 上下文注入
+  - Stop 阶段完成前检查提醒
 
-## Project Layout
+## 项目布局
 
-- `AGENTS.md`: Codex operational entrypoint
-- `CLAUDE.md`: Claude entrypoint
-- `.codex/config.toml`: Codex hook feature flag
-- `.codex/hooks.json`: Codex hook registry
-- `.codex/hooks/`: Codex hook scripts
-- `.claude/agents/`: role definitions
-- `.claude/commands/`: canonical command workflows
-- `.claude/hooks/`: loop/context/check hooks
-- `docs/specs/`: feature specs
-- `docs/contracts/`: sprint contracts
-- `docs/plans/`: planning artifacts
+- `AGENTS.md`：Codex 执行入口
+- `CLAUDE.md`：Claude 执行入口
+- `.codex/config.toml`：Codex hooks 开关
+- `.codex/hooks.json`：Codex hooks 注册
+- `.codex/hooks/`：Codex hook 脚本
+- `.claude/agents/`：角色定义
+- `.claude/commands/`：标准命令流程
+- `.claude/hooks/`：循环/上下文/检查 hook
+- `docs/specs/`：功能规格
+- `docs/contracts/`：冲刺契约
+- `docs/plans/`：计划产物
 
-## Prompt Examples (Codex)
+## 提示词示例（Codex）
 
-- `plan add passwordless login with email magic link`
+- `plan 增加邮箱魔法链接免密登录`
 - `build latest spec`
 - `qa latest contract`
-- `sprint add organization switcher in dashboard`
+- `sprint 在 dashboard 中增加组织切换器`
 
-## Tech Stack
+## 技术栈
 
-- Project: `{{PROJECT_NAME}}`
-- Type: `{{PROJECT_TYPE}}`
-- Stack: `{{TECH_STACK}}`
+- 项目：`{{PROJECT_NAME}}`
+- 类型：`{{PROJECT_TYPE}}`
+- 技术栈：`{{TECH_STACK}}`

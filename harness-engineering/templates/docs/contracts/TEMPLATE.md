@@ -1,28 +1,28 @@
-# Sprint Contract: {{FEATURE_NAME}}
+# 冲刺契约：{{FEATURE_NAME}}
 
-## Meta
+## 元信息（Meta）
 
-- **Spec**: `docs/specs/{{FEATURE_NAME}}.md`
-- **Created**: {{DATE}}
-- **Status**: draft
-- **Max Iterations**: 3
-- **Pass Threshold**: 80/100
+- **Spec**：`docs/specs/{{FEATURE_NAME}}.md`
+- **Created**：{{DATE}}
+- **Status**：draft
+- **Max Iterations**：3
+- **Pass Threshold**：80/100
 
-## Scope
+## 范围（Scope）
 
-### In Scope
-
--
-
-### Out of Scope
+### In Scope（范围内）
 
 -
 
-## Acceptance Criteria
+### Out of Scope（范围外）
 
-Each criterion must be machine-verifiable.
+-
 
-| # | Criterion | Verification Method | Status |
+## 验收标准（Acceptance Criteria）
+
+每条标准都必须可机器验证。
+
+| # | 标准（Criterion） | 验证方法（Verification Method） | 状态（Status） |
 |---|-----------|-------------------|--------|
 | 1 | | | [ ] |
 | 2 | | | [ ] |
@@ -30,23 +30,23 @@ Each criterion must be machine-verifiable.
 | 4 | | | [ ] |
 | 5 | | | [ ] |
 
-### Verification Methods
+### 验证方法说明（Verification Methods）
 
-- **unit**: Read code and verify logic
-- **playwright**: E2E test via Playwright MCP
-- **devtools**: Inspect via Chrome DevTools (console errors, network)
-- **visual**: Screenshot comparison via zai-mcp-server
-- **build**: Compile/build succeeds
-- **manual**: User must manually verify
+- **unit**：阅读代码并验证逻辑
+- **playwright**：通过 Playwright MCP 进行 E2E 测试
+- **devtools**：通过 Chrome DevTools 检查（控制台错误、网络）
+- **visual**：通过 zai-mcp-server 做截图对比
+- **build**：编译/构建成功
+- **manual**：需要用户手动验证
 
-## Sprint Log
+## 冲刺日志（Sprint Log）
 
-| Iteration | Generator Output | Evaluator Score | Issues |
+| 迭代轮次 | Generator 输出 | Evaluator 评分 | 问题 |
 |-----------|-----------------|-----------------|--------|
 | | | | |
 
-## Sign-off
+## 签署确认（Sign-off）
 
-- **Generator**: [ ] Agrees to criteria and scope
-- **Evaluator**: [ ] Agrees to verification methods
-- **User**: [ ] Approves scope and criteria
+- **Generator**：[ ] 同意标准与范围
+- **Evaluator**：[ ] 同意验证方式
+- **User**：[ ] 批准范围与标准

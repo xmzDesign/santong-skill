@@ -1,148 +1,148 @@
-# Architecture
+# 架构说明（Architecture）
 
-System design for the Harness Engineering Framework.
+Harness Engineering Framework 的系统设计说明。
 
 ---
 
-## System Diagram
+## 系统图
 
 ```
-User
+用户
   |
   v
-[/sprint <desc>] -----> [Planner Agent]
+[/sprint <描述>] -----> [Planner 智能体]
                               |
                               v
                         docs/specs/<name>.md
                               |
                               v
-                    [Contract Negotiation]
+                         [契约协商]
                      /                  \
             [Generator]  <------->  [Evaluator]
                     |                      |
                     v                      v
-              Source Code          Test Results + Grade
+                 源码               测试结果 + 评分
                     |                      |
                     +-------- fix --------+
                               |
                               v
-                    [Score >= 80?] --No--> Fix Loop (max 3x)
+                    [分数 >= 80?] --否--> 修复循环（最多 3 轮）
                               |
-                            Yes
+                            是
                               v
-                    [Doc Gardener] --> docs/ updated
+                    [Doc Gardener] --> docs/ 已更新
                               |
                               v
-                         Sprint Complete
+                           冲刺完成
 ```
 
-## Agent Relationships
+## 智能体关系
 
 ```
-Planner ---> produces spec ---> Generator reads spec
-Generator --> proposes contract --> Evaluator reviews
-Evaluator --> grades output --> Generator fixes (if needed)
-Generator --> completes sprint --> Doc Gardener audits
+Planner ---> 产出 spec ---> Generator 读取 spec
+Generator --> 提出 contract --> Evaluator 评审
+Evaluator --> 给出评分 --> Generator 修复（如需）
+Generator --> 完成冲刺 --> Doc Gardener 审计文档
 ```
 
-## Hook Injection Points
+## Hook 注入点
 
 ```
-Claude Runtime:
+Claude 运行时：
   UserPromptSubmit --> .claude/hooks/context-injector.py
   PreToolUse(Edit|Write|MultiEdit) --> .claude/hooks/loop-detector.py
   PostToolUse(TaskUpdate) --> .claude/hooks/pre-completion-check.py
 
-Codex Runtime:
+Codex 运行时：
   UserPromptSubmit --> .codex/hooks/context-injector.py
   PreToolUse(Edit|Write|MultiEdit) --> .codex/hooks/loop-detector.py
   Stop --> .codex/hooks/pre-completion-check.py
 ```
 
-## Component Inventory
+## 组件清单
 
-| Component | File | Role |
+| 组件 | 文件 | 作用 |
 |-----------|------|------|
-| Codex Guide | `AGENTS.md` | Codex entry point and workflow rules |
-| Project Map | `CLAUDE.md` | Claude entry point, progressive disclosure hub |
-| Planner Agent | `.claude/agents/planner.md` | Expands prompts into specs |
-| Generator Agent | `.claude/agents/generator.md` | Implements features |
-| Evaluator Agent | `.claude/agents/evaluator.md` | Tests and grades |
-| Doc Gardener | `.claude/agents/doc-gardener.md` | Maintains doc freshness |
-| /plan command | `.claude/commands/plan.md` | Triggers planner |
-| /build command | `.claude/commands/build.md` | Triggers generator+evaluator |
-| /qa command | `.claude/commands/qa.md` | Triggers standalone evaluation |
-| /sprint command | `.claude/commands/sprint.md` | Triggers full cycle |
-| Loop Detector | `.claude/hooks/loop-detector.py` | Prevents edit doom loops |
-| Pre-Completion | `.claude/hooks/pre-completion-check.py` | Quality gate before done |
-| Context Injector | `.claude/hooks/context-injector.py` | Session context awareness |
-| Codex Hook Config | `.codex/hooks.json` | Codex hook registration |
-| Codex Hook Scripts | `.codex/hooks/*.py` | Codex runtime hook handlers |
-| Codex Hook Feature Flag | `.codex/config.toml` | Enables Codex hooks |
-| Golden Principles | `docs/golden-principles.md` | Non-negotiable rules |
-| Sprint Workflow | `docs/sprint-workflow.md` | Process documentation |
-| Contract Template | `docs/contracts/TEMPLATE.md` | Sprint contract structure |
+| Codex 指南 | `AGENTS.md` | Codex 入口与工作流规则 |
+| 项目地图 | `CLAUDE.md` | Claude 入口与渐进披露导航 |
+| Planner 智能体 | `.claude/agents/planner.md` | 将需求扩展为规格 |
+| Generator 智能体 | `.claude/agents/generator.md` | 执行功能实现 |
+| Evaluator 智能体 | `.claude/agents/evaluator.md` | 测试并评分 |
+| Doc Gardener 智能体 | `.claude/agents/doc-gardener.md` | 维护文档新鲜度 |
+| /plan 命令 | `.claude/commands/plan.md` | 触发 planner |
+| /build 命令 | `.claude/commands/build.md` | 触发 generator + evaluator |
+| /qa 命令 | `.claude/commands/qa.md` | 独立执行评估 |
+| /sprint 命令 | `.claude/commands/sprint.md` | 执行全流程冲刺 |
+| 循环检测 | `.claude/hooks/loop-detector.py` | 阻止无效反复编辑 |
+| 完成前检查 | `.claude/hooks/pre-completion-check.py` | 完成前质量门禁 |
+| 上下文注入 | `.claude/hooks/context-injector.py` | 注入会话上下文 |
+| Codex Hook 配置 | `.codex/hooks.json` | Codex hook 注册 |
+| Codex Hook 脚本 | `.codex/hooks/*.py` | Codex 运行时 hook 处理器 |
+| Codex Hook 开关 | `.codex/config.toml` | 启用 Codex hooks |
+| 黄金原则 | `docs/golden-principles.md` | 不可妥协规则 |
+| 冲刺工作流 | `docs/sprint-workflow.md` | 流程文档 |
+| 契约模板 | `docs/contracts/TEMPLATE.md` | 冲刺契约结构 |
 
-## MCP Tool Mapping
+## MCP 工具映射
 
-| MCP Tool | Used By | Purpose |
+| MCP 工具 | 使用方 | 目的 |
 |----------|---------|---------|
-| Playwright | Evaluator | E2E testing, browser automation |
-| Chrome DevTools | Evaluator | Console errors, network, performance |
-| zai-mcp-server | Evaluator | Visual verification of UI output |
-| web_reader | Planner | Fetch external documentation |
+| Playwright | Evaluator | E2E 测试、浏览器自动化 |
+| Chrome DevTools | Evaluator | 控制台错误、网络与性能检查 |
+| zai-mcp-server | Evaluator | UI 视觉验证 |
+| web_reader | Planner | 获取外部文档资料 |
 
-## Sprint Lifecycle
+## Sprint 生命周期
 
 ```
-State: IDLE
+状态：IDLE
   |
-  [plan/sprint intent from Claude slash command or Codex prompt]
+  [来自 Claude 命令或 Codex 提示的 plan/sprint 意图]
   v
-State: PLANNING  (Planner produces spec)
+状态：PLANNING（Planner 产出 spec）
   |
-  [spec approved]
+  [spec 已批准]
   v
-State: CONTRACTING  (Generator + Evaluator negotiate)
+状态：CONTRACTING（Generator + Evaluator 协商）
   |
-  [contract agreed]
+  [contract 已达成一致]
   v
-State: BUILDING  (Generator implements)
+状态：BUILDING（Generator 实现）
   |
-  [self-verify passed]
+  [自检通过]
   v
-State: VERIFYING  (Evaluator tests)
+状态：VERIFYING（Evaluator 测试）
   |
-  [score >= 80]
+  [分数 >= 80]
   v
-State: COMPLETE  (docs updated, sprint log recorded)
+状态：COMPLETE（文档更新，冲刺日志记录）
   |
-  [score < 80 & iterations < 3]
+  [分数 < 80 且迭代 < 3]
   v
-State: FIXING  (Generator addresses failures)
+状态：FIXING（Generator 修复失败项）
   |
-  [return to VERIFYING]
+  [返回 VERIFYING]
 ```
 
-## Extension Guide
+## 扩展指南
 
-### Adding a New Agent
+### 新增智能体（Agent）
 
-1. Create `.claude/agents/<name>.md` with frontmatter (name, description, tools)
-2. Define the agent's role, constraints, and output format
-3. Reference the agent in `CLAUDE.md` and/or `AGENTS.md` usage sections
-4. Create a corresponding command in `.claude/commands/<name>.md` if needed
+1. 在 `.claude/agents/<name>.md` 创建文件并补齐 frontmatter（name、description、tools）
+2. 定义该智能体的角色、约束与输出格式
+3. 在 `CLAUDE.md` 和/或 `AGENTS.md` 中补充引用
+4. 需要时在 `.claude/commands/<name>.md` 增加对应命令
 
-### Adding a New Hook
+### 新增 Hook
 
-1. Create the hook script in `.claude/hooks/<name>.py` and/or `.codex/hooks/<name>.py`
-2. Register it in `.claude/settings.json` (Claude) and/or `.codex/hooks.json` (Codex)
-3. Output contract:
-   - Claude: `{}` allow, `{"decision":"block","reason":"..."}` block, `{"systemMessage":"..."}` inject
-   - Codex: prefer `hookSpecificOutput` payloads (e.g. `permissionDecision` / `additionalContext`); legacy `{"decision":"block","reason":"..."}` also accepted
+1. 在 `.claude/hooks/<name>.py` 和/或 `.codex/hooks/<name>.py` 创建脚本
+2. 在 `.claude/settings.json`（Claude）和/或 `.codex/hooks.json`（Codex）注册
+3. 输出协议：
+   - Claude：`{}` 放行，`{"decision":"block","reason":"..."}` 阻断，`{"systemMessage":"..."}` 注入
+   - Codex：优先使用 `hookSpecificOutput`（如 `permissionDecision` / `additionalContext`）；兼容 legacy 的 `{"decision":"block","reason":"..."}`
 
-### Adding a New Command
+### 新增命令（Command）
 
-1. Create `.claude/commands/<name>.md` with frontmatter (description, argument-hint)
-2. Define the workflow steps in the body
-3. Reference existing agents via the Agent tool
+1. 在 `.claude/commands/<name>.md` 创建文件并补齐 frontmatter（description、argument-hint）
+2. 在正文定义执行步骤
+3. 通过 Agent tool 引用已有智能体

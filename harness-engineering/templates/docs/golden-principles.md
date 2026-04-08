@@ -1,85 +1,85 @@
-# Golden Principles
+# 黄金原则（Golden Principles）
 
-Non-negotiable rules enforced across all agents and workflows. These encode the core insights from OpenAI (Codex), Anthropic (3-agent architecture), and LangChain (self-verify loops).
+以下是适用于所有智能体与工作流的**不可妥协规则**，吸收了 OpenAI（Codex）、Anthropic（三智能体架构）与 LangChain（自检循环）的核心经验。
 
 ---
 
-## 1. Spec Before Code
+## 1. 先有 Spec，再写代码（Spec Before Code）
 
-No implementation without a written specification in `docs/specs/`.
+没有写入 `docs/specs/` 的规格说明，就不允许进入实现阶段。
 
-**Why**: Models lose coherence without a clear target. A spec anchors the Generator and gives the Evaluator something concrete to test against. (OpenAI)
+**为什么**：没有明确目标时，模型容易发散。Spec 能锚定 Generator，也让 Evaluator 有可验证对象。（OpenAI）
 
-**How to apply**: The Planner agent always writes a spec before any code is written. If you're tempted to "just start coding," write the spec first.
+**如何执行**：Planner 必须先产出 spec，再允许编码。即使你“已经很清楚”，也要先写 spec。
 
-## 2. Testable Acceptance Criteria
+## 2. 验收标准必须可测试（Testable Acceptance Criteria）
 
-Every feature must have machine-verifiable pass/fail criteria.
+每个功能都必须有机器可判定的通过/失败标准。
 
-**Why**: Subjective criteria like "looks good" lead to the evaluator grading generously. Machine-verifiable criteria force precision. (Anthropic)
+**为什么**：“看起来不错”这类主观标准会导致评估偏宽松。机器可验证标准能强制精确表达。（Anthropic）
 
-**How to apply**: Each acceptance criterion in a sprint contract must specify a verification method: unit test, Playwright E2E, console check, visual comparison, or build success.
+**如何执行**：每条 contract 验收标准都要指定验证方式：单元测试、Playwright E2E、控制台检查、视觉对比或构建成功。
 
-## 3. One Sprint at a Time
+## 3. 一次只做一个 Sprint（One Sprint at a Time）
 
-The Generator implements one feature, then the Evaluator tests before moving on.
+Generator 每次只实现一个功能冲刺，随后由 Evaluator 验证，再进入下一项。
 
-**Why**: Long-running tasks cause context drift and "context anxiety" (premature wrap-up). Decomposing into sprints keeps the agent coherent. (Anthropic)
+**为什么**：长任务会引发上下文漂移与“上下文焦虑”（提前收尾、反复犯错）。拆成 Sprint 可保持稳定。（Anthropic）
 
-**How to apply**: Each sprint contract defines a bounded scope. The Generator completes one sprint, the Evaluator grades it, then the next sprint begins.
+**如何执行**：每个 sprint contract 都要有清晰边界。完成一个、评估一个，再开始下一个。
 
-## 4. Self-Verify First
+## 4. 先自检，再评估（Self-Verify First）
 
-The Generator must self-verify before the Evaluator runs.
+Generator 在交给 Evaluator 前必须先完成自检。
 
-**Why**: Models are biased toward their first plausible solution. Forcing a self-check catches obvious issues before wasting evaluator cycles. (LangChain)
+**为什么**：模型天然偏向“第一个看起来可行的答案”。先自检可拦截明显错误，避免浪费评估轮次。（LangChain）
 
-**How to apply**: After implementing, the Generator must: (1) re-read the code, (2) verify it compiles/builds, (3) check against the spec, (4) run tests if available.
+**如何执行**：实现后必须：1）复读代码；2）检查编译/构建；3）逐条对照 spec；4）运行可用测试。
 
-## 5. Loop Awareness
+## 5. 循环感知（Loop Awareness）
 
-If a file is edited 5+ times without progress, stop and reassess.
+同一文件若连续编辑 5 次以上仍无进展，必须停止并重估方案。
 
-**Why**: Models can enter "doom loops" — making small variations to the same broken approach. The loop detection hook prevents this waste. (LangChain)
+**为什么**：模型容易进入“无效循环”——在错误路径上反复微调。Loop hook 是防浪费机制。（LangChain）
 
-**How to apply**: The loop-detector hook blocks edits after 5 attempts. When blocked, reconsider the approach entirely rather than tweaking the same code.
+**如何执行**：`loop-detector` 在阈值后阻断写入。被阻断后应换策略，而不是继续微调同一方案。
 
-## 6. Context Budget
+## 6. 控制上下文预算（Context Budget）
 
-Agents read only what they need, not the entire codebase.
+智能体只读“必要信息”，不要通读全仓库。
 
-**Why**: Context is a scarce resource. A massive instruction file挤掉任务空间, causing the agent to miss key constraints or optimize for the wrong things. (OpenAI)
+**为什么**：上下文是稀缺资源。无关内容过多会挤占任务空间，导致漏约束或优化方向错误。（OpenAI）
 
-**How to apply**: The Planner reads only relevant existing code. The Generator reads only the spec and contract. The Evaluator reads only the contract and relevant source files.
+**如何执行**：Planner 只读相关代码；Generator 以 spec+contract 为主；Evaluator 只读 contract 与必要源码。
 
-## 7. Progressive Disclosure
+## 7. 渐进披露（Progressive Disclosure）
 
-Documentation follows a 3-level pattern: summary → details → references.
+文档采用三层结构：摘要 → 细节 → 引用。
 
-**Why**: This is the "map, not encyclopedia" principle. A small entry point with pointers to deeper sources keeps context lean while preserving access to depth. (OpenAI)
+**为什么**：遵循“地图而非百科全书”原则。入口轻量、细节可跳转，可兼顾上下文精简与深度可达。（OpenAI）
 
-**How to apply**: AGENTS.md (Codex) and CLAUDE.md (Claude) are the maps. docs/ contains the details. Specs and contracts contain task-specific depth.
+**如何执行**：`AGENTS.md`（Codex）与 `CLAUDE.md`（Claude）作为入口地图；`docs/` 承载细节；spec 与 contract 承载任务深度。
 
-## 8. Doc Freshness
+## 8. 文档新鲜度（Doc Freshness）
 
-After each sprint, verify documentation matches code.
+每次冲刺后，都要验证文档是否与代码一致。
 
-**Why**: Stale docs are worse than no docs — they mislead agents into implementing against wrong assumptions. (OpenAI "doc gardening")
+**为什么**：过期文档比没有文档更危险，会把实现引向错误假设。（OpenAI 的 doc gardening 实践）
 
-**How to apply**: The doc-gardener agent runs after sprint completion. It checks that code paths referenced in docs still exist, examples still compile, and new features have documentation.
+**如何执行**：冲刺完成后运行 `doc-gardener`，检查引用路径存在性、示例有效性、新功能文档覆盖情况。
 
-## 9. Fail Loudly
+## 9. 问题必须显式暴露（Fail Loudly）
 
-Hooks and agents report problems explicitly rather than silently degrading.
+hook 与智能体发现问题时必须显式报告，不能静默降级。
 
-**Why**: Silent failures accumulate into technical debt that's expensive to fix later. Better to surface issues immediately. (OpenAI)
+**为什么**：静默失败会积累为高成本技术债。越早暴露，修复成本越低。（OpenAI）
 
-**How to apply**: Hooks block with clear reasons. Agents produce structured failure reports. No silent fallbacks or "it probably works" assumptions.
+**如何执行**：hook 阻断要给明确原因；智能体要给结构化失败报告；禁止“默认应该没问题”的隐式假设。
 
-## 10. Contract-Driven
+## 10. 契约驱动（Contract-Driven）
 
-Sprint contracts define "done" before implementation begins.
+在实现开始前，由 sprint contract 明确定义“完成”标准。
 
-**Why**: Without agreed-upon completion criteria, the Generator and Evaluator have different definitions of success. Contracts align expectations before code is written. (Anthropic)
+**为什么**：没有共识标准时，Generator 与 Evaluator 会出现“各自的成功定义”。契约可在编码前统一预期。（Anthropic）
 
-**How to apply**: Before each sprint, the Generator proposes what it will build and how success is verified. The Evaluator reviews the proposal. Both agree before any code is written.
+**如何执行**：每次 sprint 前，Generator 提出实现内容与验证方式，Evaluator 审核确认，双方一致后再开始编码。
