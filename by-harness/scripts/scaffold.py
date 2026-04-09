@@ -169,6 +169,8 @@ def verify_outputs(target_dir: Path):
         "CLAUDE.md",
         "TASK-HARNESS.md",
         "feature_list.json",
+        "task-harness/index.json",
+        "task-harness/features/backlog-core.json",
         "progress.txt",
         "scripts/session_close.py",
         "init.sh",
@@ -181,6 +183,8 @@ def verify_outputs(target_dir: Path):
         ".claude/settings.json",
         "docs/contracts/TEMPLATE.md",
         "docs/qa",
+        "task-harness/progress",
+        "task-harness/handoff",
     ]
     missing = [rel for rel in required if not (target_dir / rel).exists()]
     if missing:
@@ -220,6 +224,8 @@ def main():
         ("harness/codex/hooks/loop-detector.py", ".codex/hooks/loop-detector.py"),
         ("harness/codex/hooks/pre-completion-check.py", ".codex/hooks/pre-completion-check.py"),
         ("task/feature_list.json", "feature_list.json"),
+        ("task/index.json", "task-harness/index.json"),
+        ("task/backlog-core.json", "task-harness/features/backlog-core.json"),
         ("task/progress.txt", "progress.txt"),
         ("task/init.sh", "init.sh"),
         ("task/task.json", "task.json"),
@@ -260,6 +266,8 @@ def main():
     (target_dir / "docs" / "specs").mkdir(parents=True, exist_ok=True)
     (target_dir / "docs" / "plans").mkdir(parents=True, exist_ok=True)
     (target_dir / "docs" / "qa").mkdir(parents=True, exist_ok=True)
+    (target_dir / "task-harness" / "progress").mkdir(parents=True, exist_ok=True)
+    (target_dir / "task-harness" / "handoff").mkdir(parents=True, exist_ok=True)
 
     merge_settings(target_dir, templates_harness / "settings.json")
     merge_codex_hooks(target_dir, templates_harness / "codex" / "hooks.json")
@@ -275,7 +283,7 @@ def main():
     print("  1. bash init.sh")
     print("  2. 阅读 AGENTS.md 与 TASK-HARNESS.md")
     print("  3. 选择 passes=false 的 feature，执行 plan/build/qa 闭环")
-    print("  4. 仅在 qa>=80 后更新 passes=true，并写入 progress.txt")
+    print("  4. 仅在 qa>=80 后更新 passes=true，并写入 task-harness/progress/YYYY-MM.md")
     print("  5. 会话结束执行：python3 scripts/session_close.py --target-dir . --feature-id <feat-id>")
 
 

@@ -35,9 +35,35 @@ fi
 
 echo ""
 echo "[4/5] 功能完成进度:"
-if [ -f "feature_list.json" ]; then
-  TOTAL_RAW=$(python3 -c "import json; f=open('feature_list.json'); d=json.load(f); print(len(d['features']))" 2>/dev/null || echo "0")
-  PASSED_RAW=$(python3 -c "import json; f=open('feature_list.json'); d=json.load(f); print(sum(1 for x in d['features'] if x['passes']))" 2>/dev/null || echo "0")
+FEATURE_FILE="feature_list.json"
+ACTIVE_BUCKET="legacy"
+if [ -f "task-harness/index.json" ]; then
+  MAP=$(python3 - <<'PY'
+import json
+from pathlib import Path
+idx_path = Path("task-harness/index.json")
+idx = json.loads(idx_path.read_text())
+active = idx.get("active_bucket", "")
+buckets = idx.get("buckets", [])
+path = ""
+for b in buckets:
+    if b.get("id") == active:
+        path = b.get("path", "")
+        break
+if not path and buckets:
+    active = buckets[0].get("id", "")
+    path = buckets[0].get("path", "")
+print(path or "feature_list.json")
+print(active or "legacy")
+PY
+)
+  FEATURE_FILE=$(printf "%s\n" "$MAP" | sed -n '1p')
+  ACTIVE_BUCKET=$(printf "%s\n" "$MAP" | sed -n '2p')
+fi
+
+if [ -f "$FEATURE_FILE" ]; then
+  TOTAL_RAW=$(python3 -c "import json; f=open('$FEATURE_FILE'); d=json.load(f); print(len(d['features']))" 2>/dev/null || echo "0")
+  PASSED_RAW=$(python3 -c "import json; f=open('$FEATURE_FILE'); d=json.load(f); print(sum(1 for x in d['features'] if x.get('passes')))" 2>/dev/null || echo "0")
 
   if [[ "$TOTAL_RAW" =~ ^[0-9]+$ ]]; then
     TOTAL="$TOTAL_RAW"
@@ -55,6 +81,8 @@ if [ -f "feature_list.json" ]; then
     PASSED="$TOTAL"
   fi
 
+  echo "  任务桶: $ACTIVE_BUCKET"
+  echo "  任务文件: $FEATURE_FILE"
   echo "  总计: $TOTAL 个功能"
   echo "  已完成: $PASSED 个"
   echo "  剩余: $((TOTAL - PASSED)) 个"
@@ -63,14 +91,14 @@ if [ -f "feature_list.json" ]; then
   echo "  未完成的功能:"
   python3 -c "
 import json
-with open('feature_list.json') as f:
+with open('$FEATURE_FILE') as f:
     d = json.load(f)
 for feat in d['features']:
-    if not feat['passes']:
-        print(f\"    [{feat['id']}] P{feat['priority']}: {feat['description']}\")
+    if not feat.get('passes'):
+        print(f\"    [{feat.get('id','?')}] P{feat.get('priority','?')}: {feat.get('description','')}\")
 " 2>/dev/null || echo "    (解析失败)"
 else
-  echo "  (feature_list.json 不存在)"
+  echo "  (任务文件不存在: $FEATURE_FILE)"
 fi
 
 echo ""
@@ -99,8 +127,8 @@ echo ""
 echo "下一步操作:"
 echo "  1. 阅读 AGENTS.md（Harness 主闭环规则）"
 echo "  2. 阅读 TASK-HARNESS.md（任务层规则）"
-echo "  3. 阅读 progress.txt 了解已完成的工作"
-echo "  4. 阅读 feature_list.json 找到下一个未完成 feature"
+echo "  3. 阅读 task-harness/progress/*.md（或 progress.txt）了解已完成的工作"
+echo "  4. 阅读当前任务文件（见上方任务文件路径）找到下一个未完成 feature"
 echo "  5. 按 plan/build/qa 流程执行，qa>=80 后再改 passes"
 echo "  6. 运行 python3 scripts/session_close.py --target-dir . --feature-id <feat-id>"
 echo "  7. git commit / git push"

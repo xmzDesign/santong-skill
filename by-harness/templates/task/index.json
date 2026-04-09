@@ -1,0 +1,17 @@
+{
+  "version": "2",
+  "mode": "sharded",
+  "active_bucket": "backlog-core",
+  "updated": "{{YYYY-MM-DD}}",
+  "buckets": [
+    {
+      "id": "backlog-core",
+      "description": "默认任务桶（核心功能）",
+      "path": "task-harness/features/backlog-core.json"
+    }
+  ],
+  "notes": [
+    "优先读取 active_bucket 对应文件",
+    "feature_list.json 仅作为兼容入口，可由脚本同步"
+  ]
+}

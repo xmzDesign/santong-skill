@@ -19,9 +19,9 @@ santong-skills/
 
 用于一键落地“拆分任务 -> 执行 -> 测试”的统一闭环，且不依赖其他 skill 目录，核心包含：
 - 初始化主闭环契约：`AGENTS.md` + `CLAUDE.md` + hooks + `docs/specs/contracts/plans`
-- 初始化任务层契约：`TASK-HARNESS.md` + `feature_list.json` + `progress.txt` + `init.sh` + `task.json`
+- 初始化任务层契约：`TASK-HARNESS.md` + `task-harness/index.json` + `task-harness/features/*.json` + `progress.txt(兼容)` + `init.sh` + `task.json`
 - 初始化会话收口工具：`scripts/session_close.py` + `HANDOFF.md` 交接机制
-- 支持后续持续拆任务：把新任务增量写入 `feature_list.json`
+- 支持后续持续拆任务：把新任务增量写入 active bucket（自动同步 `feature_list.json` 兼容镜像）
 - 每个任务含闭环工件字段：`spec_path` / `contract_path` / `qa_report_path`
 - 默认强约束：仅在 `qa >= 80/100` 后允许 `passes=true`
 
@@ -45,6 +45,12 @@ python3 by-harness/scripts/decompose_tasks.py \
   --item "增加组织级审计日志"
 ```
 
+任务重平衡命令（需求持续增长时）：
+
+```bash
+python3 by-harness/scripts/rebalance_tasks.py --target-dir "."
+```
+
 会话收口命令：
 
 ```bash
@@ -55,6 +61,11 @@ python3 scripts/session_close.py \
   --qa-score 72 \
   --note "已完成 plan/build，准备进入 fix"
 ```
+
+手动提示词入口（在 Codex 手动选择 `by-harness` 后直接输入）：
+- `初始化`
+- `持续拆任务 主题：权限系统，拆 6 个`
+- `执行 feat-03`
 
 ### harness-engineering
 

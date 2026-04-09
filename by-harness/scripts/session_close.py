@@ -3,8 +3,8 @@
 Session close helper for by-harness projects.
 
 Actions:
-1) Append progress.txt
-2) Generate HANDOFF.md
+1) Append progress log (monthly in sharded mode)
+2) Generate handoff file (dated in sharded mode + latest HANDOFF.md)
 3) Print next task recommendation
 """
 
@@ -45,11 +45,46 @@ def load_json(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def dump_text(path: Path, content: str):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
+
+
 def count_sessions(progress_content: str) -> int:
     matches = re.findall(r"会话 #(\d+)\s*-", progress_content)
     if not matches:
         return 0
     return max(int(item) for item in matches)
+
+
+def resolve_store(target_dir: Path):
+    index_path = target_dir / "task-harness" / "index.json"
+    if not index_path.exists():
+        return {"mode": "legacy", "index": None, "index_path": index_path}
+    index = load_json(index_path)
+    return {"mode": "sharded", "index": index, "index_path": index_path}
+
+
+def load_all_features(target_dir: Path, store):
+    if store["mode"] == "legacy":
+        feature_path = target_dir / "feature_list.json"
+        if not feature_path.exists():
+            return []
+        return load_json(feature_path).get("features", [])
+
+    all_features = []
+    index = store["index"] or {}
+    for bucket in index.get("buckets", []):
+        rel_path = bucket.get("path", "")
+        if not rel_path:
+            continue
+        feature_path = target_dir / rel_path
+        if feature_path.exists():
+            data = load_json(feature_path)
+            features = data.get("features", [])
+            if isinstance(features, list):
+                all_features.extend(features)
+    return all_features
 
 
 def find_feature(features, feature_id: str):
@@ -127,19 +162,10 @@ def append_progress(
         f"  - 下一个: {next_text}\n"
     )
 
-    progress_path.write_text(content + entry, encoding="utf-8")
+    dump_text(progress_path, content + entry)
 
 
-def write_handoff(
-    handoff_path: Path,
-    feature,
-    outcome: str,
-    qa_score: float,
-    notes,
-    total: int,
-    passed: int,
-    next_feature,
-):
+def build_handoff_content(feature, outcome: str, qa_score: float, notes, total: int, passed: int, next_feature):
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     feat_id = str(feature.get("id", "n/a")) if feature else "n/a"
     feat_desc = str(feature.get("description", "未指定任务")) if feature else "未指定任务"
@@ -170,9 +196,9 @@ def write_handoff(
         [
             "",
             "## Files / Artifacts",
-            f"- feature_list.json",
-            f"- progress.txt",
-            f"- HANDOFF.md",
+            "- feature list storage (active bucket or legacy mirror)",
+            "- progress log (monthly shard or progress.txt)",
+            "- handoff file (dated shard + latest HANDOFF.md)",
         ]
     )
 
@@ -196,28 +222,47 @@ def write_handoff(
             "1. bash init.sh",
             "2. 阅读 AGENTS.md 与 TASK-HARNESS.md",
             f"3. 优先任务: {next_text}",
-            "4. 执行 plan -> build -> qa -> fix -> mark_pass",
+            "4. 执行 read task -> plan -> build -> qa -> fix -> mark_pass",
         ]
     )
 
-    handoff_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return "\n".join(lines) + "\n"
+
+
+def write_handoff(target_dir: Path, store, content: str):
+    if store["mode"] == "sharded":
+        dated = datetime.now().strftime("%Y-%m-%d-%H%M")
+        handoff_path = target_dir / "task-harness" / "handoff" / f"{dated}.md"
+    else:
+        handoff_path = target_dir / "HANDOFF.md"
+
+    dump_text(handoff_path, content)
+    # Always keep latest HANDOFF.md at root as compatibility/latest pointer.
+    dump_text(target_dir / "HANDOFF.md", content)
+    return handoff_path
+
+
+def write_legacy_progress_pointer(target_dir: Path, monthly_path: Path):
+    legacy_progress = target_dir / "progress.txt"
+    now = datetime.now().strftime("%Y-%m-%d %H:%M")
+    pointer = (
+        "\n----------------------------------------\n"
+        f"进度已写入: {monthly_path.relative_to(target_dir)}\n"
+        f"时间: {now}\n"
+        "----------------------------------------\n"
+    )
+    content = legacy_progress.read_text(encoding="utf-8") if legacy_progress.exists() else ""
+    dump_text(legacy_progress, content + pointer)
 
 
 def main():
     args = parse_args()
     target_dir = Path(args.target_dir).resolve()
-    feature_path = target_dir / "feature_list.json"
-    progress_path = target_dir / "progress.txt"
-    handoff_path = target_dir / "HANDOFF.md"
+    store = resolve_store(target_dir)
 
-    if not feature_path.exists():
-        print(f"Error: feature_list.json not found in {target_dir}")
-        sys.exit(1)
-
-    data = load_json(feature_path)
-    features = data.get("features", [])
+    features = load_all_features(target_dir, store)
     if not isinstance(features, list):
-        print("Error: feature_list.json lacks valid features array")
+        print("Error: feature list storage invalid")
         sys.exit(1)
 
     feature = find_feature(features, args.feature_id)
@@ -227,7 +272,20 @@ def main():
 
     total = len(features)
     passed = sum(1 for feat in features if bool(feat.get("passes")))
-    next_feature = next_pending_feature(features, exclude_id=str(feature.get("id", "")) if feature else "")
+    if feature and not bool(feature.get("passes")) and args.outcome != "pass":
+        # Keep focus on the same task when it is still open.
+        next_feature = feature
+    else:
+        next_feature = next_pending_feature(
+            features,
+            exclude_id=str(feature.get("id", "")) if feature else "",
+        )
+
+    if store["mode"] == "sharded":
+        monthly = datetime.now().strftime("%Y-%m")
+        progress_path = target_dir / "task-harness" / "progress" / f"{monthly}.md"
+    else:
+        progress_path = target_dir / "progress.txt"
 
     append_progress(
         progress_path=progress_path,
@@ -240,8 +298,7 @@ def main():
         next_feature=next_feature,
     )
 
-    write_handoff(
-        handoff_path=handoff_path,
+    handoff_content = build_handoff_content(
         feature=feature,
         outcome=args.outcome,
         qa_score=args.qa_score,
@@ -250,9 +307,14 @@ def main():
         passed=passed,
         next_feature=next_feature,
     )
+    handoff_path = write_handoff(target_dir, store, handoff_content)
+
+    if store["mode"] == "sharded":
+        write_legacy_progress_pointer(target_dir, progress_path)
 
     print(f"Updated progress: {progress_path}")
     print(f"Generated handoff: {handoff_path}")
+    print(f"Updated latest handoff: {target_dir / 'HANDOFF.md'}")
     if next_feature:
         print(f"Next recommended task: {next_feature.get('id')} - {next_feature.get('description')}")
     else:
