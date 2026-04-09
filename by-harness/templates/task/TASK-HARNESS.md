@@ -14,28 +14,29 @@
 
 ## 闭环执行契约（严格遵循 Harness Engineering）
 
-针对选中的单个 feature，执行：
-1. `plan <feature description>`：生成 spec（禁止直接写实现）
-2. Contract：在 `docs/contracts/` 明确验收标准与验证方式
-3. `build <spec>`：按 contract 范围实现并自检
-4. `qa <contract>`：逐条评估并评分
-5. 若 `< 80`：进入修复循环（最多 3 轮）
-6. 若 `>= 80`：才允许将该 feature 的 `passes` 设为 `true`
+针对选中的单个 feature，必须按以下严格顺序执行（不得跳步）：
+1. **读取任务（read task）**：从 `feature_list.json` 读取该 feature 的 `description/steps/spec_path/contract_path/qa_report_path`
+2. **plan**：生成/更新 `spec_path` 对应规格文件（禁止直接写实现）
+3. **build**：基于 spec + contract 实现并自检
+4. **qa**：生成 `qa_report_path`，按 contract 逐条评分
+5. **fix**：若 `qa < 80`，进入修复循环（最多 3 轮）
+6. **mark_pass**：仅在 `qa >= 80` 后，才允许将该 feature `passes=false -> true`
 
 ## 任务清单修改规则
 
 - `feature_list.json` 中仅允许修改：
   - `passes: false -> true`（通过 QA 后）
 - 禁止修改：
-  - `id/category/priority/description/file/steps/verification`
+  - `id/category/priority/description/file/spec_path/contract_path/qa_report_path/steps/verification`
 - 如需改任务定义，必须先和用户确认，再由用户批准后调整
 
 ## 会话结束前必须完成
 
 1. 写入 `progress.txt`（本轮实现、验证结果、失败项/修复项）
 2. 若该 feature 通过阈值：更新 `passes=true`
-3. 提交 git commit（建议一个 feature 一个 commit）
-4. 输出下一步建议（下一个 feature 或阻塞处理方案）
+3. 运行会话收口脚本：`python3 scripts/session_close.py --target-dir . --feature-id <feat-id>`
+4. 提交 git commit（建议一个 feature 一个 commit）
+5. 输出下一步建议（下一个 feature 或阻塞处理方案）
 
 ## 遇到阻塞时
 
@@ -49,7 +50,7 @@
 ## Codex 提示词示例
 
 - `先运行 init.sh，然后按 AGENTS.md + TASK-HARNESS.md 执行下一个 feature`
-- `对 feat-03 执行 plan/build/qa 闭环，通过后再更新 passes`
+- `执行 feat-03：严格按 read task -> plan -> build -> qa -> fix -> mark_pass`
 - `按 harness 工作流修复 feat-05，直到 qa >= 80 或达到 3 轮上限`
 
 ## 项目信息

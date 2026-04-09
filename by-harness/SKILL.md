@@ -1,6 +1,6 @@
 ---
 name: by-harness
-description: 独立的一体化 Harness skill。可初始化 harness-engineering 脚手架，并持续执行 task-harness 风格任务拆解。适用于“拆分任务-执行-测试”闭环场景，生成 AGENTS.md/CLAUDE.md、hooks、spec/contract 文档、feature_list.json、TASK-HARNESS.md、progress.txt、init.sh、task.json。
+description: 独立的一体化 Harness skill（不依赖其他 skill 文件）。可初始化主闭环脚手架，并持续执行任务拆解。适用于“拆分任务-执行-测试”闭环场景，生成 AGENTS.md/CLAUDE.md、hooks、spec/contract/qa 文档、feature_list.json、TASK-HARNESS.md、progress.txt、init.sh、task.json、scripts/session_close.py。
 argument-hint: "[项目名称] [项目描述]"
 disable-model-invocation: false
 user-invocable: true
@@ -8,7 +8,7 @@ user-invocable: true
 
 # by-harness
 
-`by-harness` 是一个**独立 skill**，内部自带模板和脚本，不依赖 `harness-engineering` 或 `task-harness` 目录。
+`by-harness` 是一个**独立 skill**，内部自带模板和脚本。
 
 它提供两种能力：
 - **初始化主闭环**：生成 Harness Engineering 工作流（`AGENTS.md`、`CLAUDE.md`、hooks、docs）
@@ -94,6 +94,11 @@ python3 {{SKILL_PATH}}/scripts/decompose_tasks.py \
 5. 未达标进入修复循环（最多 3 轮）
 6. 达标后才允许 `passes=true`
 
+同时每个任务都会具备闭环工件字段：
+- `spec_path`
+- `contract_path`
+- `qa_report_path`
+
 ### Step 3: 每个会话执行规范
 
 每次会话建议顺序：
@@ -101,7 +106,8 @@ python3 {{SKILL_PATH}}/scripts/decompose_tasks.py \
 2. 阅读 `AGENTS.md`（主闭环）
 3. 阅读 `TASK-HARNESS.md`（任务层）
 4. 选择一个 `passes=false` 的任务执行 plan/build/qa
-5. `qa >= 80` 后更新 `passes=true`，并记录 `progress.txt`
+5. `qa >= 80` 后执行 mark_pass（更新 `passes=true`）
+6. 会话结束执行 `python3 scripts/session_close.py --target-dir . --feature-id <feat-id>`
 
 ## 运行约束
 

@@ -8,6 +8,9 @@
       "priority": 1,
       "description": "第一个功能的简要描述",
       "file": "path/to/main/file.js",
+      "spec_path": "docs/specs/feat-01.md",
+      "contract_path": "docs/contracts/feat-01.md",
+      "qa_report_path": "docs/qa/feat-01.md",
       "steps": [
         "步骤 1：具体操作（包含文件路径和行号范围）",
         "步骤 2：具体操作",
@@ -22,6 +25,9 @@
       "priority": 2,
       "description": "第二个功能的简要描述",
       "file": "path/to/another/file.js",
+      "spec_path": "docs/specs/feat-02.md",
+      "contract_path": "docs/contracts/feat-02.md",
+      "qa_report_path": "docs/qa/feat-02.md",
       "steps": [
         "步骤 1：具体操作",
         "步骤 2：具体操作"
@@ -35,6 +41,9 @@
       "priority": 3,
       "description": "第三个功能的简要描述",
       "file": null,
+      "spec_path": "docs/specs/feat-03.md",
+      "contract_path": "docs/contracts/feat-03.md",
+      "qa_report_path": "docs/qa/feat-03.md",
       "steps": [
         "步骤 1：具体操作",
         "步骤 2：具体操作"

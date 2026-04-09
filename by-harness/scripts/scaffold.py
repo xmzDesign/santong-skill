@@ -170,6 +170,7 @@ def verify_outputs(target_dir: Path):
         "TASK-HARNESS.md",
         "feature_list.json",
         "progress.txt",
+        "scripts/session_close.py",
         "init.sh",
         "task.json",
         ".codex/config.toml",
@@ -179,6 +180,7 @@ def verify_outputs(target_dir: Path):
         ".codex/hooks/pre-completion-check.py",
         ".claude/settings.json",
         "docs/contracts/TEMPLATE.md",
+        "docs/qa",
     ]
     missing = [rel for rel in required if not (target_dir / rel).exists()]
     if missing:
@@ -244,8 +246,20 @@ def main():
         else:
             skipped += 1
 
+    # Ship session close helper into initialized project
+    session_close_src = skill_dir / "scripts" / "session_close.py"
+    session_close_target = target_dir / "scripts" / "session_close.py"
+    if session_close_src.exists():
+        if generate_file(session_close_src, session_close_target, args):
+            created += 1
+        else:
+            skipped += 1
+    else:
+        print(f"  WARN: helper not found: {session_close_src}")
+
     (target_dir / "docs" / "specs").mkdir(parents=True, exist_ok=True)
     (target_dir / "docs" / "plans").mkdir(parents=True, exist_ok=True)
+    (target_dir / "docs" / "qa").mkdir(parents=True, exist_ok=True)
 
     merge_settings(target_dir, templates_harness / "settings.json")
     merge_codex_hooks(target_dir, templates_harness / "codex" / "hooks.json")
@@ -262,6 +276,7 @@ def main():
     print("  2. 阅读 AGENTS.md 与 TASK-HARNESS.md")
     print("  3. 选择 passes=false 的 feature，执行 plan/build/qa 闭环")
     print("  4. 仅在 qa>=80 后更新 passes=true，并写入 progress.txt")
+    print("  5. 会话结束执行：python3 scripts/session_close.py --target-dir . --feature-id <feat-id>")
 
 
 if __name__ == "__main__":

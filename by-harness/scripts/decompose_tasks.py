@@ -69,21 +69,47 @@ def next_priority_start(features, explicit_start: int) -> int:
     return max_priority + 1
 
 
+def artifact_paths(feature_id: str):
+    return {
+        "spec_path": f"docs/specs/{feature_id}.md",
+        "contract_path": f"docs/contracts/{feature_id}.md",
+        "qa_report_path": f"docs/qa/{feature_id}.md",
+    }
+
+
+def ensure_artifact_fields(features):
+    updated = 0
+    for feat in features:
+        feature_id = str(feat.get("id", "")).strip()
+        if not feature_id:
+            continue
+        paths = artifact_paths(feature_id)
+        for key, value in paths.items():
+            if not feat.get(key):
+                feat[key] = value
+                updated += 1
+    return updated
+
+
 def build_feature(item_desc: str, feature_id: str, category: str, priority: int):
-    short_name = feature_id.replace("-", "_")
+    paths = artifact_paths(feature_id)
     return {
         "id": feature_id,
         "category": category,
         "priority": priority,
         "description": item_desc,
         "file": None,
+        "spec_path": paths["spec_path"],
+        "contract_path": paths["contract_path"],
+        "qa_report_path": paths["qa_report_path"],
         "steps": [
-            f"执行 plan：为该任务生成 docs/specs/{short_name}.md",
-            f"执行 contract：在 docs/contracts/{short_name}.md 明确验收标准与验证方式",
+            f"读取任务定义：feature_list.json 中 {feature_id} 的目标与约束",
+            f"执行 plan：生成 {paths['spec_path']}",
+            f"执行 contract：生成 {paths['contract_path']} 并明确验收标准与验证方式",
             "执行 build：按 contract 范围实现并完成自检（构建/测试/验收标准）",
-            "执行 qa：逐条验证并评分，目标 >= 80/100",
-            "若 qa < 80，进入修复循环（最多 3 轮）",
-            "qa 达标后更新 passes=true，并在 progress.txt 记录结果与证据",
+            f"执行 qa：生成 {paths['qa_report_path']}，逐条验证并评分，目标 >= 80/100",
+            "若 qa < 80，进入 fix 循环（最多 3 轮）",
+            "执行 mark_pass：仅在 qa>=80 后将 passes 置为 true",
         ],
         "passes": False,
         "verification": "必须有 qa 报告且 score >= 80/100，验收标准逐条可追溯",
@@ -135,6 +161,7 @@ def main():
         sys.exit(1)
 
     features = data["features"]
+    repaired = ensure_artifact_fields(features)
     idx_start = next_start_index(features, args.id_prefix)
     pri_start = next_priority_start(features, args.start_priority)
 
@@ -159,6 +186,8 @@ def main():
     print("Added tasks:")
     for task_id in added:
         print(f"  - {task_id}")
+    if repaired > 0:
+        print(f"Backfilled artifact fields on existing tasks: {repaired} fields updated")
     print(f"feature_list.json updated: {feature_path}")
     print("Reminder: each task must run plan/build/qa; set passes=true only when qa>=80.")
 
