@@ -12,12 +12,26 @@ user-invocable: true
 
 基于 [Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) 方法论。
 
+默认与 `harness-engineering` **组合使用**：
+- `harness-engineering` 负责主闭环（`AGENTS.md` + Plan/Build/Verify 规则）
+- `task-harness` 负责任务层（`feature_list.json` + `TASK-HARNESS.md` + 进度追踪）
+- 两者合并后形成：**拆分任务 -> 执行冲刺 -> QA 验收 -> 更新任务状态**
+
 ## 何时使用
 
 - 大型需求需要拆解为多个子任务
 - 项目需要跨多个 Agent 会话持续开发
 - 需要跟踪功能完成进度（已完成 / 未完成）
 - 用户说"拆解任务"、"任务管理"、"项目规划"、"创建任务清单"
+
+## 先决条件（推荐）
+
+在项目中优先执行 `harness-engineering` 初始化，确保存在：
+- 根目录 `AGENTS.md`（Codex 主执行契约）
+- `docs/specs/`、`docs/contracts/`、`docs/plans/`
+- hooks 与 Plan-Build-Verify 规则
+
+若项目尚未初始化 Harness Engineering，先提示用户完成初始化，再创建 task-harness 文件。
 
 ## 核心流程
 
@@ -41,7 +55,23 @@ user-invocable: true
 - `passes` 布尔值（初始为 false）
 - `verification` 验证条件
 
-### Step 3: 生成 5 个 Harness 文件
+### Step 3: 执行脚手架（优先）
+
+优先使用脚手架脚本生成任务层文件：
+
+```bash
+python3 {{SKILL_PATH}}/scripts/scaffold.py \
+  --project-name "<项目名称>" \
+  --description "<项目描述>" \
+  --tech-stack "<技术栈>" \
+  --design-guidance "<设计约束，可选>" \
+  --target-dir "<当前项目目录>"
+```
+
+脚本默认要求目标目录存在 `AGENTS.md`（主闭环契约）。  
+若确需跳过该检查，可追加：`--allow-missing-main-contract`。
+
+### Step 4: 生成 5 个 Harness 文件（脚本产物）
 
 在项目根目录生成以下文件：
 
@@ -91,52 +121,59 @@ user-invocable: true
 
 完整模板见 [references/templates/task.json](references/templates/task.json)
 
-#### `AGENTS.md` — Codex 会话执行契约
+#### `TASK-HARNESS.md` — 任务层执行契约（不覆盖 AGENTS.md）
 
-定义每个会话的固定流程、输出要求和阻塞处理规则，确保 Codex 在多会话下稳定执行。
+定义任务拆分与进度追踪规则，且明确要求执行时遵循根目录 `AGENTS.md` 的 Harness 主闭环。
 
-完整模板见 [references/templates/AGENTS.md](references/templates/AGENTS.md)
+完整模板见 [references/templates/TASK-HARNESS.md](references/templates/TASK-HARNESS.md)
 
-### Step 4: 填充 AGENTS.md 规则
+### Step 5: 校验 TASK-HARNESS.md 规则
 
-根据项目上下文替换 `AGENTS.md` 模板中的占位符（项目名、项目描述），并确保其规则与 `feature_list.json` 保持一致。
+根据项目上下文替换 `TASK-HARNESS.md` 模板中的占位符（项目名、项目描述），并确保其规则与 `feature_list.json` 保持一致。
 
-### Step 5: 首次验证
+同时检查根目录 `AGENTS.md` 是否存在：
+- 存在：保持不覆盖，直接集成使用
+- 不存在：提示先执行 `harness-engineering` 初始化
+
+### Step 6: 首次验证
 
 运行 `bash init.sh`，确认：
 - 脚本可正常执行
 - feature_list.json 解析正确
 - 进度统计准确显示
-- AGENTS.md 已创建且可直接用于 Codex 会话
+- `TASK-HARNESS.md` 已创建
+- 根目录 `AGENTS.md` 存在且可用于 Codex 主闭环
 
-### Step 6: 输出下一步指引
+### Step 7: 输出下一步指引
 
 告诉用户：
 - 已创建的文件列表
-- 如何开始第一个任务
+- 如何按 `AGENTS.md + TASK-HARNESS.md` 开始第一个任务
 - 如何在新会话中恢复工作
 
 ## Agent 工作流（每个会话）
 
 ```
 1. bash init.sh                    ← 5 秒上下文恢复
-2. Read progress.txt               ← 理解之前做了什么、为什么
-3. Read feature_list.json          ← 找到优先级最高的未完成功能
-4. Pick 1~2 features               ← 不要贪多，增量推进是关键
-5. Execute the feature's steps     ← 严格按步骤执行
-6. Verify                          ← 必须实际验证，不要假设
-7. Update feature_list.json        ← 只改 passes: false → true
-8. git commit                      ← 一个功能一个 commit
-9. git push                        ← 同步到远程
-10. Append progress.txt            ← 记录本次会话的工作
+2. Read AGENTS.md                  ← 主闭环（Plan/Build/Verify）契约
+3. Read TASK-HARNESS.md            ← 任务层契约
+4. Read progress.txt               ← 理解之前做了什么、为什么
+5. Read feature_list.json          ← 找到优先级最高的未完成功能
+6. Pick 1 feature                  ← 一次只推进一个功能
+7. Execute plan/build/qa loop      ← 严格按 Harness Engineering 流程
+8. Verify qa score >= 80           ← 通过后才允许标记完成
+9. Update feature_list.json        ← 仅改 passes: false → true
+10. Append progress.txt            ← 记录本次会话结果与下一步
+11. git commit + git push          ← 同步稳定进度
 ```
 
 ## 严格规则
 
+- **AGENTS.md 为主契约**：Plan -> Contract -> Build -> QA -> Fix loop 流程必须执行，禁止跳阶段。
 - **只修改 `passes` 字段**：在 feature_list.json 中，只将 `passes` 从 `false` 改为 `true`。永远不要删除功能、编辑描述、修改优先级或重组 JSON。
-- **一次一个功能**：除非功能非常小（例如改一个常量），否则每个会话只做一个功能。
+- **一次一个功能**：每个会话优先只做一个 feature，避免上下文污染。
+- **必须 QA 达标后再标记完成**：仅在 `qa >= 80/100` 后可更新 `passes=true`。
 - **必须 commit + push**：每个功能完成后必须 git commit 和 push，确保进度永不丢失且可独立回滚。
-- **必须验证后再标记完成**：阅读代码、运行 dev server 或检查输出。不要信任假设。
 - **必须更新 progress.txt**：会话结束时更新进度日志，让下一个会话有完整上下文。
 - **遇到阻塞时停止**：在 progress.txt 中记录阻塞原因并停止。不要默默绕过问题。
 
@@ -149,7 +186,8 @@ init.sh ──读取──→ feature_list.json (任务状态)
 
 task.json ────→ 项目总览（里程碑、规则、文件清单）
 
-AGENTS.md ────→ Agent 行为规范（引用 harness 规则）
+AGENTS.md ───────→ Harness 主执行契约（Plan/Build/Verify）
+TASK-HARNESS.md ─→ 任务层执行契约（挑任务/更新 passes/记录进度）
 ```
 
 ## 引用

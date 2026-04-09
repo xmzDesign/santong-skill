@@ -48,9 +48,13 @@ JSON 文件被模型更谨慎对待。模型更可能只修改特定字段（如
 - 更清晰的 git 历史
 - 更容易恢复中断的工作
 
-### 5. 执行契约外置（Execution Contract Externalized）
+### 5. 执行契约分层（Execution Contract Layering）
 
-将会话规则写入项目根目录 `AGENTS.md`，让 Codex 在每次会话都读取同一套操作约束（启动顺序、只改 `passes`、提交与日志要求、阻塞处理）。这能显著降低多会话漂移。
+在组合 `harness-engineering + task-harness` 时，执行契约应分层：
+- 根目录 `AGENTS.md`：Harness 主契约（Plan -> Build -> Verify）
+- 根目录 `TASK-HARNESS.md`：任务层契约（选任务、更新 passes、记录进度）
+
+分层后可避免两个 skill 互相覆盖 `AGENTS.md`，同时确保每个任务都走完整验收闭环。
 
 ## 常见问题
 
@@ -77,9 +81,11 @@ JSON 文件被模型更谨慎对待。模型更可能只修改特定字段（如
 
 ### Q: Agent 不遵守规则怎么办？
 
-在 `AGENTS.md` 中以明确的规则形式写好约束。AGENTS.md 会在每次会话开始时被加载到 Agent 的上下文中，比普通文件更有约束力。
+在 `AGENTS.md` 与 `TASK-HARNESS.md` 中以明确规则写好约束。两者都会在会话中被读取：
+- `AGENTS.md` 约束主闭环（不得跳过 QA）
+- `TASK-HARNESS.md` 约束任务状态（不得跳过 passes/progress 更新）
 
-关键规则要放在 `AGENTS.md` 的 `Rules` 部分，而不是 `## Notes` 或 `## Tips` 中。
+关键规则要放在契约文件的规则区，而不是 `## Notes` 或 `## Tips` 中。
 
 ### Q: steps 数组中的步骤应该多详细？
 
@@ -178,3 +184,4 @@ verification  # 验证和测试
 - [Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) — Anthropic 官方方法论文章
 - [task-harness SKILL.md](../SKILL.md) — 技能主入口
 - [templates/](templates/) — Harness 文件模板
+- [scripts/scaffold.py](../scripts/scaffold.py) — 一键生成 task-harness 文件（默认要求存在 `AGENTS.md`）

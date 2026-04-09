@@ -83,12 +83,12 @@ fi
 if [ -f "AGENTS.md" ]; then
   echo "  AGENTS.md 已存在（Harness 主执行契约）"
 else
-  echo "  ⚠️ AGENTS.md 不存在，建议先执行 harness-engineering 初始化"
+  echo "  ⚠️ AGENTS.md 不存在，建议先执行 by-harness 脚手架初始化"
 fi
 if [ -f "TASK-HARNESS.md" ]; then
   echo "  TASK-HARNESS.md 已存在（任务层执行契约）"
 else
-  echo "  ⚠️ TASK-HARNESS.md 不存在，请先按 task-harness 模板创建"
+  echo "  ⚠️ TASK-HARNESS.md 不存在，建议重新执行 by-harness 脚手架"
 fi
 
 echo ""
