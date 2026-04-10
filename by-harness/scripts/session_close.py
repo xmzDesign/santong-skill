@@ -3,8 +3,8 @@
 Session close helper for by-harness projects.
 
 Actions:
-1) Append progress log (monthly in sharded mode)
-2) Generate handoff file (dated in sharded mode + latest HANDOFF.md)
+1) Append session log (monthly in sharded mode / progress.txt in legacy mode)
+2) Update latest progress snapshot (.harness/progress.txt in sharded mode)
 3) Print next task recommendation
 """
 
@@ -14,6 +14,8 @@ import re
 import sys
 from datetime import datetime
 from pathlib import Path
+
+HARNESS_DIR_NAME = ".harness"
 
 
 def parse_args():
@@ -50,24 +52,51 @@ def dump_text(path: Path, content: str):
     path.write_text(content, encoding="utf-8")
 
 
-def count_sessions(progress_content: str) -> int:
-    matches = re.findall(r"会话 #(\d+)\s*-", progress_content)
+def count_sessions(log_content: str) -> int:
+    matches = re.findall(r"会话 #(\d+)\s*-", log_content)
     if not matches:
         return 0
     return max(int(item) for item in matches)
 
 
-def resolve_store(target_dir: Path):
-    index_path = target_dir / "task-harness" / "index.json"
+def detect_workspace_dir(target_dir: Path) -> Path:
+    harness_dir = target_dir / HARNESS_DIR_NAME
+    if harness_dir.exists():
+        return harness_dir
+    return target_dir
+
+
+def resolve_store(workspace_dir: Path):
+    index_path = workspace_dir / "task-harness" / "index.json"
     if not index_path.exists():
         return {"mode": "legacy", "index": None, "index_path": index_path}
     index = load_json(index_path)
     return {"mode": "sharded", "index": index, "index_path": index_path}
 
 
-def load_all_features(target_dir: Path, store):
+def resolve_bucket_feature_path(workspace_dir: Path, rel_path: str) -> Path:
+    raw = str(rel_path or "").strip()
+    if not raw:
+        return workspace_dir / "__invalid_bucket_path__"
+
+    candidates = [workspace_dir / raw]
+    if raw.startswith(f"{HARNESS_DIR_NAME}/"):
+        candidates.append(workspace_dir / raw[len(HARNESS_DIR_NAME) + 1 :])
+
+    if workspace_dir.name == HARNESS_DIR_NAME:
+        candidates.append(workspace_dir.parent / raw)
+        if raw.startswith(f"{HARNESS_DIR_NAME}/"):
+            candidates.append(workspace_dir.parent / raw[len(HARNESS_DIR_NAME) + 1 :])
+
+    for path in candidates:
+        if path.exists():
+            return path
+    return candidates[0]
+
+
+def load_all_features(workspace_dir: Path, store):
     if store["mode"] == "legacy":
-        feature_path = target_dir / "feature_list.json"
+        feature_path = workspace_dir / "feature_list.json"
         if not feature_path.exists():
             return []
         return load_json(feature_path).get("features", [])
@@ -78,7 +107,7 @@ def load_all_features(target_dir: Path, store):
         rel_path = bucket.get("path", "")
         if not rel_path:
             continue
-        feature_path = target_dir / rel_path
+        feature_path = resolve_bucket_feature_path(workspace_dir, rel_path)
         if feature_path.exists():
             data = load_json(feature_path)
             features = data.get("features", [])
@@ -87,13 +116,38 @@ def load_all_features(target_dir: Path, store):
     return all_features
 
 
+def normalize_feature_id(feature_id: str) -> str:
+    text = str(feature_id or "").strip().lower()
+    match = re.match(r"^([a-z0-9_-]+)-0*(\d+)$", text)
+    if match:
+        return f"{match.group(1)}-{int(match.group(2))}"
+    return text
+
+
 def find_feature(features, feature_id: str):
     if not feature_id:
         return None
+    target_raw = str(feature_id).strip()
+    target_norm = normalize_feature_id(target_raw)
     for feat in features:
-        if str(feat.get("id", "")).strip() == feature_id:
+        if str(feat.get("id", "")).strip() == target_raw:
+            return feat
+    for feat in features:
+        if normalize_feature_id(str(feat.get("id", ""))) == target_norm:
             return feat
     return None
+
+
+def sample_feature_ids(features, limit: int = 12):
+    ids = []
+    for feat in features:
+        feat_id = str(feat.get("id", "")).strip()
+        if feat_id:
+            ids.append(feat_id)
+    ids = sorted(dict.fromkeys(ids))
+    if len(ids) <= limit:
+        return ", ".join(ids)
+    return ", ".join(ids[:limit]) + f", ... (total {len(ids)})"
 
 
 def to_priority(value):
@@ -111,8 +165,8 @@ def next_pending_feature(features, exclude_id: str = ""):
     return pending[0]
 
 
-def append_progress(
-    progress_path: Path,
+def build_session_entry(
+    session_no: int,
     feature,
     outcome: str,
     qa_score: float,
@@ -122,9 +176,6 @@ def append_progress(
     next_feature,
 ):
     now = datetime.now()
-    content = progress_path.read_text(encoding="utf-8") if progress_path.exists() else ""
-    session_no = count_sessions(content) + 1
-
     feat_id = str(feature.get("id", "n/a")) if feature else "n/a"
     feat_desc = str(feature.get("description", "未指定任务")) if feature else "未指定任务"
     qa_text = f"{qa_score:.1f}" if qa_score >= 0 else "n/a"
@@ -160,12 +211,24 @@ def append_progress(
         "\n进度:\n"
         f"  - 已完成: {passed}/{total}\n"
         f"  - 下一个: {next_text}\n"
+        "\n下一会话建议:\n"
+        "  1. bash .harness/init.sh（legacy 项目可用 bash init.sh）\n"
+        "  2. 阅读 AGENTS.md 与 .harness/TASK-HARNESS.md\n"
+        f"  3. 优先处理: {next_text}\n"
+        "  4. 执行 read task -> plan -> build -> qa(non-blocking) -> fix -> mark_pass\n"
     )
+    return entry
 
-    dump_text(progress_path, content + entry)
+
+def append_session_log(log_path: Path, entry: str) -> int:
+    content = log_path.read_text(encoding="utf-8") if log_path.exists() else ""
+    session_no = count_sessions(content) + 1
+    finalized = entry.replace("会话 #0 -", f"会话 #{session_no} -", 1)
+    dump_text(log_path, content + finalized)
+    return session_no
 
 
-def build_handoff_content(feature, outcome: str, qa_score: float, notes, total: int, passed: int, next_feature):
+def build_latest_snapshot(feature, outcome: str, qa_score: float, total: int, passed: int, next_feature, log_path: Path):
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     feat_id = str(feature.get("id", "n/a")) if feature else "n/a"
     feat_desc = str(feature.get("description", "未指定任务")) if feature else "未指定任务"
@@ -175,105 +238,46 @@ def build_handoff_content(feature, outcome: str, qa_score: float, notes, total: 
         if next_feature
         else "无（全部任务已完成）"
     )
-
-    lines = [
-        "# HANDOFF",
-        "",
-        f"生成时间: {now}",
-        "",
-        "## Summary",
-        f"- 当前会话任务: {feat_id} - {feat_desc}",
-        f"- 会话结果: {outcome}",
-        f"- QA 分数: {qa_text}",
-        f"- 任务进度: {passed}/{total}",
-        "",
-        "## Decisions",
-    ]
-    for line in notes if notes else ["未提供额外决策说明。"]:
-        lines.append(f"- {line}")
-
-    lines.extend(
-        [
-            "",
-            "## Files / Artifacts",
-            "- feature list storage (active bucket or legacy mirror)",
-            "- progress log (monthly shard or progress.txt)",
-            "- handoff file (dated shard + latest HANDOFF.md)",
-        ]
+    return (
+        "# LATEST PROGRESS SNAPSHOT\n\n"
+        f"- 更新时间: {now}\n"
+        f"- 当前任务: {feat_id} - {feat_desc}\n"
+        f"- 会话结果: {outcome}\n"
+        f"- QA 分数: {qa_text}\n"
+        f"- 任务进度: {passed}/{total}\n"
+        f"- 下一任务建议: {next_text}\n"
+        f"- 会话日志文件: {log_path.name}\n\n"
+        "下一步:\n"
+        "1. 运行 `.harness/init.sh`\n"
+        "2. 阅读 `AGENTS.md` 和 `.harness/TASK-HARNESS.md`\n"
+        "3. 继续推进下一任务\n"
     )
-
-    if feature:
-        lines.extend(
-            [
-                f"- {feature.get('spec_path', 'n/a')}",
-                f"- {feature.get('contract_path', 'n/a')}",
-                f"- {feature.get('qa_report_path', 'n/a')}",
-            ]
-        )
-
-    lines.extend(
-        [
-            "",
-            "## Open Loops",
-            "- 若 outcome 不是 pass，请优先处理失败项与阻塞原因。",
-            "- 未达 qa>=80 前，不应将 passes 置为 true。",
-            "",
-            "## Next Session Start",
-            "1. bash init.sh",
-            "2. 阅读 AGENTS.md 与 TASK-HARNESS.md",
-            f"3. 优先任务: {next_text}",
-            "4. 执行 read task -> plan -> build -> qa -> fix -> mark_pass",
-        ]
-    )
-
-    return "\n".join(lines) + "\n"
-
-
-def write_handoff(target_dir: Path, store, content: str):
-    if store["mode"] == "sharded":
-        dated = datetime.now().strftime("%Y-%m-%d-%H%M")
-        handoff_path = target_dir / "task-harness" / "handoff" / f"{dated}.md"
-    else:
-        handoff_path = target_dir / "HANDOFF.md"
-
-    dump_text(handoff_path, content)
-    # Always keep latest HANDOFF.md at root as compatibility/latest pointer.
-    dump_text(target_dir / "HANDOFF.md", content)
-    return handoff_path
-
-
-def write_legacy_progress_pointer(target_dir: Path, monthly_path: Path):
-    legacy_progress = target_dir / "progress.txt"
-    now = datetime.now().strftime("%Y-%m-%d %H:%M")
-    pointer = (
-        "\n----------------------------------------\n"
-        f"进度已写入: {monthly_path.relative_to(target_dir)}\n"
-        f"时间: {now}\n"
-        "----------------------------------------\n"
-    )
-    content = legacy_progress.read_text(encoding="utf-8") if legacy_progress.exists() else ""
-    dump_text(legacy_progress, content + pointer)
 
 
 def main():
     args = parse_args()
     target_dir = Path(args.target_dir).resolve()
-    store = resolve_store(target_dir)
+    workspace_dir = detect_workspace_dir(target_dir)
+    store = resolve_store(workspace_dir)
 
-    features = load_all_features(target_dir, store)
+    features = load_all_features(workspace_dir, store)
     if not isinstance(features, list):
         print("Error: feature list storage invalid")
         sys.exit(1)
 
     feature = find_feature(features, args.feature_id)
     if args.feature_id and feature is None:
+        candidates = sample_feature_ids(features)
         print(f"Error: feature id not found: {args.feature_id}")
+        if candidates:
+            print(f"Available feature ids: {candidates}")
+        else:
+            print("Available feature ids: none (task storage may be empty or misconfigured)")
         sys.exit(1)
 
     total = len(features)
     passed = sum(1 for feat in features if bool(feat.get("passes")))
-    if feature and not bool(feature.get("passes")) and args.outcome != "pass":
-        # Keep focus on the same task when it is still open.
+    if feature and not bool(feature.get("passes")) and args.outcome in ("in-progress", "blocked"):
         next_feature = feature
     else:
         next_feature = next_pending_feature(
@@ -283,12 +287,12 @@ def main():
 
     if store["mode"] == "sharded":
         monthly = datetime.now().strftime("%Y-%m")
-        progress_path = target_dir / "task-harness" / "progress" / f"{monthly}.md"
+        session_log_path = workspace_dir / "task-harness" / "progress" / f"{monthly}.md"
     else:
-        progress_path = target_dir / "progress.txt"
+        session_log_path = workspace_dir / "progress.txt"
 
-    append_progress(
-        progress_path=progress_path,
+    entry = build_session_entry(
+        session_no=0,
         feature=feature,
         outcome=args.outcome,
         qa_score=args.qa_score,
@@ -297,24 +301,23 @@ def main():
         passed=passed,
         next_feature=next_feature,
     )
-
-    handoff_content = build_handoff_content(
-        feature=feature,
-        outcome=args.outcome,
-        qa_score=args.qa_score,
-        notes=args.note,
-        total=total,
-        passed=passed,
-        next_feature=next_feature,
-    )
-    handoff_path = write_handoff(target_dir, store, handoff_content)
+    session_no = append_session_log(session_log_path, entry)
 
     if store["mode"] == "sharded":
-        write_legacy_progress_pointer(target_dir, progress_path)
+        snapshot_path = workspace_dir / "progress.txt"
+        snapshot = build_latest_snapshot(
+            feature=feature,
+            outcome=args.outcome,
+            qa_score=args.qa_score,
+            total=total,
+            passed=passed,
+            next_feature=next_feature,
+            log_path=session_log_path,
+        )
+        dump_text(snapshot_path, snapshot)
+        print(f"Updated latest snapshot: {snapshot_path}")
 
-    print(f"Updated progress: {progress_path}")
-    print(f"Generated handoff: {handoff_path}")
-    print(f"Updated latest handoff: {target_dir / 'HANDOFF.md'}")
+    print(f"Appended session log: {session_log_path} (session #{session_no})")
     if next_feature:
         print(f"Next recommended task: {next_feature.get('id')} - {next_feature.get('description')}")
     else:

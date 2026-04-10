@@ -18,12 +18,13 @@ santong-skills/
 独立融合版 Harness。
 
 用于一键落地“拆分任务 -> 执行 -> 测试”的统一闭环，且不依赖其他 skill 目录，核心包含：
-- 初始化主闭环契约：`AGENTS.md` + `CLAUDE.md` + hooks + `docs/specs/contracts/plans`
-- 初始化任务层契约：`TASK-HARNESS.md` + `task-harness/index.json` + `task-harness/features/*.json` + `progress.txt(兼容)` + `init.sh` + `task.json`
-- 初始化会话收口工具：`scripts/session_close.py` + `HANDOFF.md` 交接机制
-- 支持后续持续拆任务：把新任务增量写入 active bucket（自动同步 `feature_list.json` 兼容镜像）
+- 根目录极简：默认只放 `AGENTS.md`（以及隐藏运行目录 `.codex/.claude`）
+- 工作文件集中到 `.harness/`：`CLAUDE.md`、`docs/`、`TASK-HARNESS.md`、`feature_list.json`、`task-harness/`、`progress.txt`、`init.sh`、`task.json`
+- 初始化会话收口工具：`.harness/scripts/session_close.py`（维护会话日志 + 最新快照）
+- 支持后续持续拆任务：把新任务增量写入 active bucket（自动同步 `.harness/feature_list.json` 兼容镜像）
 - 每个任务含闭环工件字段：`spec_path` / `contract_path` / `qa_report_path`
-- 默认强约束：仅在 `qa >= 80/100` 后允许 `passes=true`
+- 工件语义：`spec_path=技术方案`，`contract_path=测试计划/验收标准`，`qa_report_path=测试结果`
+- 当前门禁策略：单元测试通过即可 `passes=true`，QA 报告默认非阻塞
 
 一体化初始化命令：
 
@@ -34,6 +35,12 @@ python3 by-harness/scripts/scaffold.py \
   --tech-stack "React + Node.js" \
   --project-type "web app" \
   --target-dir "."
+```
+
+初始化后建议先执行：
+
+```bash
+bash .harness/init.sh
 ```
 
 持续拆任务命令：
@@ -54,7 +61,7 @@ python3 by-harness/scripts/rebalance_tasks.py --target-dir "."
 会话收口命令：
 
 ```bash
-python3 scripts/session_close.py \
+python3 .harness/scripts/session_close.py \
   --target-dir "." \
   --feature-id "feat-03" \
   --outcome "in-progress" \
@@ -118,7 +125,7 @@ python3 scripts/session_close.py \
 | 主要入口 | `task-harness/SKILL.md` 流程引导 | `AGENTS.md`（主闭环）+ `TASK-HARNESS.md`（任务层） |
 | 触发方式 | “拆解任务/任务管理/项目规划”类请求 | 自然语言执行意图（如“执行下一个未完成任务”） |
 | 会话启动 | 建议先读 `progress.txt` + `feature_list.json` | 强制先 `bash init.sh`，再读两个契约文件 |
-| 状态更新 | 完成功能后更新 `passes` + 记录日志 | 仅在 `qa >= 80` 后才允许 `passes=true` |
+| 状态更新 | 完成功能后更新 `passes` + 记录日志 | 单元测试通过即可 `passes=true`（QA 报告非阻塞） |
 | 适合场景 | 规划与拆解阶段 | 长时、多会话、持续推进阶段 |
 
 #### 核心文件作用说明
@@ -137,7 +144,7 @@ python3 scripts/session_close.py \
 1. 先初始化 `harness-engineering`（生成 `AGENTS.md` 和 hooks）
 2. 再执行 `task-harness` 脚手架（生成 `feature_list.json` / `TASK-HARNESS.md` 等）
 3. 每次会话按单个 feature 执行：`plan -> build -> qa -> (fix)`  
-4. 仅在 `qa >= 80/100` 后更新该 feature 的 `passes=true`
+4. 单元测试通过即可更新该 feature 的 `passes=true`（QA 报告仅用于质量跟踪）
 
 初始化命令示例：
 

@@ -11,7 +11,7 @@
 | `/qa` | 对当前代码执行评估 |
 | `/sprint <description>` | 执行完整 Plan-Build-Verify 周期 |
 
-Codex 用户请参考 `AGENTS.md`（提示词驱动工作流）。  
+Codex 用户请参考 `../AGENTS.md`（提示词驱动工作流）。  
 Codex hooks 配置位于 `.codex/config.toml` 与 `.codex/hooks.json`。
 
 ## 架构
@@ -33,11 +33,11 @@ Codex hooks 配置位于 `.codex/config.toml` 与 `.codex/hooks.json`。
 
 ## 冲刺工作流
 
-1. **Plan**：Planner 在 `docs/specs/` 产出 spec  
+1. **Plan**：Planner 在 `.harness/docs/specs/` 产出 spec  
 2. **Contract**：Generator + Evaluator 先对“完成标准”达成一致  
 3. **Build**：Generator 完成一个 sprint 的实现  
-4. **Verify**：Evaluator 按 contract 测试（阈值 `80/100`）  
-5. **Fix**：若分数 `< 80`，Generator 进入修复（最多 3 轮）  
+4. **Verify**：Evaluator 按 contract 测试并产出 QA 报告（非阻塞）  
+5. **Fix**：若单元测试失败，Generator 进入修复（最多 3 轮）  
 6. **Complete**：更新文档并执行 doc-gardener  
 
 完整流程请见 [docs/sprint-workflow.md](docs/sprint-workflow.md)。
@@ -45,13 +45,13 @@ Codex hooks 配置位于 `.codex/config.toml` 与 `.codex/hooks.json`。
 ## 项目结构
 
 ``` 
-docs/
-  architecture.md     -- 系统设计
+.harness/docs/
+  architecture.md      -- 系统设计
   golden-principles.md -- 核心规则
-  sprint-workflow.md  -- 冲刺流程
-  contracts/          -- Sprint 完成定义
-  specs/              -- 功能规格
-  plans/              -- 实施计划
+  sprint-workflow.md   -- 冲刺流程
+  contracts/           -- Sprint 完成定义
+  specs/               -- 功能规格
+  plans/               -- 实施计划
 .claude/
   agents/             -- 智能体定义
   commands/           -- 斜杠命令

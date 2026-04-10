@@ -13,6 +13,8 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+HARNESS_DIR_NAME = ".harness"
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Rebalance tasks into sharded buckets.")
@@ -82,13 +84,21 @@ def build_index(active_bucket: str, bucket_defs):
     }
 
 
+def detect_workspace_dir(target_dir: Path) -> Path:
+    harness_dir = target_dir / HARNESS_DIR_NAME
+    if harness_dir.exists():
+        return harness_dir
+    return target_dir
+
+
 def main():
     args = parse_args()
     target_dir = Path(args.target_dir).resolve()
-    legacy_path = target_dir / "feature_list.json"
+    workspace_dir = detect_workspace_dir(target_dir)
+    legacy_path = workspace_dir / "feature_list.json"
 
     if not legacy_path.exists():
-        print(f"Error: feature_list.json not found in {target_dir}")
+        print(f"Error: feature_list.json not found in {workspace_dir}")
         sys.exit(1)
 
     legacy = load_json(legacy_path)
@@ -123,7 +133,7 @@ def main():
             }
         )
         bucket_payloads[bucket_id] = {
-            "project": legacy.get("project", target_dir.name),
+            "project": legacy.get("project", workspace_dir.name),
             "description": legacy.get("description", ""),
             "features": feats,
         }
@@ -141,17 +151,17 @@ def main():
         return
 
     # Backup legacy once.
-    backup_path = target_dir / "feature_list.legacy.json"
+    backup_path = workspace_dir / "feature_list.legacy.json"
     if not backup_path.exists():
         shutil.copy2(legacy_path, backup_path)
 
     # Write bucket files.
     for bucket_id, payload in bucket_payloads.items():
-        bucket_path = target_dir / "task-harness" / "features" / f"{bucket_id}.json"
+        bucket_path = workspace_dir / "task-harness" / "features" / f"{bucket_id}.json"
         dump_json(bucket_path, payload)
 
     # Write index.
-    index_path = target_dir / "task-harness" / "index.json"
+    index_path = workspace_dir / "task-harness" / "index.json"
     dump_json(index_path, index_data)
 
     # Sync legacy view to active bucket for compatibility.

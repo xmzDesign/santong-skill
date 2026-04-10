@@ -14,18 +14,18 @@ argument-hint: 功能描述（1-4 句话）
 调用 `planner` 智能体，`planner` 会：
 - 澄清歧义（先向用户提问）
 - 调研代码库
-- 在 `docs/specs/<feature-name>.md` 产出规格说明
+- 在 `.harness/docs/specs/<feature-name>.md` 产出规格说明
 - 创建冲刺任务
 
 **门禁**：用户必须先批准规格，才能进入下一阶段。
 
 ### 阶段 2：契约协商（Contract Negotiation）
 
-在 `docs/contracts/<feature-name>.md` 生成冲刺契约：
+在 `.harness/docs/contracts/<feature-name>.md` 生成冲刺契约：
 - 从规格中提取验收标准
 - 明确范围（In Scope / Out of Scope）
 - 为每条标准指定验证方法
-- 设置通过阈值：`80/100`
+- 设置执行门禁：单元测试必须通过（QA 报告非阻塞）
 - 设置最大迭代：`3`
 
 将契约提交给用户审批。
@@ -49,24 +49,24 @@ argument-hint: 功能描述（1-4 句话）
 
 ### 阶段 5：Fix Loop（修复循环）
 
-若分数低于阈值（最多 3 轮）：
+若单元测试不通过（最多 3 轮）：
 1. 将 evaluator 的失败报告回传给 generator
 2. generator 分析根因并完成修复
 3. generator 对修复结果执行自检
 4. 返回阶段 4 重新验证
 
 若 3 轮后仍失败：
-- **STOP（停止）**，不要继续。
-- 向用户汇总所有累计失败项。
+- 保持当前 feature 的 `passes=false`。
+- 向用户汇总所有累计失败项并记录在进度日志。
 - 建议：缩小范围、拆分更小冲刺、人工介入。
-- 提示当前上下文可能已污染，可考虑新会话重试。
+- 继续执行下一个 feature，避免阻塞整体推进。
 
 ### 阶段 6：Complete（完成）
 
-若冲刺通过：
+若单元测试通过：
 1. 在 contract 的 Sprint Log 里写入最终结果
-2. 若存在 `feature_list.json`，将对应 feature 的 `passes` 更新为 `true`
-3. 若存在 `progress.txt`，追加本轮冲刺记录
+2. 若存在 `.harness/feature_list.json`，将对应 feature 的 `passes` 更新为 `true`
+3. 若存在 `.harness/progress.txt`，追加本轮冲刺记录
 4. 调用 doc-gardener 智能体执行新鲜度审计
 5. 产出冲刺总结：
    - 已构建功能

@@ -12,7 +12,7 @@
 
 **智能体（Agent）**：Planner  
 **输入**：用户 1-4 句话描述  
-**输出**：`docs/specs/<feature-name>.md`
+**输出**：`.harness/docs/specs/<feature-name>.md`
 
 Planner 会：
 1. 阅读简述需求  
@@ -28,12 +28,12 @@ Planner 会：
    - 边界场景（至少 3 个）
    - 依赖项（Dependencies）
 
-**阶段准入条件**：spec 已写入 `docs/specs/` 且通过用户评审。
+**阶段准入条件**：spec 已写入 `.harness/docs/specs/` 且通过用户评审。
 
 ## 阶段 2：契约协商（Contract Negotiation）
 
 **智能体（Agents）**：Generator + Evaluator  
-**输出**：`docs/contracts/<feature-name>.md`
+**输出**：`.harness/docs/contracts/<feature-name>.md`
 
 在任何代码编写前，先完成：
 1. Generator 提出“要实现什么 + 如何验证成功”  
@@ -81,11 +81,11 @@ Evaluator 使用四层测试策略：
 - FAIL：标准未满足，附失败细节、复现步骤、修复建议
 
 **评分公式**：`分数 = (通过标准条数 / 标准总条数) * 100`  
-**通过阈值**：`80/100`
+**执行门禁**：单元测试通过（QA 报告非阻塞）
 
 **阶段流转条件**：
-- `Score >= 80`：进入阶段 6（Complete）
-- `Score < 80`：进入阶段 5（Fix）
+- 单元测试通过：进入阶段 6（Complete）
+- 单元测试失败：进入阶段 5（Fix）
 
 ## 阶段 5：Fix Loop（修复循环）
 
@@ -99,10 +99,11 @@ Evaluator 使用四层测试策略：
 5. 回到阶段 4（Verify）
 
 **若 3 轮仍失败**：
-- 暂停冲刺
+- 结束当前 feature 的修复循环
+- 保持该 feature 的 `passes=false`
 - 向用户汇总全部失败项
 - 给出建议：a) 缩小范围 b) 拆分更小冲刺 c) 人工介入
-- 不要继续硬迭代（当前上下文很可能已污染）
+- 继续推进下一个 feature，避免阻塞总体进度
 
 **上下文重置建议**：如果 Generator 工作过久并出现上下文焦虑（提前收尾、重复错误），可考虑：
 - 将当前进展写入文件
@@ -126,9 +127,9 @@ Evaluator 使用四层测试策略：
    - 迭代次数
    - 剩余问题或技术债
 
-若项目启用了 task-harness（存在 `feature_list.json`）：
-- 仅当分数 `>= 80` 才更新对应 feature 的 `passes=true`
-- 同步在 `progress.txt` 追加该 feature 的闭环记录
+若项目启用了 task-harness（存在 `.harness/feature_list.json`）：
+- 单元测试通过即可更新对应 feature 的 `passes=true`
+- 同步在 `.harness/task-harness/progress/YYYY-MM.md` 追加该 feature 的闭环记录
 
 ## 上下文重置（Context Reset）与压缩（Compaction）的取舍
 

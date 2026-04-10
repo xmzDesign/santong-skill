@@ -2,11 +2,11 @@
 
 ## 元信息（Meta）
 
-- **规格文件（Spec）**：`docs/specs/{{FEATURE_NAME}}.md`
+- **规格文件（Spec）**：`.harness/docs/specs/{{FEATURE_NAME}}.md`
 - **创建时间（Created）**：{{DATE}}
 - **状态（Status）**：draft
 - **最大迭代次数（Max Iterations）**：3
-- **通过阈值（Pass Threshold）**：80/100
+- **执行门禁（Execution Gate）**：单元测试通过（QA 报告非阻塞）
 
 ## 范围（Scope）
 

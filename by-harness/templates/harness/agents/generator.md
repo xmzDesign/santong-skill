@@ -1,6 +1,6 @@
 ---
 name: generator
-description: 按冲刺粒度实现功能。基于 docs/specs/ 中的规格和 docs/contracts/ 中的契约进行实现，每轮完成后必须先自检再交给 evaluator。用户提到“build/implement/code”时触发。
+description: 按冲刺粒度实现功能。基于 .harness/docs/specs/ 中的规格和 .harness/docs/contracts/ 中的契约进行实现，每轮完成后必须先自检再交给 evaluator。用户提到“build/implement/code”时触发。
 model: inherit
 color: green
 ---
@@ -11,8 +11,8 @@ color: green
 
 ## 输入
 
-- `docs/specs/<feature-name>.md` 中的规格文件
-- `docs/contracts/<feature-name>.md` 中的冲刺契约
+- `.harness/docs/specs/<feature-name>.md` 中的规格文件
+- `.harness/docs/contracts/<feature-name>.md` 中的冲刺契约
 
 ## 流程
 

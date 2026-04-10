@@ -13,7 +13,7 @@ Harness Engineering Framework 的系统设计说明。
 [/sprint <描述>] -----> [Planner 智能体]
                               |
                               v
-                        docs/specs/<name>.md
+                    .harness/docs/specs/<name>.md
                               |
                               v
                          [契约协商]
@@ -26,11 +26,11 @@ Harness Engineering Framework 的系统设计说明。
                     +-------- fix --------+
                               |
                               v
-                    [分数 >= 80?] --否--> 修复循环（最多 3 轮）
+                [单元测试通过?] --否--> 修复循环（最多 3 轮）
                               |
                             是
                               v
-                    [Doc Gardener] --> docs/ 已更新
+                    [Doc Gardener] --> .harness/docs/ 已更新
                               |
                               v
                            冲刺完成
@@ -64,7 +64,7 @@ Codex 运行时：
 | 组件 | 文件 | 作用 |
 |-----------|------|------|
 | Codex 指南 | `AGENTS.md` | Codex 入口与工作流规则 |
-| 项目地图 | `CLAUDE.md` | Claude 入口与渐进披露导航 |
+| 项目地图 | `.harness/CLAUDE.md` | Claude 入口与渐进披露导航 |
 | Planner 智能体 | `.claude/agents/planner.md` | 将需求扩展为规格 |
 | Generator 智能体 | `.claude/agents/generator.md` | 执行功能实现 |
 | Evaluator 智能体 | `.claude/agents/evaluator.md` | 测试并评分 |
@@ -79,11 +79,11 @@ Codex 运行时：
 | Codex Hook 配置 | `.codex/hooks.json` | Codex hook 注册 |
 | Codex Hook 脚本 | `.codex/hooks/*.py` | Codex 运行时 hook 处理器 |
 | Codex Hook 开关 | `.codex/config.toml` | 启用 Codex hooks |
-| 黄金原则 | `docs/golden-principles.md` | 不可妥协规则 |
-| 冲刺工作流 | `docs/sprint-workflow.md` | 流程文档 |
-| 契约模板 | `docs/contracts/TEMPLATE.md` | 冲刺契约结构 |
-| 任务清单（可选） | `feature_list.json` | task-harness 任务状态源（passes） |
-| 任务层契约（可选） | `TASK-HARNESS.md` | task-harness 任务追踪规则 |
+| 黄金原则 | `.harness/docs/golden-principles.md` | 不可妥协规则 |
+| 冲刺工作流 | `.harness/docs/sprint-workflow.md` | 流程文档 |
+| 契约模板 | `.harness/docs/contracts/TEMPLATE.md` | 冲刺契约结构 |
+| 任务清单（可选） | `.harness/feature_list.json` | task-harness 任务状态源（passes） |
+| 任务层契约（可选） | `.harness/TASK-HARNESS.md` | task-harness 任务追踪规则 |
 
 ## MCP 工具映射
 
@@ -115,11 +115,11 @@ Codex 运行时：
   v
 状态：VERIFYING（Evaluator 测试）
   |
-  [分数 >= 80]
+  [单元测试通过]
   v
 状态：COMPLETE（文档更新，冲刺日志记录，必要时更新 passes）
   |
-  [分数 < 80 且迭代 < 3]
+  [单元测试失败 且迭代 < 3]
   v
 状态：FIXING（Generator 修复失败项）
   |

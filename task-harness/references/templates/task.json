@@ -23,7 +23,7 @@
       "再读取 TASK-HARNESS.md（任务层规则）",
       "读取 progress.txt 获取上次进度",
       "读取 feature_list.json 找到下一个优先级最高的未完成功能",
-      "必须执行 plan/build/qa，且 qa>=80 后才允许标记完成",
+      "必须执行 plan/build/qa，单元测试通过即可标记完成（QA 非阻塞）",
       "完成后更新 feature_list.json 的 passes 字段",
       "每次完成功能后 git commit",
       "会话结束前更新 progress.txt",

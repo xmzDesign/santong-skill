@@ -168,7 +168,7 @@ def main():
     print("  1. 运行 `bash init.sh`")
     print("  2. 阅读 `AGENTS.md` 与 `TASK-HARNESS.md`")
     print("  3. 选择一个 passes=false 的 feature 执行 plan/build/qa")
-    print("  4. 仅在 qa>=80 后更新 passes=true，并追加 progress.txt")
+    print("  4. 单元测试通过即可更新 passes=true（QA 非阻塞），并追加 progress.txt")
 
 
 if __name__ == "__main__":

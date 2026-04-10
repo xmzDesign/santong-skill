@@ -3,7 +3,7 @@
 #  {{项目名称}} - Agent 环境初始化脚本
 # ==========================================
 # 用途：每个 Agent 会话开始时运行，快速恢复开发环境
-# 用法：bash init.sh
+# 用法：bash .harness/init.sh（legacy 项目可用 bash init.sh）
 
 set -e
 
@@ -11,24 +11,38 @@ echo "=========================================="
 echo "  {{项目名称}} - Agent 环境初始化"
 echo "=========================================="
 
-PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
-cd "$PROJECT_DIR"
+WORKSPACE_DIR="$(cd "$(dirname "$0")" && pwd)"
+if [ -f "$WORKSPACE_DIR/AGENTS.md" ]; then
+  REPO_ROOT="$WORKSPACE_DIR"
+else
+  REPO_ROOT="$(cd "$WORKSPACE_DIR/.." && pwd)"
+fi
+WORKSPACE_NAME="$(basename "$WORKSPACE_DIR")"
+if [ "$WORKSPACE_DIR" = "$REPO_ROOT" ]; then
+  WORKSPACE_PREFIX=""
+else
+  WORKSPACE_PREFIX="$WORKSPACE_NAME/"
+fi
+
+cd "$WORKSPACE_DIR"
 
 echo ""
-echo "[1/5] 当前目录: $PROJECT_DIR"
+echo "[1/5] 当前目录:"
+echo "  仓库根目录: $REPO_ROOT"
+echo "  Harness 工作目录: $WORKSPACE_DIR"
 
 echo ""
 echo "[2/5] Git 状态:"
-if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  git status --short || echo "  (无 git 变更)"
+if git -C "$REPO_ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  git -C "$REPO_ROOT" status --short || echo "  (无 git 变更)"
 else
   echo "  (当前目录不是 git 仓库)"
 fi
 
 echo ""
 echo "[3/5] 最近 10 条 commit:"
-if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  git log --oneline -10 || echo "  (无 commit 历史)"
+if git -C "$REPO_ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  git -C "$REPO_ROOT" log --oneline -10 || echo "  (无 commit 历史)"
 else
   echo "  (当前目录不是 git 仓库)"
 fi
@@ -41,6 +55,7 @@ if [ -f "task-harness/index.json" ]; then
   MAP=$(python3 - <<'PY'
 import json
 from pathlib import Path
+
 idx_path = Path("task-harness/index.json")
 idx = json.loads(idx_path.read_text())
 active = idx.get("active_bucket", "")
@@ -103,17 +118,17 @@ fi
 
 echo ""
 echo "[5/5] 依赖检查:"
-if [ -d "node_modules" ]; then
+if [ -d "$REPO_ROOT/node_modules" ]; then
   echo "  node_modules 已存在"
 else
   echo "  node_modules 不存在，需要运行依赖安装命令"
 fi
-if [ -f "AGENTS.md" ]; then
+if [ -f "$REPO_ROOT/AGENTS.md" ]; then
   echo "  AGENTS.md 已存在（Harness 主执行契约）"
 else
   echo "  ⚠️ AGENTS.md 不存在，建议先执行 by-harness 脚手架初始化"
 fi
-if [ -f "TASK-HARNESS.md" ]; then
+if [ -f "$WORKSPACE_DIR/TASK-HARNESS.md" ]; then
   echo "  TASK-HARNESS.md 已存在（任务层执行契约）"
 else
   echo "  ⚠️ TASK-HARNESS.md 不存在，建议重新执行 by-harness 脚手架"
@@ -126,10 +141,10 @@ echo "=========================================="
 echo ""
 echo "下一步操作:"
 echo "  1. 阅读 AGENTS.md（Harness 主闭环规则）"
-echo "  2. 阅读 TASK-HARNESS.md（任务层规则）"
-echo "  3. 阅读 task-harness/progress/*.md（或 progress.txt）了解已完成的工作"
+echo "  2. 阅读 ${WORKSPACE_PREFIX}TASK-HARNESS.md（任务层规则）"
+echo "  3. 阅读 ${WORKSPACE_PREFIX}task-harness/progress/*.md（${WORKSPACE_PREFIX}progress.txt 为最新快照）"
 echo "  4. 阅读当前任务文件（见上方任务文件路径）找到下一个未完成 feature"
-echo "  5. 按 plan/build/qa 流程执行，qa>=80 后再改 passes"
-echo "  6. 运行 python3 scripts/session_close.py --target-dir . --feature-id <feat-id>"
+echo "  5. 按 plan/build/qa 流程执行，单元测试通过后即可改 passes（QA 非阻塞）"
+echo "  6. 运行 python3 ${WORKSPACE_PREFIX}scripts/session_close.py --target-dir . --feature-id <feat-id>"
 echo "  7. git commit / git push"
 echo ""

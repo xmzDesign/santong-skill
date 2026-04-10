@@ -161,7 +161,7 @@ python3 {{SKILL_PATH}}/scripts/scaffold.py \
 5. Read feature_list.json          ← 找到优先级最高的未完成功能
 6. Pick 1 feature                  ← 一次只推进一个功能
 7. Execute plan/build/qa loop      ← 严格按 Harness Engineering 流程
-8. Verify qa score >= 80           ← 通过后才允许标记完成
+8. Verify unit tests pass          ← 通过后才允许标记完成（QA 非阻塞）
 9. Update feature_list.json        ← 仅改 passes: false → true
 10. Append progress.txt            ← 记录本次会话结果与下一步
 11. git commit + git push          ← 同步稳定进度
@@ -172,7 +172,7 @@ python3 {{SKILL_PATH}}/scripts/scaffold.py \
 - **AGENTS.md 为主契约**：Plan -> Contract -> Build -> QA -> Fix loop 流程必须执行，禁止跳阶段。
 - **只修改 `passes` 字段**：在 feature_list.json 中，只将 `passes` 从 `false` 改为 `true`。永远不要删除功能、编辑描述、修改优先级或重组 JSON。
 - **一次一个功能**：每个会话优先只做一个 feature，避免上下文污染。
-- **必须 QA 达标后再标记完成**：仅在 `qa >= 80/100` 后可更新 `passes=true`。
+- **以单元测试作为通过门禁**：单元测试通过即可更新 `passes=true`；QA 报告用于质量跟踪，不阻塞流程。
 - **必须 commit + push**：每个功能完成后必须 git commit 和 push，确保进度永不丢失且可独立回滚。
 - **必须更新 progress.txt**：会话结束时更新进度日志，让下一个会话有完整上下文。
 - **遇到阻塞时停止**：在 progress.txt 中记录阻塞原因并停止。不要默默绕过问题。

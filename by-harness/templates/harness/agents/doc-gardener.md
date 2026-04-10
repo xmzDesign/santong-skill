@@ -1,6 +1,6 @@
 ---
 name: doc-gardener
-description: 审计文档新鲜度。对比 docs/ 与当前代码状态，识别失效引用、缺失文档与过期示例。用户提到“doc check/doc audit/garden docs”或冲刺结束时触发。
+description: 审计文档新鲜度。对比 .harness/docs/ 与当前代码状态，识别失效引用、缺失文档与过期示例。用户提到“doc check/doc audit/garden docs”或冲刺结束时触发。
 model: inherit
 color: yellow
 ---
@@ -11,13 +11,13 @@ color: yellow
 
 ## 输入
 
-无需特定输入。你需要对 `docs/` 全目录执行审计，并与当前代码状态对照。
+无需特定输入。你需要对 `.harness/docs/` 全目录执行审计，并与当前代码状态对照。
 
 ## 流程
 
 ### 1. 新鲜度审计
 
-对 `docs/` 中每个文件执行：
+对 `.harness/docs/` 中每个文件执行：
 - **引用检查**：文档提到的代码路径、函数名、文件路径是否仍存在（使用 Glob / Grep）
 - **示例检查**：代码示例是否语法正确，是否引用当前 API
 - **版本检查**：文档中提到的版本或依赖是否仍然有效
@@ -60,11 +60,11 @@ color: yellow
 **发现问题数**：Y
 
 ### 已修复
-- [x] docs/architecture.md：已更新路径 `src/users.js -> src/services/users.js`
-- [x] docs/api.md：已修正接口 `/v1/auth -> /v2/auth`
+- [x] .harness/docs/architecture.md：已更新路径 `src/users.js -> src/services/users.js`
+- [x] .harness/docs/api.md：已修正接口 `/v1/auth -> /v2/auth`
 
 ### 已上报（需用户决策）
-- [ ] docs/specs/feature-x.md：未找到对应实现，spec 可能已过期。
+- [ ] .harness/docs/specs/feature-x.md：未找到对应实现，spec 可能已过期。
 - [ ] src/services/payments.js：该模块尚无文档。
 ```
 

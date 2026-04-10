@@ -7,6 +7,8 @@ import json
 import subprocess
 from pathlib import Path
 
+HARNESS_DIR_NAME = ".harness"
+
 
 def emit(payload):
     print(json.dumps(payload, ensure_ascii=False))
@@ -38,8 +40,9 @@ def get_git_info():
 def get_project_state():
     state = {}
     cwd = Path.cwd()
+    workspace = cwd / HARNESS_DIR_NAME if (cwd / HARNESS_DIR_NAME).exists() else cwd
 
-    specs_dir = cwd / "docs" / "specs"
+    specs_dir = workspace / "docs" / "specs"
     if specs_dir.exists():
         specs = list(specs_dir.glob("*.md"))
         if specs:
@@ -47,7 +50,7 @@ def get_project_state():
                 p.name for p in sorted(specs, key=lambda x: x.stat().st_mtime, reverse=True)[:5]
             ]
 
-    contracts_dir = cwd / "docs" / "contracts"
+    contracts_dir = workspace / "docs" / "contracts"
     if contracts_dir.exists():
         contracts = [p for p in contracts_dir.glob("*.md") if p.name != "TEMPLATE.md"]
         if contracts:
@@ -55,7 +58,7 @@ def get_project_state():
                 p.name for p in sorted(contracts, key=lambda x: x.stat().st_mtime, reverse=True)[:5]
             ]
 
-    plans_dir = cwd / "docs" / "plans"
+    plans_dir = workspace / "docs" / "plans"
     if plans_dir.exists():
         plans = list(plans_dir.glob("*.md"))
         if plans:
@@ -69,7 +72,9 @@ def get_project_state():
 def get_task_harness_state():
     state = {}
     cwd = Path.cwd()
-    feature_list_path = cwd / "feature_list.json"
+    workspace = cwd / HARNESS_DIR_NAME if (cwd / HARNESS_DIR_NAME).exists() else cwd
+    workspace_label = f"{HARNESS_DIR_NAME}/" if workspace != cwd else ""
+    feature_list_path = workspace / "feature_list.json"
 
     if not feature_list_path.exists():
         return state
@@ -107,8 +112,9 @@ def get_task_harness_state():
             "description": next_feat.get("description", ""),
         }
 
-    state["has_task_contract"] = (cwd / "TASK-HARNESS.md").exists()
-    state["has_progress_log"] = (cwd / "progress.txt").exists()
+    state["has_task_contract"] = (workspace / "TASK-HARNESS.md").exists()
+    state["has_progress_log"] = (workspace / "progress.txt").exists()
+    state["workspace_label"] = workspace_label
     return state
 
 
@@ -143,9 +149,15 @@ def main():
                 f"[{next_feat.get('id')}] P{next_feat.get('priority')} {next_feat.get('description')}"
             )
         if not task_state.get("has_task_contract"):
-            parts.append("Warning: feature_list.json exists but TASK-HARNESS.md is missing.")
+            parts.append(
+                "Warning: feature_list.json exists but "
+                f"{task_state.get('workspace_label', '')}TASK-HARNESS.md is missing."
+            )
         if not task_state.get("has_progress_log"):
-            parts.append("Warning: feature_list.json exists but progress.txt is missing.")
+            parts.append(
+                "Warning: feature_list.json exists but "
+                f"{task_state.get('workspace_label', '')}progress.txt is missing."
+            )
 
     if not parts:
         emit({})

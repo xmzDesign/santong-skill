@@ -7,14 +7,14 @@ argument-hint: 可选 - 指定要评估的 contract 或 spec
 
 对当前实现执行完整评估流程。
 
-**目标**：$ARGUMENTS（为空时默认对 `docs/contracts/` 中的契约进行评估）
+**目标**：$ARGUMENTS（为空时默认对 `.harness/docs/contracts/` 中的契约进行评估）
 
 ## 流程
 
 ### 1. 选择目标
 
 - 若传入参数：按指定 contract/spec 评估。
-- 若未传参数：列出 `docs/contracts/` 下全部契约让用户选择，或默认评估最新契约。
+- 若未传参数：列出 `.harness/docs/contracts/` 下全部契约让用户选择，或默认评估最新契约。
 
 ### 2. 调用 Evaluator
 
@@ -34,10 +34,14 @@ argument-hint: 可选 - 指定要评估的 contract 或 spec
 
 ### 4. 后续动作
 
-若分数 `< 80`：
+若分数偏低：
 - 提示可执行 `/build` 进入修复循环
 - 展示需要处理的具体失败项
 
-若分数 `>= 80`：
+若分数较高：
 - 报告通过
 - 可选执行 `doc-gardener` 做文档新鲜度检查
+
+说明：
+- QA 报告用于质量跟踪，默认不阻塞任务推进。
+- 是否标记 `passes=true` 以单元测试结果为准。

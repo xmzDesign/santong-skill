@@ -12,6 +12,6 @@
   ],
   "notes": [
     "优先读取 active_bucket 对应文件",
-    "feature_list.json 仅作为兼容入口，可由脚本同步"
+    ".harness/feature_list.json 仅作为兼容入口，可由脚本同步"
   ]
 }

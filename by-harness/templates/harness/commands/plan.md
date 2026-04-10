@@ -13,7 +13,7 @@ argument-hint: 功能描述（1-4 句话）
 2. `planner` 会执行：
    - 若描述存在歧义，先向用户澄清问题。
    - 调研现有代码中的模式与约定。
-   - 在 `docs/specs/<feature-name>.md` 生成结构化规格说明。
+   - 在 `.harness/docs/specs/<feature-name>.md` 生成结构化规格说明。
    - 通过 `TaskCreate` 创建带依赖关系的冲刺任务。
 3. 将规格提交给用户评审。
 4. 评审通过后，用户可继续执行 `/build` 或 `/sprint`。

@@ -17,10 +17,10 @@
 
 | 意图 | 触发示例 | 必要动作 | 必要输出 |
 |---|---|---|---|
-| `plan` | “plan login flow”, “write spec for X” | 澄清歧义、检查相关代码、编写 spec | `docs/specs/<feature>.md` |
+| `plan` | “plan login flow”, “write spec for X” | 澄清歧义、检查相关代码、编写 spec | `.harness/docs/specs/<feature>.md` |
 | `build` | “build latest spec”, “implement checkout spec” | 读取 spec+contract，按范围实现并自检 | 代码改动 + 冲刺报告 |
-| `qa` | “qa latest contract”, “evaluate feature X” | 读取 contract，逐条测试并评分 | 结构化 QA 报告 + 分数 |
-| `sprint` | “sprint build auth”, “full cycle for X” | 依次执行 plan+contract+build+qa+fix | spec + contract + 实现 + 分数 |
+| `qa` | “qa latest contract”, “evaluate feature X” | 读取 contract，逐条测试并评分（非阻塞） | 结构化 QA 报告 + 分数 |
+| `sprint` | “sprint build auth”, “full cycle for X” | 依次执行 plan+contract+build+qa+fix | spec + contract + 实现 + 报告 |
 
 ## 执行契约
 
@@ -36,13 +36,13 @@
   - 错误处理（Error handling）
   - 至少 3 个边界场景
   - 依赖项（Dependencies）
-- 保存路径：`docs/specs/<feature-name>.md`
+- 保存路径：`.harness/docs/specs/<feature-name>.md`
 
 ### Build 契约
 
-- 从 `docs/specs/` 读取目标 spec。
-- 从 `docs/contracts/` 读取目标 contract。
-- 若 contract 缺失，先基于 `docs/contracts/TEMPLATE.md` 创建再实现。
+- 从 `.harness/docs/specs/` 读取目标 spec。
+- 从 `.harness/docs/contracts/` 读取目标 contract。
+- 若 contract 缺失，先基于 `.harness/docs/contracts/TEMPLATE.md` 创建再实现。
 - 只允许实现 contract 范围内内容。
 - 交付前必须自检：
   - 构建/编译通过
@@ -56,7 +56,7 @@
 - 每条标准状态仅允许：`PASS` / `FAIL` / `PARTIAL`。
 - 评分公式：
   - `score = (pass + 0.5 * partial) / total * 100`
-- 阈值：`80`。
+- QA 结果默认**非阻塞**（用于质量跟踪与修复建议）。
 - 每个 FAIL 必须包含：
   - 预期行为
   - 实际行为
@@ -73,10 +73,10 @@
   5. Fix loop（必要时）
   6. 文档新鲜度检查
 - Fix loop 最大迭代：`3`。
-- 若 3 轮后仍未达阈值：
-  - 停止
-  - 汇总未解决失败项
-  - 请求缩范围或人工介入
+- 若 3 轮后单元测试仍失败：
+  - 记录失败项与建议
+  - 保持当前 feature `passes=false`
+  - 继续下一个 feature（不阻塞整体流程）
 
 ## 操作规则
 
@@ -89,18 +89,18 @@
 
 ## 与 Task Harness 的集成（可选但推荐）
 
-若项目存在 `feature_list.json` 与 `TASK-HARNESS.md`，按以下方式形成任务闭环：
+若项目存在 `.harness/feature_list.json` 与 `.harness/TASK-HARNESS.md`，按以下方式形成任务闭环：
 
-1. 从 `feature_list.json` 选择优先级最高且 `passes=false` 的 feature
+1. 从 `.harness/feature_list.json` 选择优先级最高且 `passes=false` 的 feature
 2. 严格执行 `plan -> contract -> build -> qa -> fix` 主流程
-3. 仅当 `qa >= 80/100` 时，将该 feature 的 `passes` 置为 `true`
-4. 在 `progress.txt` 记录本轮实现、验证结果与下一步
-5. 若达到 3 轮仍失败，保持 `passes=false` 并记录阻塞原因
+3. 单元测试通过即可将该 feature 的 `passes` 置为 `true`
+4. 在 `.harness/progress.txt` 记录本轮实现、验证结果与下一步
+5. 若达到 3 轮仍失败，保持 `passes=false` 并继续下一个任务
 
 集成约束：
 - `AGENTS.md` 负责主闭环，不负责改任务定义
-- `TASK-HARNESS.md` 负责任务追踪，不得覆盖主闭环规则
-- 禁止为了推进进度跳过 QA 或绕过阈值
+- `.harness/TASK-HARNESS.md` 负责任务追踪，不得覆盖主闭环规则
+- QA 结论用于质量跟踪，不作为阻塞门禁
 
 ## Codex Hook 运行时
 
@@ -115,18 +115,18 @@
 ## 项目布局
 
 - `AGENTS.md`：Codex 执行入口
-- `CLAUDE.md`：Claude 执行入口
+- `.harness/CLAUDE.md`：Claude 执行入口
 - `.codex/config.toml`：Codex hooks 开关
 - `.codex/hooks.json`：Codex hooks 注册
 - `.codex/hooks/`：Codex hook 脚本
 - `.claude/agents/`：角色定义
 - `.claude/commands/`：标准命令流程
 - `.claude/hooks/`：循环/上下文/检查 hook
-- `docs/specs/`：功能规格
-- `docs/contracts/`：冲刺契约
-- `docs/plans/`：计划产物
-- `feature_list.json`：任务状态（可选）
-- `TASK-HARNESS.md`：任务层执行契约（可选）
+- `.harness/docs/specs/`：功能规格
+- `.harness/docs/contracts/`：冲刺契约
+- `.harness/docs/plans/`：计划产物
+- `.harness/feature_list.json`：任务状态（可选）
+- `.harness/TASK-HARNESS.md`：任务层执行契约（可选）
 
 ## 提示词示例（Codex）
 

@@ -7,6 +7,8 @@ import json
 import sys
 from pathlib import Path
 
+HARNESS_DIR_NAME = ".harness"
+
 CHECKLIST = [
     "1. Code compiles/builds without errors?",
     "2. All tests pass (existing and new)?",
@@ -16,8 +18,8 @@ CHECKLIST = [
 ]
 
 TASK_HARNESS_CHECKLIST = [
-    "6. If this sprint maps to feature_list.json, qa score is >= 80/100 before passes=true?",
-    "7. If feature status changed, feature_list.json and progress.txt are both updated?",
+    "6. If this sprint maps to feature_list.json, unit tests passed before passes=true?",
+    "7. QA report is recorded (non-blocking), and progress logs are updated?",
 ]
 
 
@@ -38,7 +40,8 @@ def main():
 
     checklist = list(CHECKLIST)
     cwd = Path.cwd()
-    if (cwd / "feature_list.json").exists():
+    workspace = cwd / HARNESS_DIR_NAME if (cwd / HARNESS_DIR_NAME).exists() else cwd
+    if (workspace / "feature_list.json").exists():
         checklist.extend(TASK_HARNESS_CHECKLIST)
 
     message = (

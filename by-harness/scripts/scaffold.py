@@ -16,6 +16,8 @@ import sys
 from datetime import date
 from pathlib import Path
 
+HARNESS_DIR_NAME = ".harness"
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -166,25 +168,24 @@ def merge_codex_hooks(target_dir: Path, template_hooks_path: Path):
 def verify_outputs(target_dir: Path):
     required = [
         "AGENTS.md",
-        "CLAUDE.md",
-        "TASK-HARNESS.md",
-        "feature_list.json",
-        "task-harness/index.json",
-        "task-harness/features/backlog-core.json",
-        "progress.txt",
-        "scripts/session_close.py",
-        "init.sh",
-        "task.json",
+        f"{HARNESS_DIR_NAME}/CLAUDE.md",
+        f"{HARNESS_DIR_NAME}/TASK-HARNESS.md",
+        f"{HARNESS_DIR_NAME}/feature_list.json",
+        f"{HARNESS_DIR_NAME}/task-harness/index.json",
+        f"{HARNESS_DIR_NAME}/task-harness/features/backlog-core.json",
+        f"{HARNESS_DIR_NAME}/progress.txt",
+        f"{HARNESS_DIR_NAME}/scripts/session_close.py",
+        f"{HARNESS_DIR_NAME}/init.sh",
+        f"{HARNESS_DIR_NAME}/task.json",
         ".codex/config.toml",
         ".codex/hooks.json",
         ".codex/hooks/context-injector.py",
         ".codex/hooks/loop-detector.py",
         ".codex/hooks/pre-completion-check.py",
         ".claude/settings.json",
-        "docs/contracts/TEMPLATE.md",
-        "docs/qa",
-        "task-harness/progress",
-        "task-harness/handoff",
+        f"{HARNESS_DIR_NAME}/docs/contracts/TEMPLATE.md",
+        f"{HARNESS_DIR_NAME}/docs/qa",
+        f"{HARNESS_DIR_NAME}/task-harness/progress",
     ]
     missing = [rel for rel in required if not (target_dir / rel).exists()]
     if missing:
@@ -201,13 +202,14 @@ def main():
         print(f"Error: target directory does not exist: {target_dir}")
         sys.exit(1)
 
+    harness_dir = target_dir / HARNESS_DIR_NAME
     file_mappings = [
-        ("harness/CLAUDE.md", "CLAUDE.md"),
         ("harness/AGENTS.md", "AGENTS.md"),
-        ("harness/docs/architecture.md", "docs/architecture.md"),
-        ("harness/docs/golden-principles.md", "docs/golden-principles.md"),
-        ("harness/docs/sprint-workflow.md", "docs/sprint-workflow.md"),
-        ("harness/docs/contracts/TEMPLATE.md", "docs/contracts/TEMPLATE.md"),
+        ("harness/CLAUDE.md", f"{HARNESS_DIR_NAME}/CLAUDE.md"),
+        ("harness/docs/architecture.md", f"{HARNESS_DIR_NAME}/docs/architecture.md"),
+        ("harness/docs/golden-principles.md", f"{HARNESS_DIR_NAME}/docs/golden-principles.md"),
+        ("harness/docs/sprint-workflow.md", f"{HARNESS_DIR_NAME}/docs/sprint-workflow.md"),
+        ("harness/docs/contracts/TEMPLATE.md", f"{HARNESS_DIR_NAME}/docs/contracts/TEMPLATE.md"),
         ("harness/agents/planner.md", ".claude/agents/planner.md"),
         ("harness/agents/generator.md", ".claude/agents/generator.md"),
         ("harness/agents/evaluator.md", ".claude/agents/evaluator.md"),
@@ -223,13 +225,13 @@ def main():
         ("harness/codex/hooks/context-injector.py", ".codex/hooks/context-injector.py"),
         ("harness/codex/hooks/loop-detector.py", ".codex/hooks/loop-detector.py"),
         ("harness/codex/hooks/pre-completion-check.py", ".codex/hooks/pre-completion-check.py"),
-        ("task/feature_list.json", "feature_list.json"),
-        ("task/index.json", "task-harness/index.json"),
-        ("task/backlog-core.json", "task-harness/features/backlog-core.json"),
-        ("task/progress.txt", "progress.txt"),
-        ("task/init.sh", "init.sh"),
-        ("task/task.json", "task.json"),
-        ("task/TASK-HARNESS.md", "TASK-HARNESS.md"),
+        ("task/feature_list.json", f"{HARNESS_DIR_NAME}/feature_list.json"),
+        ("task/index.json", f"{HARNESS_DIR_NAME}/task-harness/index.json"),
+        ("task/backlog-core.json", f"{HARNESS_DIR_NAME}/task-harness/features/backlog-core.json"),
+        ("task/progress.txt", f"{HARNESS_DIR_NAME}/progress.txt"),
+        ("task/init.sh", f"{HARNESS_DIR_NAME}/init.sh"),
+        ("task/task.json", f"{HARNESS_DIR_NAME}/task.json"),
+        ("task/TASK-HARNESS.md", f"{HARNESS_DIR_NAME}/TASK-HARNESS.md"),
     ]
 
     print(f"\nInitializing by-harness in: {target_dir}")
@@ -254,7 +256,7 @@ def main():
 
     # Ship session close helper into initialized project
     session_close_src = skill_dir / "scripts" / "session_close.py"
-    session_close_target = target_dir / "scripts" / "session_close.py"
+    session_close_target = harness_dir / "scripts" / "session_close.py"
     if session_close_src.exists():
         if generate_file(session_close_src, session_close_target, args):
             created += 1
@@ -263,11 +265,10 @@ def main():
     else:
         print(f"  WARN: helper not found: {session_close_src}")
 
-    (target_dir / "docs" / "specs").mkdir(parents=True, exist_ok=True)
-    (target_dir / "docs" / "plans").mkdir(parents=True, exist_ok=True)
-    (target_dir / "docs" / "qa").mkdir(parents=True, exist_ok=True)
-    (target_dir / "task-harness" / "progress").mkdir(parents=True, exist_ok=True)
-    (target_dir / "task-harness" / "handoff").mkdir(parents=True, exist_ok=True)
+    (harness_dir / "docs" / "specs").mkdir(parents=True, exist_ok=True)
+    (harness_dir / "docs" / "plans").mkdir(parents=True, exist_ok=True)
+    (harness_dir / "docs" / "qa").mkdir(parents=True, exist_ok=True)
+    (harness_dir / "task-harness" / "progress").mkdir(parents=True, exist_ok=True)
 
     merge_settings(target_dir, templates_harness / "settings.json")
     merge_codex_hooks(target_dir, templates_harness / "codex" / "hooks.json")
@@ -280,11 +281,11 @@ def main():
 
     print(f"\nDone. Created {created} files, skipped {skipped} files.")
     print("\nNext steps:")
-    print("  1. bash init.sh")
-    print("  2. 阅读 AGENTS.md 与 TASK-HARNESS.md")
+    print(f"  1. bash {HARNESS_DIR_NAME}/init.sh")
+    print(f"  2. 阅读 AGENTS.md 与 {HARNESS_DIR_NAME}/TASK-HARNESS.md")
     print("  3. 选择 passes=false 的 feature，执行 plan/build/qa 闭环")
-    print("  4. 仅在 qa>=80 后更新 passes=true，并写入 task-harness/progress/YYYY-MM.md")
-    print("  5. 会话结束执行：python3 scripts/session_close.py --target-dir . --feature-id <feat-id>")
+    print(f"  4. 单元测试通过即可更新 passes=true（QA 非阻塞），并写入 {HARNESS_DIR_NAME}/task-harness/progress/YYYY-MM.md")
+    print(f"  5. 会话结束执行：python3 {HARNESS_DIR_NAME}/scripts/session_close.py --target-dir . --feature-id <feat-id>")
 
 
 if __name__ == "__main__":

@@ -19,7 +19,7 @@ color: cyan
 
 2. **调研（Research）**：阅读相关现有代码，理解模式、约定和集成点。使用 Glob / Grep 查找关联文件，只读取必要上下文（context budget）。
 
-3. **规格（Spec）**：在 `docs/specs/<feature-name>.md` 生成结构化规格，至少包含：
+3. **规格（Spec）**：在 `.harness/docs/specs/<feature-name>.md` 生成结构化规格，至少包含：
 
    - **问题陈述（Problem Statement）**：该功能解决什么问题？
    - **用户故事（User Stories）**：`As a [user], I want to [action], so that [benefit]`
@@ -61,4 +61,4 @@ color: cyan
 
 ## 输出
 
-将规格写入 `docs/specs/<feature-name>.md`，并通过 `TaskCreate` 生成冲刺任务。向用户汇报创建结果，并在进入 build 前征求批准。
+将规格写入 `.harness/docs/specs/<feature-name>.md`，并通过 `TaskCreate` 生成冲刺任务。向用户汇报创建结果，并在进入 build 前征求批准。
