@@ -25,6 +25,7 @@ santong-skills/
 - 每个任务含闭环工件字段：`spec_path` / `contract_path` / `qa_report_path`
 - 工件语义：`spec_path=技术方案`，`contract_path=测试计划/验收标准`，`qa_report_path=测试结果`
 - 当前门禁策略：单元测试通过即可 `passes=true`，QA 报告默认非阻塞
+- 代码注释准则：所有新增/修改函数、方法必须补齐中文注释（用途、参数、返回值、副作用）
 
 一体化初始化命令：
 
@@ -84,6 +85,7 @@ python3 .harness/scripts/session_close.py \
 - **4 个智能体**: Planner / Generator / Evaluator / Doc Gardener
 - **4 个命令**: `/plan` / `/build` / `/qa` / `/sprint`
 - **10 条黄金原则**: 无规格不编码、可测试验收标准、契约驱动等
+- **中文注释规范**: 所有新增/修改函数、方法必须具备中文注释
 
 #### Claude 与 Codex 使用方式对照
 
