@@ -24,7 +24,7 @@
 针对选中的单个 feature，必须按以下严格顺序执行（不得跳步）：
 1. **读取任务（read task）**：从 active bucket 文件（兼容入口 `.harness/feature_list.json`）读取该 feature 的 `description/steps/spec_path/contract_path/qa_report_path`
 2. **plan**：生成/更新 `spec_path` 对应规格文件（禁止直接写实现）
-3. **build**：基于 spec + contract 实现并自检
+3. **build**：基于 spec + contract 实现并自检；所有新增/修改函数、方法必须补齐中文注释
 4. **qa（非阻塞）**：生成 `qa_report_path`，按 contract 逐条评分（用于质量跟踪，不阻塞流程）
 5. **fix**：若单元测试未通过，进入修复循环（最多 3 轮）
 6. **mark_pass**：单元测试通过即可将该 feature `passes=false -> true`

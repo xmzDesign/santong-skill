@@ -17,7 +17,7 @@
 针对选中的单个 feature，执行：
 1. `plan <feature description>`：生成 spec（禁止直接写实现）
 2. Contract：在 `docs/contracts/` 明确验收标准与验证方式
-3. `build <spec>`：按 contract 范围实现并自检
+3. `build <spec>`：按 contract 范围实现并自检；所有新增/修改函数、方法必须补齐中文注释
 4. `qa <contract>`：逐条评估并评分（质量跟踪，默认非阻塞）
 5. 若单元测试不通过：进入修复循环（最多 3 轮）
 6. 若单元测试通过：允许将该 feature 的 `passes` 设为 `true`

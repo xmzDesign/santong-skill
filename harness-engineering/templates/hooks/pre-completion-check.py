@@ -23,11 +23,12 @@ CHECKLIST = [
     "3. All acceptance criteria from the contract are met?",
     "4. No debug artifacts left (console.log, TODO, temporary code)?",
     "5. Documentation updated if behavior changed?",
+    "6. Do all newly added/modified functions and methods include clear Chinese comments?",
 ]
 
 TASK_HARNESS_CHECKLIST = [
-    "6. If this sprint maps to feature_list.json, qa score is >= 80/100 before passes=true?",
-    "7. If feature status changed, feature_list.json and progress.txt are both updated?",
+    "7. If this sprint maps to feature_list.json, qa score is >= 80/100 before passes=true?",
+    "8. If feature status changed, feature_list.json and progress.txt are both updated?",
 ]
 
 

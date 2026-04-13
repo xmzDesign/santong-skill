@@ -30,6 +30,7 @@ argument-hint: 可选 - 指定 docs/specs/ 中要实现的 spec 文件
 
 1. **Build**：调用 `generator` 实现本轮冲刺。
 2. **Self-verify**：`generator` 先自检。
+   - 检查所有新增/修改函数、方法是否补齐中文注释（用途、参数、返回值、副作用）。
 3. **Evaluate**：调用 `evaluator` 按契约测试。
 4. **Grade**：检查评分是否 `>= 80/100`。
    - 若 PASS：冲刺完成。

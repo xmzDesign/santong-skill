@@ -128,6 +128,7 @@ python3 {{SKILL_PATH}}/scripts/rebalance_tasks.py --target-dir "<项目目录>"
 - `AGENTS.md` 是主契约，定义 Plan/Build/Verify/Fix。
 - `.harness/TASK-HARNESS.md` 是任务层契约，不得覆盖主契约。
 - 单元测试通过即可 `passes=false -> true`；QA 默认非阻塞。
+- 所有新增/修改函数、方法必须补齐中文注释（用途、参数、返回值、副作用）。
 - 常规执行只改 `passes`，不改任务结构字段。
 
 ## 典型提示词
