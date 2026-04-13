@@ -1,6 +1,6 @@
 ---
 name: by-harness
-description: 独立的一体化 Harness skill（不依赖其他 skill 文件）。可初始化主闭环脚手架，并持续拆解与执行任务，默认采用分片任务存储（index + buckets）并保留 feature_list 兼容镜像。
+description: Harness skill。可初始化主闭环脚手架，并持续拆解与执行任务，默认采用分片任务存储（index + buckets）并保留 feature_list 兼容镜像。
 argument-hint: "[项目名称] [项目描述]"
 disable-model-invocation: false
 user-invocable: true
@@ -8,7 +8,7 @@ user-invocable: true
 
 # by-harness
 
-`by-harness` 是一个**独立 skill**，内部自带模板和脚本，不依赖其他 skill 目录。
+`by-harness` 是一个**独立 skill**，内部自带模板和脚本。
 
 目标是让你在 Codex 里稳定执行这个闭环：
 `拆分任务 -> read task -> plan -> build -> qa -> fix -> mark_pass -> session_close`
