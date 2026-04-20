@@ -29,7 +29,7 @@ CHECKLIST = [
 ]
 
 TASK_HARNESS_CHECKLIST = [
-    "7. If this sprint maps to feature_list.json, unit tests passed before passes=true?",
+    "7. If this sprint maps to active bucket task file, unit tests passed before passes=true?",
     "8. QA report is recorded (non-blocking), and progress logs are updated?",
 ]
 
@@ -58,7 +58,8 @@ def main():
     checklist = list(CHECKLIST)
     cwd = Path.cwd()
     workspace = cwd / HARNESS_DIR_NAME if (cwd / HARNESS_DIR_NAME).exists() else cwd
-    if (workspace / 'feature_list.json').exists():
+    has_task_harness = (workspace / 'task-harness' / 'index.json').exists() or (workspace / 'feature_list.json').exists()
+    if has_task_harness:
         checklist.extend(TASK_HARNESS_CHECKLIST)
 
     # Inject pre-completion checklist

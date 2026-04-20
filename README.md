@@ -16,12 +16,12 @@ santong-skills/
 ### 核心能力
 
 - 根目录极简：默认只放 `AGENTS.md`（以及隐藏运行目录 `.codex/.claude`）
-- 工作文件集中在 `.harness/`：`CLAUDE.md`、`docs/`、`TASK-HARNESS.md`、`feature_list.json`、`task-harness/`、`progress.txt`、`init.sh`、`task.json`
+- 工作文件集中在 `.harness/`：`CLAUDE.md`、`docs/`、`TASK-HARNESS.md`、`task-harness/`、`progress.txt`、`init.sh`、`task.json`（`feature_list.json` 不再默认创建，仅 legacy 项目兼容）
 - 自动任务分支路由：`.harness/scripts/ensure_task_branch.py`（按任务状态/提示词选择分支）
 - 会话收口：`.harness/scripts/session_close.py`（会话日志 + 快照 + 会话状态）
 - 连续切任务：`.harness/scripts/task_switch.py`（自动封箱 + 切下个任务分支）
 - 多分支汇总：任务全部完成后可自动合并到汇总分支（默认 `feat/{repo}/integration`）
-- 持续拆任务：新任务增量写入 active bucket（同步 `.harness/feature_list.json` 兼容镜像）
+- 持续拆任务：新任务增量写入 active bucket（仅当 legacy 项目已存在 `.harness/feature_list.json` 时才同步兼容镜像）
 - 每个任务闭环工件字段：`spec_path` / `contract_path` / `qa_report_path`
 - 门禁策略：单元测试通过即可 `passes=true`，QA 默认非阻塞
 - 注释准则：所有新增/修改函数、方法必须补齐中文注释（用途、参数、返回值、副作用）
@@ -115,4 +115,3 @@ python3 .harness/scripts/task_switch.py continue --target-dir "." --finalize-mer
 - 可以再次执行 `scaffold.py`，默认不带 `--force` 时已有文件会 `SKIP`，不会直接覆盖任务数据
 - 不要在已有项目直接全量 `--force`
 - 升级重点是同步 `.harness/scripts/*.py`（尤其 `task_switch.py`）和 `.harness/task.json` 的 `session_control` 配置
-

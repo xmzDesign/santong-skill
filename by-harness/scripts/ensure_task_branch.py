@@ -148,10 +148,17 @@ def resolve_bucket_feature_path(workspace_dir: Path, rel_path: str) -> Path:
     return candidates[0]
 
 
+def default_feature_file(workspace_dir: Path) -> Path:
+    legacy = workspace_dir / "feature_list.json"
+    if legacy.exists():
+        return legacy
+    return workspace_dir / "task-harness" / "features" / "backlog-core.json"
+
+
 def resolve_feature_file(workspace_dir: Path) -> tuple[Path, Path, dict[str, Any] | None]:
     idx = workspace_dir / "task-harness" / "index.json"
     if not idx.exists():
-        feature_file = workspace_dir / "feature_list.json"
+        feature_file = default_feature_file(workspace_dir)
         return feature_file, feature_file, None
 
     data = json.loads(idx.read_text(encoding="utf-8"))
@@ -165,7 +172,7 @@ def resolve_feature_file(workspace_dir: Path) -> tuple[Path, Path, dict[str, Any
     if not rel_path and buckets:
         rel_path = str((buckets[0] or {}).get("path", "") or "")
     if not rel_path:
-        rel_path = "feature_list.json"
+        rel_path = "task-harness/features/backlog-core.json"
 
     feature_file = resolve_bucket_feature_path(workspace_dir, rel_path)
     legacy_mirror = workspace_dir / "feature_list.json"
@@ -297,12 +304,17 @@ def non_harness_dirty_paths(repo: Path) -> list[str]:
 
 def collect_all_features(workspace_dir: Path, index_data: dict[str, Any] | None) -> list[dict[str, Any]]:
     if not index_data:
-        feature_file = workspace_dir / "feature_list.json"
-        if not feature_file.exists():
-            return []
-        data = json.loads(feature_file.read_text(encoding="utf-8"))
-        feats = data.get("features", [])
-        return feats if isinstance(feats, list) else []
+        for feature_file in (
+            workspace_dir / "feature_list.json",
+            workspace_dir / "task-harness" / "features" / "backlog-core.json",
+        ):
+            if not feature_file.exists():
+                continue
+            data = json.loads(feature_file.read_text(encoding="utf-8"))
+            feats = data.get("features", [])
+            if isinstance(feats, list):
+                return feats
+        return []
 
     all_features: list[dict[str, Any]] = []
     for bucket in index_data.get("buckets", []) or []:

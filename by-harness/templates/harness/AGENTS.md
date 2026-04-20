@@ -103,9 +103,9 @@
 
 ## 与 Task Harness 的集成（可选但推荐）
 
-若项目存在 `.harness/feature_list.json` 与 `.harness/TASK-HARNESS.md`，按以下方式形成任务闭环：
+若项目存在 `.harness/task-harness/index.json` 与 `.harness/TASK-HARNESS.md`，按以下方式形成任务闭环：
 
-1. 从 `.harness/feature_list.json` 选择优先级最高且 `passes=false` 的 feature
+1. 从 active bucket 任务文件（默认 `.harness/task-harness/features/backlog-core.json`）选择优先级最高且 `passes=false` 的 feature
 2. 严格执行 `plan -> contract -> build -> qa -> fix` 主流程
 3. 单元测试通过即可将该 feature 的 `passes` 置为 `true`
 4. 在 `.harness/progress.txt` 记录本轮实现、验证结果与下一步
@@ -140,7 +140,7 @@
 - `.harness/docs/contracts/`：冲刺契约
 - `.harness/docs/plans/`：计划产物
 - `.harness/docs/java-dev-conventions.md`：Java 后端编码规范（Java 项目必读）
-- `.harness/feature_list.json`：任务状态（可选）
+- `.harness/feature_list.json`：legacy 兼容镜像（仅在历史项目存在时沿用）
 - `.harness/TASK-HARNESS.md`：任务层执行契约（可选）
 
 ## 提示词示例（Codex）

@@ -33,7 +33,7 @@
       }
     },
     "files": {
-      "feature_list": ".harness/feature_list.json",
+      "legacy_feature_list": ".harness/feature_list.json",
       "task_index": ".harness/task-harness/index.json",
       "feature_buckets": ".harness/task-harness/features/",
       "progress_shards": ".harness/task-harness/progress/",

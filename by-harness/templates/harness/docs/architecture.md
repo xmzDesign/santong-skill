@@ -82,7 +82,8 @@ Codex 运行时：
 | 黄金原则 | `.harness/docs/golden-principles.md` | 不可妥协规则 |
 | 冲刺工作流 | `.harness/docs/sprint-workflow.md` | 流程文档 |
 | 契约模板 | `.harness/docs/contracts/TEMPLATE.md` | 冲刺契约结构 |
-| 任务清单（可选） | `.harness/feature_list.json` | task-harness 任务状态源（passes） |
+| 任务清单（默认） | `.harness/task-harness/features/backlog-core.json` | task-harness active bucket 任务状态源（passes） |
+| 任务清单（legacy 兼容） | `.harness/feature_list.json` | 历史项目兼容镜像（若存在则同步） |
 | 任务层契约（可选） | `.harness/TASK-HARNESS.md` | task-harness 任务追踪规则 |
 
 ## MCP 工具映射

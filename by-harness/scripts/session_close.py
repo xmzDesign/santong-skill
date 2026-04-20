@@ -153,10 +153,17 @@ def resolve_bucket_feature_path(workspace_dir: Path, rel_path: str) -> Path:
 
 def load_all_features(workspace_dir: Path, store):
     if store["mode"] == "legacy":
-        feature_path = workspace_dir / "feature_list.json"
-        if not feature_path.exists():
-            return []
-        return load_json(feature_path).get("features", [])
+        for feature_path in (
+            workspace_dir / "feature_list.json",
+            workspace_dir / "task-harness" / "features" / "backlog-core.json",
+        ):
+            if not feature_path.exists():
+                continue
+            data = load_json(feature_path)
+            features = data.get("features", [])
+            if isinstance(features, list):
+                return features
+        return []
 
     all_features = []
     index = store["index"] or {}

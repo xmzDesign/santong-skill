@@ -15,14 +15,14 @@
 2. 阅读根目录 `AGENTS.md`（主工作流约束）
 3. 阅读 `.harness/TASK-HARNESS.md`（任务追踪约束）
 4. 阅读 `.harness/task-harness/index.json`（定位 active bucket）
-5. 阅读对应任务文件（如 `.harness/task-harness/features/backlog-core.json`，兼容入口为 `.harness/feature_list.json`）
+5. 阅读对应任务文件（如 `.harness/task-harness/features/backlog-core.json`；若存在 `.harness/feature_list.json`，仅作兼容查看）
 6. 阅读 `.harness/task-harness/progress/*.md`（`.harness/progress.txt` 为最新快照）
 7. 选择优先级最高且 `passes=false` 的 1 个功能
 
 ## 闭环执行契约（严格遵循 Harness Engineering）
 
 针对选中的单个 feature，必须按以下严格顺序执行（不得跳步）：
-1. **读取任务（read task）**：从 active bucket 文件（兼容入口 `.harness/feature_list.json`）读取该 feature 的 `description/steps/spec_path/contract_path/qa_report_path`
+1. **读取任务（read task）**：从 active bucket 文件读取该 feature 的 `description/steps/spec_path/contract_path/qa_report_path`
 2. **plan**：生成/更新 `spec_path` 对应规格文件（禁止直接写实现）
 3. **build**：基于 spec + contract 实现并自检；所有新增/修改函数、方法必须补齐中文注释
 4. **qa（非阻塞）**：生成 `qa_report_path`，按 contract 逐条评分（用于质量跟踪，不阻塞流程）
@@ -33,7 +33,7 @@
 
 - active bucket 对应任务文件（例如 `.harness/task-harness/features/backlog-core.json`）中仅允许修改：
   - `passes: false -> true`（单元测试通过后）
-- `.harness/feature_list.json` 为兼容镜像，常规不直接手改（由脚本同步）
+- 若存在 `.harness/feature_list.json`，其为兼容镜像，常规不直接手改（由脚本同步）
 - 禁止修改：
   - `id/category/priority/description/file/spec_path/contract_path/qa_report_path/steps/verification`
 - 如需改任务定义，必须先和用户确认，再由用户批准后调整

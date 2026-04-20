@@ -237,14 +237,21 @@ def invoke_ensure_branch(repo: Path, workspace: Path, prompt: str) -> tuple[int,
     return result.returncode, detail
 
 
+def default_feature_file(workspace: Path) -> Path:
+    legacy = workspace / "feature_list.json"
+    if legacy.exists():
+        return legacy
+    return workspace / "task-harness" / "features" / "backlog-core.json"
+
+
 def resolve_feature_file(workspace: Path) -> Path:
     idx = workspace / "task-harness" / "index.json"
     if not idx.exists():
-        return workspace / "feature_list.json"
+        return default_feature_file(workspace)
     try:
         data = json.loads(idx.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError, ValueError):
-        return workspace / "feature_list.json"
+        return default_feature_file(workspace)
     active = str(data.get("active_bucket", "") or "")
     buckets = data.get("buckets", []) or []
     rel = ""
@@ -255,7 +262,7 @@ def resolve_feature_file(workspace: Path) -> Path:
     if not rel and buckets:
         rel = str((buckets[0] or {}).get("path", "") or "")
     if not rel:
-        rel = "feature_list.json"
+        rel = "task-harness/features/backlog-core.json"
     path = workspace / rel
     if path.exists():
         return path
@@ -263,7 +270,7 @@ def resolve_feature_file(workspace: Path) -> Path:
         alt = workspace / rel[len(HARNESS_DIR_NAME) + 1 :]
         if alt.exists():
             return alt
-    return workspace / "feature_list.json"
+    return default_feature_file(workspace)
 
 
 def pending_count(workspace: Path) -> int:

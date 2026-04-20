@@ -20,7 +20,7 @@
 完成工作:
   [x] 探索项目结构，了解技术架构
   [x] 制定开发计划
-  [x] 创建 .harness/feature_list.json（N 个功能点）
+  [x] 创建 .harness/task-harness/features/backlog-core.json（N 个功能点）
   [x] 创建 .harness/progress.txt（本文件）
   [x] 创建 .harness/init.sh（环境初始化脚本）
   [x] 创建 .harness/task.json（项目总览）
@@ -33,7 +33,7 @@
   - {{重要发现 3}}
 
 下一步:
-  - 按优先级顺序完成 .harness/feature_list.json 中的功能
+  - 按优先级顺序完成 active bucket（默认 .harness/task-harness/features/backlog-core.json）中的功能
 
 ----------------------------------------
 （后续会话在此追加，格式如下）

@@ -49,8 +49,12 @@ fi
 
 echo ""
 echo "[4/5] 功能完成进度:"
-FEATURE_FILE="feature_list.json"
-ACTIVE_BUCKET="legacy"
+FEATURE_FILE="task-harness/features/backlog-core.json"
+ACTIVE_BUCKET="backlog-core"
+if [ ! -f "task-harness/index.json" ] && [ -f "feature_list.json" ]; then
+  FEATURE_FILE="feature_list.json"
+  ACTIVE_BUCKET="legacy"
+fi
 if [ -f "task-harness/index.json" ]; then
   MAP=$(python3 - <<'PY'
 import json
@@ -68,8 +72,8 @@ for b in buckets:
 if not path and buckets:
     active = buckets[0].get("id", "")
     path = buckets[0].get("path", "")
-print(path or "feature_list.json")
-print(active or "legacy")
+print(path or "task-harness/features/backlog-core.json")
+print(active or "backlog-core")
 PY
 )
   FEATURE_FILE=$(printf "%s\n" "$MAP" | sed -n '1p')

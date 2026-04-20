@@ -127,7 +127,7 @@ Evaluator 使用四层测试策略：
    - 迭代次数
    - 剩余问题或技术债
 
-若项目启用了 task-harness（存在 `.harness/feature_list.json`）：
+若项目启用了 task-harness（存在 `.harness/task-harness/index.json`）：
 - 单元测试通过即可更新对应 feature 的 `passes=true`
 - 同步在 `.harness/task-harness/progress/YYYY-MM.md` 追加该 feature 的闭环记录
 

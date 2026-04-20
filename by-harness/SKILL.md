@@ -1,6 +1,6 @@
 ---
 name: by-harness
-description: Harness skill。可初始化主闭环脚手架，并持续拆解与执行任务，默认采用分片任务存储（index + buckets）并保留 feature_list 兼容镜像。
+description: Harness skill。可初始化主闭环脚手架，并持续拆解与执行任务，默认采用分片任务存储（index + buckets）；feature_list 仅在 legacy 项目存在时兼容沿用。
 argument-hint: "[项目名称] [项目描述]"
 disable-model-invocation: false
 user-invocable: true
@@ -61,7 +61,7 @@ user-invocable: true
 - 索引文件：`.harness/task-harness/index.json`
 - 任务分片：`.harness/task-harness/features/*.json`
 - 进度分片：`.harness/task-harness/progress/YYYY-MM.md`
-- 兼容镜像：`.harness/feature_list.json`（同步 active bucket 视图）
+- 兼容镜像：`.harness/feature_list.json`（仅 legacy 项目存在时沿用，并同步 active bucket 视图）
 - 最新快照：`.harness/progress.txt`（由会话收口脚本刷新）
 
 ## 初始化（首次）
@@ -78,7 +78,7 @@ python3 {{SKILL_PATH}}/scripts/scaffold.py \
 
 初始化后生成：
 - 根目录最小集：`AGENTS.md` + `.codex/` + `.claude/`
-- `.harness/`：`CLAUDE.md`、`docs/`、`TASK-HARNESS.md`、`task-harness/`、`feature_list.json`、`progress.txt`、`init.sh`、`task.json`
+- `.harness/`：`CLAUDE.md`、`docs/`、`TASK-HARNESS.md`、`task-harness/`、`progress.txt`、`init.sh`、`task.json`
 - 收口工具：`.harness/scripts/session_close.py`
 
 ## 持续拆任务（可重复执行）
@@ -94,7 +94,7 @@ python3 {{SKILL_PATH}}/scripts/decompose_tasks.py \
 默认行为：
 - 自动补齐闭环工件字段：`spec_path` / `contract_path` / `qa_report_path`
 - 自动生成闭环步骤：`read task -> plan -> build -> qa(non-blocking) -> fix -> mark_pass`
-- 在分片模式下自动同步 `.harness/feature_list.json` 兼容镜像
+- 在分片模式下，若存在 `.harness/feature_list.json` 则自动同步兼容镜像
 
 ## 会话收口（每次会话末尾）
 
@@ -121,7 +121,7 @@ python3 {{SKILL_PATH}}/scripts/rebalance_tasks.py --target-dir "<项目目录>"
 用途：
 - 把大文件按 category 自动分桶到 `.harness/task-harness/features/*.json`
 - 生成/更新 `.harness/task-harness/index.json`
-- 保留 `.harness/feature_list.json` 兼容视图
+- 若存在 `.harness/feature_list.json`，则保持其兼容视图同步
 
 ## 运行约束
 

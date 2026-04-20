@@ -158,18 +158,61 @@ def get_project_state():
     return state
 
 
+def resolve_task_feature_file(workspace: Path):
+    legacy = workspace / "feature_list.json"
+    index_path = workspace / "task-harness" / "index.json"
+    default_path = workspace / "task-harness" / "features" / "backlog-core.json"
+
+    if not index_path.exists():
+        if legacy.exists():
+            return legacy, "legacy_feature_list"
+        return default_path, "active_bucket"
+
+    try:
+        index = json.loads(index_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError, ValueError):
+        if legacy.exists():
+            return legacy, "legacy_feature_list"
+        return default_path, "active_bucket"
+
+    buckets = index.get("buckets", [])
+    active = str(index.get("active_bucket", "") or "")
+    rel_path = ""
+    if isinstance(buckets, list):
+        for bucket in buckets:
+            if str(bucket.get("id", "") or "") == active:
+                rel_path = str(bucket.get("path", "") or "")
+                break
+        if not rel_path and buckets:
+            rel_path = str((buckets[0] or {}).get("path", "") or "")
+    if not rel_path:
+        rel_path = "task-harness/features/backlog-core.json"
+
+    candidate = workspace / rel_path
+    if candidate.exists():
+        return candidate, "active_bucket"
+    if rel_path.startswith(f"{HARNESS_DIR_NAME}/"):
+        alt = workspace / rel_path[len(HARNESS_DIR_NAME) + 1 :]
+        if alt.exists():
+            return alt, "active_bucket"
+
+    if legacy.exists():
+        return legacy, "legacy_feature_list"
+    return default_path, "active_bucket"
+
+
 def get_task_harness_state():
     state = {}
     cwd = Path.cwd()
     workspace = cwd / HARNESS_DIR_NAME if (cwd / HARNESS_DIR_NAME).exists() else cwd
     workspace_label = f"{HARNESS_DIR_NAME}/" if workspace != cwd else ""
-    feature_list_path = workspace / "feature_list.json"
+    feature_path, source = resolve_task_feature_file(workspace)
 
-    if not feature_list_path.exists():
+    if not feature_path.exists():
         return state
 
     try:
-        data = json.loads(feature_list_path.read_text(encoding="utf-8"))
+        data = json.loads(feature_path.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError, ValueError):
         return state
 
@@ -204,6 +247,7 @@ def get_task_harness_state():
     state["has_task_contract"] = (workspace / "TASK-HARNESS.md").exists()
     state["has_progress_log"] = (workspace / "progress.txt").exists()
     state["workspace_label"] = workspace_label
+    state["task_source"] = source
     return state
 
 
@@ -312,12 +356,12 @@ def main():
             )
         if not task_state.get("has_task_contract"):
             parts.append(
-                "Warning: feature_list.json exists but "
+                "Warning: task harness state exists but "
                 f"{task_state.get('workspace_label', '')}TASK-HARNESS.md is missing."
             )
         if not task_state.get("has_progress_log"):
             parts.append(
-                "Warning: feature_list.json exists but "
+                "Warning: task harness state exists but "
                 f"{task_state.get('workspace_label', '')}progress.txt is missing."
             )
     parts.append(

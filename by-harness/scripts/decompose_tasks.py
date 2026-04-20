@@ -2,7 +2,7 @@
 """
 by-harness task decomposition helper.
 
-Append new tasks into feature list storage with harness-closed-loop defaults.
+Append new tasks into task storage with harness-closed-loop defaults.
 Supports:
 - legacy mode: feature_list.json
 - sharded mode: task-harness/index.json + task-harness/features/*.json
@@ -20,7 +20,7 @@ HARNESS_DIR_NAME = ".harness"
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Append new decomposed tasks into feature list storage."
+        description="Append new decomposed tasks into harness task storage."
     )
     parser.add_argument("--target-dir", required=True, help="目标项目目录")
     parser.add_argument(
@@ -126,7 +126,7 @@ def build_feature(item_desc: str, feature_id: str, category: str, priority: int,
         "contract_path": paths["contract_path"],
         "qa_report_path": paths["qa_report_path"],
         "steps": [
-            f"读取任务定义：feature_list 中 {feature_id} 的目标与约束",
+            f"读取任务定义：active bucket 中 {feature_id} 的目标与约束",
             f"执行 plan：生成 {paths['spec_path']}",
             f"执行 contract：生成 {paths['contract_path']} 并明确验收标准与验证方式",
             "执行 build：按 contract 范围实现并完成自检（构建/单元测试/验收标准）",
@@ -244,9 +244,12 @@ def aggregate_features(workspace_dir: Path, store):
     return all_features
 
 
-def sync_legacy_view(workspace_dir: Path, data):
+def sync_legacy_view(workspace_dir: Path, data) -> bool:
     legacy_path = workspace_dir / "feature_list.json"
+    if not legacy_path.exists():
+        return False
     dump_json(legacy_path, data)
+    return True
 
 
 def update_task_summary(workspace_dir: Path, all_features):
@@ -329,9 +332,10 @@ def main():
     data["features"] = features
     dump_json(feature_path, data)
 
-    # Keep feature_list.json as compatibility view in sharded mode.
+    # Keep feature_list.json as compatibility view only when legacy file exists.
+    legacy_synced = False
     if store["mode"] == "sharded":
-        sync_legacy_view(workspace_dir, data)
+        legacy_synced = sync_legacy_view(workspace_dir, data)
 
     all_features = aggregate_features(workspace_dir, store)
     update_task_summary(workspace_dir, all_features)
@@ -344,7 +348,7 @@ def main():
         print(f"Backfilled artifact fields on existing tasks: {repaired} fields updated")
     print(f"Target store: {store['mode']} / bucket={store['bucket_id']}")
     print(f"Feature file updated: {feature_path}")
-    if store["mode"] == "sharded":
+    if legacy_synced:
         print(f"Legacy mirror synced: {workspace_dir / 'feature_list.json'}")
     print("Reminder: pass gate = unit tests; QA report is non-blocking.")
 
