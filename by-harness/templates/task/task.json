@@ -9,12 +9,22 @@
 
   "harness": {
     "initializer_done": true,
+    "session_control": {
+      "mode": "soft_reset",
+      "supported_modes": ["soft_reset", "hard_new_session"],
+      "mode_guide": {
+        "soft_reset": "默认模式：同一聊天可继续，但每次 feature 收口后自动提升 context epoch，并要求忽略旧 feature 上下文。",
+        "hard_new_session": "严格模式：每个 feature 收口后必须新开会话，未新开会话前阻止切换到下一个任务分支。"
+      }
+    },
     "files": {
       "feature_list": ".harness/feature_list.json",
       "task_index": ".harness/task-harness/index.json",
       "feature_buckets": ".harness/task-harness/features/",
       "progress_shards": ".harness/task-harness/progress/",
       "progress_log": ".harness/progress.txt",
+      "session_context": ".harness/session-context.json",
+      "session_boundary": ".harness/session-boundary.json",
       "init_script": ".harness/init.sh",
       "main_contract": "AGENTS.md",
       "task_contract": ".harness/TASK-HARNESS.md"

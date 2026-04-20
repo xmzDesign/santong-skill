@@ -86,6 +86,9 @@
 - 先 spec 后代码。
 - 先 contract 后 build。
 - 一次只做一个 sprint。
+- 会话切换策略由 `.harness/task.json` 的 `harness.session_control.mode` 控制：
+  - `soft_reset`（默认）：feature 收口后自动切换 context epoch，继续会话时必须忽略旧 feature 上下文。
+  - `hard_new_session`：feature 收口后必须新开会话，未新开会话前不允许进入下一 feature。
 - 禁止隐式扩范围。
 - 问题必须显式暴露并附证据。
 - 优先可回滚、低风险的朴素方案。

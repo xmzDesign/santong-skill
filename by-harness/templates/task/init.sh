@@ -117,7 +117,95 @@ else
 fi
 
 echo ""
-echo "[5/6] 任务分支自动切换:"
+echo "[5/7] 会话模式与上下文重置:"
+SESSION_MODE=$(python3 - <<'PY'
+import json
+from pathlib import Path
+
+mode = "soft_reset"
+path = Path("task.json")
+if path.exists():
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        harness = data.get("harness", {}) if isinstance(data, dict) else {}
+        if isinstance(harness, dict):
+            sc = harness.get("session_control", {})
+            if isinstance(sc, dict) and sc.get("mode"):
+                mode = str(sc.get("mode"))
+            elif harness.get("session_mode"):
+                mode = str(harness.get("session_mode"))
+    except Exception:
+        pass
+print(mode)
+PY
+)
+case "$SESSION_MODE" in
+  hard|new_session|hard_new_session)
+    SESSION_MODE="hard_new_session"
+    ;;
+  *)
+    SESSION_MODE="soft_reset"
+    ;;
+esac
+echo "  session_mode: $SESSION_MODE"
+
+if [ "$SESSION_MODE" = "hard_new_session" ]; then
+  BOUNDARY_FILE="$WORKSPACE_DIR/session-boundary.json"
+  if [ -f "$BOUNDARY_FILE" ]; then
+    BOUNDARY_FILE="$BOUNDARY_FILE" python3 - <<'PY'
+import json
+import os
+from pathlib import Path
+
+path = Path(os.environ["BOUNDARY_FILE"])
+try:
+    data = json.loads(path.read_text(encoding="utf-8"))
+except Exception:
+    print("  检测到 session-boundary.json，但解析失败")
+else:
+    closed_id = data.get("closed_feature_id", "n/a")
+    next_id = data.get("next_feature_id", "n/a")
+    print(f"  上一 feature 已收口: {closed_id}")
+    print(f"  下一任务建议: {next_id}")
+    print("  当前 init 视为新会话启动，将消费边界标记")
+PY
+    rm -f "$BOUNDARY_FILE"
+  else
+    echo "  无会话边界标记"
+  fi
+else
+  CONTEXT_FILE="$WORKSPACE_DIR/session-context.json"
+  if [ -f "$CONTEXT_FILE" ]; then
+    CONTEXT_FILE="$CONTEXT_FILE" python3 - <<'PY'
+import json
+import os
+from pathlib import Path
+
+path = Path(os.environ["CONTEXT_FILE"])
+try:
+    data = json.loads(path.read_text(encoding="utf-8"))
+except Exception:
+    print("  检测到 session-context.json，但解析失败")
+else:
+    epoch = data.get("epoch", "n/a")
+    reset_required = bool(data.get("reset_required"))
+    closed_id = data.get("closed_feature_id", "n/a")
+    print(f"  当前 context epoch: {epoch}")
+    print(f"  最近收口 feature: {closed_id}")
+    if reset_required:
+        data["reset_required"] = False
+        path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        print("  已消费 soft_reset 标记：后续按新任务上下文执行")
+    else:
+        print("  soft_reset 标记已消费，无需额外处理")
+PY
+  else
+    echo "  未发现 session-context.json（首次会话或旧版本项目）"
+  fi
+fi
+
+echo ""
+echo "[6/7] 任务分支自动切换:"
 BRANCH_SCRIPT=""
 if [ -f "$WORKSPACE_DIR/scripts/ensure_task_branch.py" ]; then
   BRANCH_SCRIPT="$WORKSPACE_DIR/scripts/ensure_task_branch.py"
@@ -131,7 +219,7 @@ else
 fi
 
 echo ""
-echo "[6/6] 依赖检查:"
+echo "[7/7] 依赖检查:"
 if [ -d "$REPO_ROOT/node_modules" ]; then
   echo "  node_modules 已存在"
 else
@@ -161,5 +249,6 @@ echo "  4. 确认是否已自动切换到当前任务分支（必要时重跑 in
 echo "  5. 若为 Java 项目，先阅读 ${WORKSPACE_PREFIX}docs/java-dev-conventions.md"
 echo "  6. 按 plan/build/qa 流程执行，单元测试通过后即可改 passes（QA 非阻塞）"
 echo "  7. 运行 python3 ${WORKSPACE_PREFIX}scripts/session_close.py --target-dir . --feature-id <feat-id>"
-echo "  8. git commit / git push"
+echo "  8. 根据 session_mode 自动执行会话切换（hard: 新会话；soft: 上下文软重置）"
+echo "  9. git commit / git push"
 echo ""

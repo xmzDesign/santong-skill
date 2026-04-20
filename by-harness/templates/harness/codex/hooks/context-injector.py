@@ -9,6 +9,8 @@ import sys
 from pathlib import Path
 
 HARNESS_DIR_NAME = ".harness"
+SESSION_MODE_SOFT = "soft_reset"
+SESSION_MODE_HARD = "hard_new_session"
 
 
 def emit(payload):
@@ -205,12 +207,81 @@ def get_task_harness_state():
     return state
 
 
+def normalize_session_mode(raw: str) -> str:
+    value = str(raw or "").strip().lower()
+    if value in {"hard_new_session", "hard", "new_session"}:
+        return SESSION_MODE_HARD
+    if value in {"soft_reset", "soft", "reset"}:
+        return SESSION_MODE_SOFT
+    return SESSION_MODE_SOFT
+
+
+def get_session_mode(workspace: Path) -> str:
+    task_path = workspace / "task.json"
+    if not task_path.exists():
+        return SESSION_MODE_SOFT
+    try:
+        data = json.loads(task_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError, ValueError):
+        return SESSION_MODE_SOFT
+    harness = data.get("harness", {})
+    if not isinstance(harness, dict):
+        return SESSION_MODE_SOFT
+    session_control = harness.get("session_control", {})
+    if isinstance(session_control, dict):
+        mode = session_control.get("mode", "")
+        if mode:
+            return normalize_session_mode(mode)
+    return normalize_session_mode(harness.get("session_mode", ""))
+
+
+def get_session_context_notice() -> str:
+    cwd = Path.cwd()
+    workspace = cwd / HARNESS_DIR_NAME if (cwd / HARNESS_DIR_NAME).exists() else cwd
+    mode = get_session_mode(workspace)
+    context_path = workspace / "session-context.json"
+    boundary_path = workspace / "session-boundary.json"
+
+    if mode == SESSION_MODE_HARD and boundary_path.exists():
+        try:
+            data = json.loads(boundary_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError, ValueError):
+            data = {}
+        closed_id = str(data.get("closed_feature_id", "n/a"))
+        next_id = str(data.get("next_feature_id", "") or "n/a")
+        return (
+            "Session mode: hard_new_session. "
+            f"Boundary active (closed={closed_id}, next={next_id}). "
+            "Do not start next feature in this chat."
+        )
+
+    if mode == SESSION_MODE_SOFT and context_path.exists():
+        try:
+            data = json.loads(context_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError, ValueError):
+            return "Session mode: soft_reset. Session context file exists but parse failed."
+        epoch = data.get("epoch", "n/a")
+        reset_required = bool(data.get("reset_required"))
+        closed_id = str(data.get("closed_feature_id", "n/a"))
+        next_id = str(data.get("next_feature_id", "") or "n/a")
+        if reset_required:
+            return (
+                "Session mode: soft_reset. "
+                f"Context epoch switched to {epoch} after feature {closed_id}. "
+                f"Next feature hint: {next_id}. Ignore stale context from older feature turns."
+            )
+        return f"Session mode: soft_reset. Current context epoch={epoch}."
+
+    return f"Session mode: {mode}."
+
+
 def main():
     hook_input = read_hook_input()
     prompt_text = extract_prompt_text(hook_input)
 
     parts = []
     parts.append(run_auto_branch(prompt_text))
+    parts.append(get_session_context_notice())
 
     git_info = get_git_info()
     if git_info.get("branch"):

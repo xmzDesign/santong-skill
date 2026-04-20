@@ -45,6 +45,9 @@
 3. 运行会话收口脚本：`python3 .harness/scripts/session_close.py --target-dir . --feature-id <feat-id>`
 4. 提交 git commit（建议一个 feature 一个 commit）
 5. 输出下一步建议（下一个 feature 或阻塞处理方案）
+6. 根据 `.harness/task.json` 的 `harness.session_control.mode` 自动执行会话切换：
+   - `soft_reset`：继续当前会话时，必须按新 epoch 上下文处理下一 feature
+   - `hard_new_session`：必须新开会话后再开始下一 feature
 
 ## 遇到阻塞时
 

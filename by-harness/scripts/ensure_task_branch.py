@@ -19,6 +19,8 @@ from pathlib import Path
 from typing import Any
 
 HARNESS_DIR_NAME = ".harness"
+SESSION_MODE_SOFT = "soft_reset"
+SESSION_MODE_HARD = "hard_new_session"
 STOP_WORDS = {
     "处理",
     "继续",
@@ -163,6 +165,61 @@ def resolve_feature_file(workspace_dir: Path) -> tuple[Path, Path, dict[str, Any
     feature_file = resolve_bucket_feature_path(workspace_dir, rel_path)
     legacy_mirror = workspace_dir / "feature_list.json"
     return feature_file, legacy_mirror, data
+
+
+def normalize_session_mode(raw: str) -> str:
+    value = str(raw or "").strip().lower()
+    if value in {"hard_new_session", "hard", "new_session"}:
+        return SESSION_MODE_HARD
+    if value in {"soft_reset", "soft", "reset"}:
+        return SESSION_MODE_SOFT
+    return SESSION_MODE_SOFT
+
+
+def load_session_mode(workspace_dir: Path) -> str:
+    task_path = workspace_dir / "task.json"
+    if not task_path.exists():
+        return SESSION_MODE_SOFT
+    try:
+        data = json.loads(task_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError, ValueError):
+        return SESSION_MODE_SOFT
+    harness = data.get("harness", {})
+    if not isinstance(harness, dict):
+        return SESSION_MODE_SOFT
+    session_control = harness.get("session_control", {})
+    if isinstance(session_control, dict):
+        mode = session_control.get("mode", "")
+        if mode:
+            return normalize_session_mode(mode)
+    return normalize_session_mode(harness.get("session_mode", ""))
+
+
+def load_session_boundary(workspace_dir: Path) -> dict[str, Any] | None:
+    boundary_path = workspace_dir / "session-boundary.json"
+    if not boundary_path.exists():
+        return None
+    try:
+        data = json.loads(boundary_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError, ValueError):
+        return {"invalid": True, "_path": str(boundary_path)}
+    if not isinstance(data, dict):
+        return {"invalid": True, "_path": str(boundary_path)}
+    data["_path"] = str(boundary_path)
+    return data
+
+
+def load_session_context(workspace_dir: Path) -> dict[str, Any] | None:
+    context_path = workspace_dir / "session-context.json"
+    if not context_path.exists():
+        return None
+    try:
+        data = json.loads(context_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError, ValueError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    return data
 
 
 def collect_all_features(workspace_dir: Path, index_data: dict[str, Any] | None) -> list[dict[str, Any]]:
@@ -567,6 +624,38 @@ def main() -> int:
         return 0
 
     workspace_dir = detect_workspace_dir(repo)
+    session_mode = load_session_mode(workspace_dir)
+    boundary = load_session_boundary(workspace_dir)
+    if boundary and session_mode == SESSION_MODE_HARD:
+        closed_id = str(boundary.get("closed_feature_id", "n/a"))
+        next_id = str(boundary.get("next_feature_id", "") or "n/a")
+        print(
+            "[branch] session-boundary active under hard_new_session mode: "
+            f"closed_feature={closed_id} next_feature={next_id}"
+        )
+        print(
+            "[branch] session rotation required. "
+            "Please open a NEW session and run .harness/init.sh before starting next feature."
+        )
+        return 0
+
+    if boundary and session_mode == SESSION_MODE_SOFT:
+        # Soft mode should not be blocked by stale hard boundary markers.
+        boundary_path = Path(str(boundary.get("_path", "")))
+        if boundary_path.exists():
+            try:
+                boundary_path.unlink()
+            except OSError:
+                pass
+
+    context_state = load_session_context(workspace_dir)
+    if session_mode == SESSION_MODE_SOFT and context_state and bool(context_state.get("reset_required")):
+        epoch = context_state.get("epoch", "?")
+        print(
+            "[branch] soft_reset context epoch active: "
+            f"epoch={epoch}. Previous feature context should be considered stale."
+        )
+
     feature_file, legacy_mirror, index_data = resolve_feature_file(workspace_dir)
     if not feature_file.exists():
         print(f"[branch] skip: feature file missing: {feature_file}")

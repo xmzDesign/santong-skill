@@ -16,6 +16,8 @@ from datetime import datetime
 from pathlib import Path
 
 HARNESS_DIR_NAME = ".harness"
+SESSION_MODE_SOFT = "soft_reset"
+SESSION_MODE_HARD = "hard_new_session"
 
 
 def parse_args():
@@ -52,6 +54,11 @@ def dump_text(path: Path, content: str):
     path.write_text(content, encoding="utf-8")
 
 
+def dump_json(path: Path, data):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
 def count_sessions(log_content: str) -> int:
     matches = re.findall(r"会话 #(\d+)\s*-", log_content)
     if not matches:
@@ -72,6 +79,35 @@ def resolve_store(workspace_dir: Path):
         return {"mode": "legacy", "index": None, "index_path": index_path}
     index = load_json(index_path)
     return {"mode": "sharded", "index": index, "index_path": index_path}
+
+
+def normalize_session_mode(raw: str) -> str:
+    value = str(raw or "").strip().lower()
+    if value in {"hard_new_session", "hard", "new_session"}:
+        return SESSION_MODE_HARD
+    if value in {"soft_reset", "soft", "reset"}:
+        return SESSION_MODE_SOFT
+    return SESSION_MODE_SOFT
+
+
+def load_session_mode(workspace_dir: Path) -> str:
+    task_path = workspace_dir / "task.json"
+    if not task_path.exists():
+        return SESSION_MODE_SOFT
+    try:
+        data = load_json(task_path)
+    except (json.JSONDecodeError, OSError, ValueError):
+        return SESSION_MODE_SOFT
+    harness = data.get("harness", {})
+    if not isinstance(harness, dict):
+        return SESSION_MODE_SOFT
+    session_control = harness.get("session_control", {})
+    if isinstance(session_control, dict):
+        mode = session_control.get("mode", "")
+        if mode:
+            return normalize_session_mode(str(mode))
+    mode = harness.get("session_mode", "")
+    return normalize_session_mode(str(mode))
 
 
 def resolve_bucket_feature_path(workspace_dir: Path, rel_path: str) -> Path:
@@ -254,11 +290,67 @@ def build_latest_snapshot(feature, outcome: str, qa_score: float, total: int, pa
     )
 
 
+def build_session_meta(feature, next_feature, outcome: str, mode: str):
+    closed_id = str(feature.get("id", "n/a")) if feature else "n/a"
+    closed_desc = str(feature.get("description", "未指定任务")) if feature else "未指定任务"
+    payload = {
+        "mode": mode,
+        "generated_by": "session_close.py",
+        "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "closed_feature_id": closed_id,
+        "closed_feature_description": closed_desc,
+        "outcome": outcome,
+    }
+    if next_feature:
+        payload["next_feature_id"] = str(next_feature.get("id", ""))
+        payload["next_feature_description"] = str(next_feature.get("description", ""))
+    else:
+        payload["next_feature_id"] = ""
+        payload["next_feature_description"] = "无（全部任务已完成）"
+    return payload
+
+
+def bump_session_context(workspace_dir: Path, meta: dict, mode: str) -> tuple[Path, int]:
+    context_path = workspace_dir / "session-context.json"
+    epoch = 0
+    if context_path.exists():
+        try:
+            existing = load_json(context_path)
+            epoch = int(existing.get("epoch", 0))
+        except (json.JSONDecodeError, OSError, ValueError, TypeError):
+            epoch = 0
+
+    epoch += 1
+    payload = {
+        "epoch": epoch,
+        "mode": mode,
+        "reset_required": mode == SESSION_MODE_SOFT,
+        "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "closed_feature_id": meta.get("closed_feature_id", ""),
+        "closed_feature_description": meta.get("closed_feature_description", ""),
+        "next_feature_id": meta.get("next_feature_id", ""),
+        "next_feature_description": meta.get("next_feature_description", ""),
+        "outcome": meta.get("outcome", ""),
+    }
+    dump_json(context_path, payload)
+    return context_path, epoch
+
+
+def write_hard_boundary(workspace_dir: Path, meta: dict, epoch: int) -> Path:
+    boundary_path = workspace_dir / "session-boundary.json"
+    payload = dict(meta)
+    payload["require_new_session"] = True
+    payload["epoch"] = epoch
+    dump_json(boundary_path, payload)
+    return boundary_path
+
+
 def main():
     args = parse_args()
     target_dir = Path(args.target_dir).resolve()
     workspace_dir = detect_workspace_dir(target_dir)
     store = resolve_store(workspace_dir)
+    session_mode = load_session_mode(workspace_dir)
 
     features = load_all_features(workspace_dir, store)
     if not isinstance(features, list):
@@ -317,7 +409,27 @@ def main():
         dump_text(snapshot_path, snapshot)
         print(f"Updated latest snapshot: {snapshot_path}")
 
+    meta = build_session_meta(
+        feature=feature,
+        next_feature=next_feature,
+        outcome=args.outcome,
+        mode=session_mode,
+    )
+    context_path, epoch = bump_session_context(
+        workspace_dir=workspace_dir,
+        meta=meta,
+        mode=session_mode,
+    )
+
     print(f"Appended session log: {session_log_path} (session #{session_no})")
+    print(f"Session mode: {session_mode}")
+    print(f"Session context updated: {context_path} (epoch={epoch})")
+    if session_mode == SESSION_MODE_HARD:
+        boundary_path = write_hard_boundary(workspace_dir, meta, epoch)
+        print(f"Session boundary marker: {boundary_path}")
+        print("Session rotation required: start a NEW session before next feature.")
+    else:
+        print("Soft reset activated: current session should treat previous feature context as stale.")
     if next_feature:
         print(f"Next recommended task: {next_feature.get('id')} - {next_feature.get('description')}")
     else:
