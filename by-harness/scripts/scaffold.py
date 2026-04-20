@@ -165,6 +165,20 @@ def merge_codex_hooks(target_dir: Path, template_hooks_path: Path):
     print(f"  MERGE: {hooks_path}")
 
 
+def ship_runtime_script(
+    skill_dir: Path,
+    harness_dir: Path,
+    script_name: str,
+    args,
+) -> bool:
+    src = skill_dir / "scripts" / script_name
+    dst = harness_dir / "scripts" / script_name
+    if not src.exists():
+        print(f"  WARN: helper not found: {src}")
+        return False
+    return generate_file(src, dst, args)
+
+
 def verify_outputs(target_dir: Path):
     required = [
         "AGENTS.md",
@@ -175,6 +189,7 @@ def verify_outputs(target_dir: Path):
         f"{HARNESS_DIR_NAME}/task-harness/features/backlog-core.json",
         f"{HARNESS_DIR_NAME}/progress.txt",
         f"{HARNESS_DIR_NAME}/scripts/session_close.py",
+        f"{HARNESS_DIR_NAME}/scripts/ensure_task_branch.py",
         f"{HARNESS_DIR_NAME}/init.sh",
         f"{HARNESS_DIR_NAME}/task.json",
         ".codex/config.toml",
@@ -184,6 +199,7 @@ def verify_outputs(target_dir: Path):
         ".codex/hooks/pre-completion-check.py",
         ".claude/settings.json",
         f"{HARNESS_DIR_NAME}/docs/contracts/TEMPLATE.md",
+        f"{HARNESS_DIR_NAME}/docs/java-dev-conventions.md",
         f"{HARNESS_DIR_NAME}/docs/qa",
         f"{HARNESS_DIR_NAME}/task-harness/progress",
     ]
@@ -209,6 +225,7 @@ def main():
         ("harness/docs/architecture.md", f"{HARNESS_DIR_NAME}/docs/architecture.md"),
         ("harness/docs/golden-principles.md", f"{HARNESS_DIR_NAME}/docs/golden-principles.md"),
         ("harness/docs/sprint-workflow.md", f"{HARNESS_DIR_NAME}/docs/sprint-workflow.md"),
+        ("harness/docs/java-dev-conventions.md", f"{HARNESS_DIR_NAME}/docs/java-dev-conventions.md"),
         ("harness/docs/contracts/TEMPLATE.md", f"{HARNESS_DIR_NAME}/docs/contracts/TEMPLATE.md"),
         ("harness/agents/planner.md", ".claude/agents/planner.md"),
         ("harness/agents/generator.md", ".claude/agents/generator.md"),
@@ -254,16 +271,12 @@ def main():
         else:
             skipped += 1
 
-    # Ship session close helper into initialized project
-    session_close_src = skill_dir / "scripts" / "session_close.py"
-    session_close_target = harness_dir / "scripts" / "session_close.py"
-    if session_close_src.exists():
-        if generate_file(session_close_src, session_close_target, args):
+    # Ship runtime helpers into initialized project
+    for runtime_script in ("session_close.py", "ensure_task_branch.py"):
+        if ship_runtime_script(skill_dir, harness_dir, runtime_script, args):
             created += 1
         else:
             skipped += 1
-    else:
-        print(f"  WARN: helper not found: {session_close_src}")
 
     (harness_dir / "docs" / "specs").mkdir(parents=True, exist_ok=True)
     (harness_dir / "docs" / "plans").mkdir(parents=True, exist_ok=True)

@@ -18,6 +18,10 @@ Codex hooks 配置位于 `.codex/config.toml` 与 `.codex/hooks.json`。
 
 系统设计请见 [docs/architecture.md](docs/architecture.md)。
 
+## Java 规范（按需）
+
+若项目包含 Java/Spring Boot 实现，请先阅读 [docs/java-dev-conventions.md](docs/java-dev-conventions.md) 再开始编码。
+
 ## 黄金原则
 
 请阅读 [docs/golden-principles.md](docs/golden-principles.md)，这些规则不可妥协。

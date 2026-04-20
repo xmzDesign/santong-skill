@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Codex Stop hook: inject completion checklist before finalizing.
+Codex Stop hook: enforce one continuation pass with a completion checklist.
 """
 
 import json
@@ -39,24 +39,26 @@ def main():
         emit({})
         return
 
+    # Avoid re-blocking when Codex re-enters Stop after a continuation pass.
+    if bool(input_data.get("stop_hook_active")):
+        emit({})
+        return
+
     checklist = list(CHECKLIST)
     cwd = Path.cwd()
     workspace = cwd / HARNESS_DIR_NAME if (cwd / HARNESS_DIR_NAME).exists() else cwd
     if (workspace / "feature_list.json").exists():
         checklist.extend(TASK_HARNESS_CHECKLIST)
 
-    message = (
-        "Pre-completion checklist:\n"
-        + "\n".join(checklist)
-        + "\n\nIf any item fails, fix before claiming completion."
-    )
-
     emit(
         {
-            "hookSpecificOutput": {
-                "hookEventName": "Stop",
-                "additionalContext": message,
-            }
+            "decision": "block",
+            "reason": (
+                "Pre-completion checklist:\n"
+                + "\n".join(checklist)
+                + "\n\nIf any item fails, fix before claiming completion."
+                + "\nCommit/push must be triggered by explicit user instruction."
+            ),
         }
     )
 

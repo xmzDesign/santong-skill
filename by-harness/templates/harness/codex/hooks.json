@@ -6,7 +6,7 @@
           {
             "type": "command",
             "command": "/usr/bin/env python3 \"$(git rev-parse --show-toplevel 2>/dev/null || pwd)/.codex/hooks/context-injector.py\"",
-            "timeout": 5,
+            "timeout": 30,
             "statusMessage": "Injecting project context"
           }
         ]
@@ -14,7 +14,7 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "Edit|Write|MultiEdit",
+        "matcher": "Edit|Write|MultiEdit|ApplyPatch|NotebookEdit",
         "hooks": [
           {
             "type": "command",

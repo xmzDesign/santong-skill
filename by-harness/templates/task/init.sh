@@ -117,7 +117,21 @@ else
 fi
 
 echo ""
-echo "[5/5] 依赖检查:"
+echo "[5/6] 任务分支自动切换:"
+BRANCH_SCRIPT=""
+if [ -f "$WORKSPACE_DIR/scripts/ensure_task_branch.py" ]; then
+  BRANCH_SCRIPT="$WORKSPACE_DIR/scripts/ensure_task_branch.py"
+elif [ -f "$REPO_ROOT/scripts/ensure_task_branch.py" ]; then
+  BRANCH_SCRIPT="$REPO_ROOT/scripts/ensure_task_branch.py"
+fi
+if [ -n "$BRANCH_SCRIPT" ]; then
+  python3 "$BRANCH_SCRIPT" --target-dir "$REPO_ROOT" || echo "  (任务分支同步失败，可稍后手动执行)"
+else
+  echo "  (未找到 ensure_task_branch.py，跳过自动切分支)"
+fi
+
+echo ""
+echo "[6/6] 依赖检查:"
 if [ -d "$REPO_ROOT/node_modules" ]; then
   echo "  node_modules 已存在"
 else
@@ -143,8 +157,9 @@ echo "下一步操作:"
 echo "  1. 阅读 AGENTS.md（Harness 主闭环规则）"
 echo "  2. 阅读 ${WORKSPACE_PREFIX}TASK-HARNESS.md（任务层规则）"
 echo "  3. 阅读 ${WORKSPACE_PREFIX}task-harness/progress/*.md（${WORKSPACE_PREFIX}progress.txt 为最新快照）"
-echo "  4. 阅读当前任务文件（见上方任务文件路径）找到下一个未完成 feature"
-echo "  5. 按 plan/build/qa 流程执行，单元测试通过后即可改 passes（QA 非阻塞）"
-echo "  6. 运行 python3 ${WORKSPACE_PREFIX}scripts/session_close.py --target-dir . --feature-id <feat-id>"
-echo "  7. git commit / git push"
+echo "  4. 确认是否已自动切换到当前任务分支（必要时重跑 init.sh）"
+echo "  5. 若为 Java 项目，先阅读 ${WORKSPACE_PREFIX}docs/java-dev-conventions.md"
+echo "  6. 按 plan/build/qa 流程执行，单元测试通过后即可改 passes（QA 非阻塞）"
+echo "  7. 运行 python3 ${WORKSPACE_PREFIX}scripts/session_close.py --target-dir . --feature-id <feat-id>"
+echo "  8. git commit / git push"
 echo ""
