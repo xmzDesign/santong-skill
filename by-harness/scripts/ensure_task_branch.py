@@ -21,6 +21,11 @@ from typing import Any
 HARNESS_DIR_NAME = ".harness"
 SESSION_MODE_SOFT = "soft_reset"
 SESSION_MODE_HARD = "hard_new_session"
+FLOW_MODE_REVIEW_FIRST = "review_first"
+FLOW_MODE_CONTINUOUS = "continuous"
+DIRTY_STRATEGY_BLOCK = "block"
+DIRTY_STRATEGY_STASH = "stash_then_switch"
+DIRTY_STRATEGY_WIP = "wip_commit_then_switch"
 STOP_WORDS = {
     "处理",
     "继续",
@@ -176,23 +181,58 @@ def normalize_session_mode(raw: str) -> str:
     return SESSION_MODE_SOFT
 
 
-def load_session_mode(workspace_dir: Path) -> str:
+def normalize_flow_mode(raw: str) -> str:
+    value = str(raw or "").strip().lower()
+    if value in {"continuous", "continue"}:
+        return FLOW_MODE_CONTINUOUS
+    if value in {"review_first", "review"}:
+        return FLOW_MODE_REVIEW_FIRST
+    return FLOW_MODE_REVIEW_FIRST
+
+
+def normalize_dirty_strategy(raw: str) -> str:
+    value = str(raw or "").strip().lower()
+    if value in {"stash_then_switch", "stash"}:
+        return DIRTY_STRATEGY_STASH
+    if value in {"wip_commit_then_switch", "wip_commit", "wip"}:
+        return DIRTY_STRATEGY_WIP
+    if value in {"block", "stop"}:
+        return DIRTY_STRATEGY_BLOCK
+    return DIRTY_STRATEGY_BLOCK
+
+
+def load_session_control(workspace_dir: Path) -> dict[str, str]:
+    control = {
+        "context_mode": SESSION_MODE_SOFT,
+        "flow_mode": FLOW_MODE_REVIEW_FIRST,
+        "dirty_strategy": DIRTY_STRATEGY_BLOCK,
+    }
     task_path = workspace_dir / "task.json"
     if not task_path.exists():
-        return SESSION_MODE_SOFT
+        return control
     try:
         data = json.loads(task_path.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError, ValueError):
-        return SESSION_MODE_SOFT
+        return control
     harness = data.get("harness", {})
     if not isinstance(harness, dict):
-        return SESSION_MODE_SOFT
+        return control
     session_control = harness.get("session_control", {})
     if isinstance(session_control, dict):
         mode = session_control.get("mode", "")
         if mode:
-            return normalize_session_mode(mode)
-    return normalize_session_mode(harness.get("session_mode", ""))
+            control["context_mode"] = normalize_session_mode(mode)
+        flow_mode = session_control.get("flow_mode", "")
+        if flow_mode:
+            control["flow_mode"] = normalize_flow_mode(flow_mode)
+        dirty_strategy = session_control.get("dirty_strategy", "")
+        if dirty_strategy:
+            control["dirty_strategy"] = normalize_dirty_strategy(dirty_strategy)
+
+    legacy_mode = harness.get("session_mode", "")
+    if legacy_mode:
+        control["context_mode"] = normalize_session_mode(legacy_mode)
+    return control
 
 
 def load_session_boundary(workspace_dir: Path) -> dict[str, Any] | None:
@@ -220,6 +260,39 @@ def load_session_context(workspace_dir: Path) -> dict[str, Any] | None:
     if not isinstance(data, dict):
         return None
     return data
+
+
+def is_worktree_dirty(repo: Path) -> bool:
+    status = run_git_cmd(repo, "status", "--porcelain")
+    if status.returncode != 0:
+        return False
+    return bool((status.stdout or "").strip())
+
+
+def dirty_paths(repo: Path) -> set[str]:
+    paths: set[str] = set()
+    for args in (
+        ("diff", "--name-only"),
+        ("diff", "--name-only", "--cached"),
+        ("ls-files", "--others", "--exclude-standard"),
+    ):
+        result = run_git_cmd(repo, *args)
+        if result.returncode != 0:
+            continue
+        for line in (result.stdout or "").splitlines():
+            text = line.strip()
+            if text:
+                paths.add(text)
+    return paths
+
+
+def non_harness_dirty_paths(repo: Path) -> list[str]:
+    paths = dirty_paths(repo)
+    return sorted(
+        p
+        for p in paths
+        if p != HARNESS_DIR_NAME and not p.startswith(f"{HARNESS_DIR_NAME}/")
+    )
 
 
 def collect_all_features(workspace_dir: Path, index_data: dict[str, Any] | None) -> list[dict[str, Any]]:
@@ -624,9 +697,12 @@ def main() -> int:
         return 0
 
     workspace_dir = detect_workspace_dir(repo)
-    session_mode = load_session_mode(workspace_dir)
+    session_control = load_session_control(workspace_dir)
+    context_mode = session_control["context_mode"]
+    flow_mode = session_control["flow_mode"]
+    dirty_strategy = session_control["dirty_strategy"]
     boundary = load_session_boundary(workspace_dir)
-    if boundary and session_mode == SESSION_MODE_HARD:
+    if boundary and context_mode == SESSION_MODE_HARD:
         closed_id = str(boundary.get("closed_feature_id", "n/a"))
         next_id = str(boundary.get("next_feature_id", "") or "n/a")
         print(
@@ -639,7 +715,7 @@ def main() -> int:
         )
         return 0
 
-    if boundary and session_mode == SESSION_MODE_SOFT:
+    if boundary and context_mode == SESSION_MODE_SOFT:
         # Soft mode should not be blocked by stale hard boundary markers.
         boundary_path = Path(str(boundary.get("_path", "")))
         if boundary_path.exists():
@@ -649,7 +725,23 @@ def main() -> int:
                 pass
 
     context_state = load_session_context(workspace_dir)
-    if session_mode == SESSION_MODE_SOFT and context_state and bool(context_state.get("reset_required")):
+    if (
+        flow_mode == FLOW_MODE_REVIEW_FIRST
+        and context_state
+        and bool(context_state.get("review_pending"))
+    ):
+        epoch = context_state.get("epoch", "?")
+        print(
+            "[branch] review gate active: "
+            f"epoch={epoch}. Complete review before switching next task branch."
+        )
+        print(
+            "[branch] hint: run `python3 .harness/scripts/task_switch.py continue --target-dir .` "
+            "after review to auto-shelve/switch."
+        )
+        return 0
+
+    if context_mode == SESSION_MODE_SOFT and context_state and bool(context_state.get("reset_required")):
         epoch = context_state.get("epoch", "?")
         print(
             "[branch] soft_reset context epoch active: "
@@ -786,6 +878,20 @@ def main() -> int:
     if current == branch:
         print(f"[branch] already on {branch}")
         return 0
+
+    non_harness_dirty = non_harness_dirty_paths(repo)
+    if non_harness_dirty:
+        print(
+            "[branch] switch blocked: working tree has uncommitted changes. "
+            f"configured dirty_strategy={dirty_strategy}."
+        )
+        print(
+            "[branch] hint: run `python3 .harness/scripts/task_switch.py continue --target-dir .` "
+            "to auto-shelve and switch safely."
+        )
+        return 0
+    if is_worktree_dirty(repo):
+        print("[branch] note: only .harness metadata is dirty; allow branch switch.")
 
     print(
         f"[branch] switching by task: feature={feature_id} task_id={task_id} "

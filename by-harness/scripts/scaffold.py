@@ -190,6 +190,7 @@ def verify_outputs(target_dir: Path):
         f"{HARNESS_DIR_NAME}/progress.txt",
         f"{HARNESS_DIR_NAME}/scripts/session_close.py",
         f"{HARNESS_DIR_NAME}/scripts/ensure_task_branch.py",
+        f"{HARNESS_DIR_NAME}/scripts/task_switch.py",
         f"{HARNESS_DIR_NAME}/init.sh",
         f"{HARNESS_DIR_NAME}/task.json",
         ".codex/config.toml",
@@ -272,7 +273,7 @@ def main():
             skipped += 1
 
     # Ship runtime helpers into initialized project
-    for runtime_script in ("session_close.py", "ensure_task_branch.py"):
+    for runtime_script in ("session_close.py", "ensure_task_branch.py", "task_switch.py"):
         if ship_runtime_script(skill_dir, harness_dir, runtime_script, args):
             created += 1
         else:
@@ -299,6 +300,7 @@ def main():
     print("  3. 选择 passes=false 的 feature，执行 plan/build/qa 闭环")
     print(f"  4. 单元测试通过即可更新 passes=true（QA 非阻塞），并写入 {HARNESS_DIR_NAME}/task-harness/progress/YYYY-MM.md")
     print(f"  5. 会话结束执行：python3 {HARNESS_DIR_NAME}/scripts/session_close.py --target-dir . --feature-id <feat-id>")
+    print(f"  6. 连续切任务可用：python3 {HARNESS_DIR_NAME}/scripts/task_switch.py continue --target-dir .")
 
 
 if __name__ == "__main__":

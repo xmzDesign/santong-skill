@@ -11,10 +11,25 @@
     "initializer_done": true,
     "session_control": {
       "mode": "soft_reset",
+      "flow_mode": "review_first",
+      "dirty_strategy": "stash_then_switch",
+      "auto_merge_on_all_done": true,
+      "rollup_target": "feat/{repo}/integration",
       "supported_modes": ["soft_reset", "hard_new_session"],
+      "supported_flow_modes": ["review_first", "continuous"],
+      "supported_dirty_strategies": ["stash_then_switch", "wip_commit_then_switch", "block"],
       "mode_guide": {
         "soft_reset": "默认模式：同一聊天可继续，但每次 feature 收口后自动提升 context epoch，并要求忽略旧 feature 上下文。",
         "hard_new_session": "严格模式：每个 feature 收口后必须新开会话，未新开会话前阻止切换到下一个任务分支。"
+      },
+      "flow_mode_guide": {
+        "review_first": "默认模式：feature 收口后先评审，评审完成再切下一个任务。",
+        "continuous": "连续模式：支持一条命令自动封箱并切换到下一任务。"
+      },
+      "dirty_strategy_guide": {
+        "stash_then_switch": "自动 stash 后切分支（推荐）。",
+        "wip_commit_then_switch": "自动本地 WIP commit 后切分支。",
+        "block": "工作区脏时阻止切分支。"
       }
     },
     "files": {
@@ -41,6 +56,8 @@
       "每个 feature 必须维护 spec_path/contract_path/qa_report_path",
       "完成后仅更新 active bucket 中对应 feature 的 passes 字段",
       "会话结束运行 .harness/scripts/session_close.py 追加会话日志，并刷新 .harness/progress.txt 快照",
+      "连续模式切任务：python3 .harness/scripts/task_switch.py continue --target-dir .",
+      "多个任务分支在全部完成后自动汇总合并到 rollup_target 分支",
       "每次完成功能后 git commit",
       "会话结束前写入 .harness/task-harness/progress/YYYY-MM.md（同时刷新 .harness/progress.txt 快照）",
       "同一任务最多修复 3 轮，仍失败则保持 passes=false 并继续下一个任务",

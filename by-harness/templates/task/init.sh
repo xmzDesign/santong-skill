@@ -118,11 +118,13 @@ fi
 
 echo ""
 echo "[5/7] 会话模式与上下文重置:"
-SESSION_MODE=$(python3 - <<'PY'
+SESSION_CONTROL=$(python3 - <<'PY'
 import json
 from pathlib import Path
 
 mode = "soft_reset"
+flow_mode = "review_first"
+dirty_strategy = "stash_then_switch"
 path = Path("task.json")
 if path.exists():
     try:
@@ -130,15 +132,25 @@ if path.exists():
         harness = data.get("harness", {}) if isinstance(data, dict) else {}
         if isinstance(harness, dict):
             sc = harness.get("session_control", {})
-            if isinstance(sc, dict) and sc.get("mode"):
-                mode = str(sc.get("mode"))
+            if isinstance(sc, dict):
+                if sc.get("mode"):
+                    mode = str(sc.get("mode"))
+                if sc.get("flow_mode"):
+                    flow_mode = str(sc.get("flow_mode"))
+                if sc.get("dirty_strategy"):
+                    dirty_strategy = str(sc.get("dirty_strategy"))
             elif harness.get("session_mode"):
                 mode = str(harness.get("session_mode"))
     except Exception:
         pass
 print(mode)
+print(flow_mode)
+print(dirty_strategy)
 PY
 )
+SESSION_MODE=$(printf "%s\n" "$SESSION_CONTROL" | sed -n '1p')
+FLOW_MODE=$(printf "%s\n" "$SESSION_CONTROL" | sed -n '2p')
+DIRTY_STRATEGY=$(printf "%s\n" "$SESSION_CONTROL" | sed -n '3p')
 case "$SESSION_MODE" in
   hard|new_session|hard_new_session)
     SESSION_MODE="hard_new_session"
@@ -148,6 +160,8 @@ case "$SESSION_MODE" in
     ;;
 esac
 echo "  session_mode: $SESSION_MODE"
+echo "  flow_mode: $FLOW_MODE"
+echo "  dirty_strategy: $DIRTY_STRATEGY"
 
 if [ "$SESSION_MODE" = "hard_new_session" ]; then
   BOUNDARY_FILE="$WORKSPACE_DIR/session-boundary.json"
@@ -249,6 +263,6 @@ echo "  4. 确认是否已自动切换到当前任务分支（必要时重跑 in
 echo "  5. 若为 Java 项目，先阅读 ${WORKSPACE_PREFIX}docs/java-dev-conventions.md"
 echo "  6. 按 plan/build/qa 流程执行，单元测试通过后即可改 passes（QA 非阻塞）"
 echo "  7. 运行 python3 ${WORKSPACE_PREFIX}scripts/session_close.py --target-dir . --feature-id <feat-id>"
-echo "  8. 根据 session_mode 自动执行会话切换（hard: 新会话；soft: 上下文软重置）"
+echo "  8. 连续模式切任务可用：python3 ${WORKSPACE_PREFIX}scripts/task_switch.py continue --target-dir ."
 echo "  9. git commit / git push"
 echo ""
