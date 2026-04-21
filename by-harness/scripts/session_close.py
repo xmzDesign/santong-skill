@@ -18,8 +18,6 @@ from pathlib import Path
 HARNESS_DIR_NAME = ".harness"
 SESSION_MODE_SOFT = "soft_reset"
 SESSION_MODE_HARD = "hard_new_session"
-FLOW_MODE_REVIEW_FIRST = "review_first"
-FLOW_MODE_CONTINUOUS = "continuous"
 
 
 def parse_args():
@@ -92,20 +90,8 @@ def normalize_session_mode(raw: str) -> str:
     return SESSION_MODE_SOFT
 
 
-def normalize_flow_mode(raw: str) -> str:
-    value = str(raw or "").strip().lower()
-    if value in {"continuous", "continue"}:
-        return FLOW_MODE_CONTINUOUS
-    if value in {"review_first", "review"}:
-        return FLOW_MODE_REVIEW_FIRST
-    return FLOW_MODE_REVIEW_FIRST
-
-
 def load_session_control(workspace_dir: Path) -> dict[str, str]:
-    control = {
-        "context_mode": SESSION_MODE_SOFT,
-        "flow_mode": FLOW_MODE_REVIEW_FIRST,
-    }
+    control = {"context_mode": SESSION_MODE_SOFT}
     task_path = workspace_dir / "task.json"
     if not task_path.exists():
         return control
@@ -120,11 +106,8 @@ def load_session_control(workspace_dir: Path) -> dict[str, str]:
     session_control = harness.get("session_control", {})
     if isinstance(session_control, dict):
         context_mode = session_control.get("mode", "")
-        flow_mode = session_control.get("flow_mode", "")
         if context_mode:
             control["context_mode"] = normalize_session_mode(str(context_mode))
-        if flow_mode:
-            control["flow_mode"] = normalize_flow_mode(str(flow_mode))
     legacy_mode = harness.get("session_mode", "")
     if legacy_mode:
         control["context_mode"] = normalize_session_mode(str(legacy_mode))
@@ -318,12 +301,11 @@ def build_latest_snapshot(feature, outcome: str, qa_score: float, total: int, pa
     )
 
 
-def build_session_meta(feature, next_feature, outcome: str, context_mode: str, flow_mode: str):
+def build_session_meta(feature, next_feature, outcome: str, context_mode: str):
     closed_id = str(feature.get("id", "n/a")) if feature else "n/a"
     closed_desc = str(feature.get("description", "未指定任务")) if feature else "未指定任务"
     payload = {
         "context_mode": context_mode,
-        "flow_mode": flow_mode,
         "generated_by": "session_close.py",
         "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "closed_feature_id": closed_id,
@@ -339,7 +321,7 @@ def build_session_meta(feature, next_feature, outcome: str, context_mode: str, f
     return payload
 
 
-def bump_session_context(workspace_dir: Path, meta: dict, context_mode: str, flow_mode: str) -> tuple[Path, int]:
+def bump_session_context(workspace_dir: Path, meta: dict, context_mode: str) -> tuple[Path, int]:
     context_path = workspace_dir / "session-context.json"
     epoch = 0
     if context_path.exists():
@@ -353,9 +335,7 @@ def bump_session_context(workspace_dir: Path, meta: dict, context_mode: str, flo
     payload = {
         "epoch": epoch,
         "context_mode": context_mode,
-        "flow_mode": flow_mode,
         "reset_required": context_mode == SESSION_MODE_SOFT,
-        "review_pending": flow_mode == FLOW_MODE_REVIEW_FIRST,
         "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "closed_feature_id": meta.get("closed_feature_id", ""),
         "closed_feature_description": meta.get("closed_feature_description", ""),
@@ -383,7 +363,6 @@ def main():
     store = resolve_store(workspace_dir)
     session_control = load_session_control(workspace_dir)
     context_mode = session_control["context_mode"]
-    flow_mode = session_control["flow_mode"]
 
     features = load_all_features(workspace_dir, store)
     if not isinstance(features, list):
@@ -447,25 +426,17 @@ def main():
         next_feature=next_feature,
         outcome=args.outcome,
         context_mode=context_mode,
-        flow_mode=flow_mode,
     )
     context_path, epoch = bump_session_context(
         workspace_dir=workspace_dir,
         meta=meta,
         context_mode=context_mode,
-        flow_mode=flow_mode,
     )
 
     print(f"Appended session log: {session_log_path} (session #{session_no})")
     print(f"Context mode: {context_mode}")
-    print(f"Flow mode: {flow_mode}")
     print(f"Session context updated: {context_path} (epoch={epoch})")
-    if flow_mode == FLOW_MODE_REVIEW_FIRST:
-        print("Review gate: pending. Complete review before switching to next task.")
-        print("After review, run: python3 .harness/scripts/task_switch.py continue --target-dir .")
-    else:
-        print("Review gate: continuous mode, ready for automated task switching.")
-        print("Use: python3 .harness/scripts/task_switch.py continue --target-dir .")
+    print("Auto-continue command: python3 .harness/scripts/task_switch.py continue --target-dir .")
     if context_mode == SESSION_MODE_HARD:
         boundary_path = write_hard_boundary(workspace_dir, meta, epoch)
         print(f"Session boundary marker: {boundary_path}")

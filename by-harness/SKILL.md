@@ -123,6 +123,18 @@ python3 {{SKILL_PATH}}/scripts/rebalance_tasks.py --target-dir "<项目目录>"
 - 生成/更新 `.harness/task-harness/index.json`
 - 若存在 `.harness/feature_list.json`，则保持其兼容视图同步
 
+## 老仓库一键升级（推荐）
+
+```bash
+python3 {{SKILL_PATH}}/scripts/upgrade_legacy_repo.py --target-dir "<项目目录>"
+```
+
+默认行为：
+- 升级前自动备份 `.harness/task.json` 与 `.harness/scripts/*.py`
+- 同步最新运行时脚本：`session_close.py` / `ensure_task_branch.py` / `task_switch.py`
+- 自动迁移 `task.json` 的 `session_control` 到当前简化模式（仅保留 `mode` 相关配置）
+- 默认按“当前分支自动续跑”执行任务，不再依赖自动切分支配置
+
 ## 运行约束
 
 - `AGENTS.md` 是主契约，定义 Plan/Build/Verify/Fix。

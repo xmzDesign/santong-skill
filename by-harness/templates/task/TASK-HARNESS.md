@@ -48,9 +48,9 @@
 6. 根据 `.harness/task.json` 的 `harness.session_control.mode` 自动执行会话切换：
    - `soft_reset`：继续当前会话时，必须按新 epoch 上下文处理下一 feature
    - `hard_new_session`：必须新开会话后再开始下一 feature
-7. 若启用 `flow_mode=continuous`，可执行：
+7. 自动续跑下一个任务可执行：
    - `python3 .harness/scripts/task_switch.py continue --target-dir .`
-   - 该命令会自动封箱（按 `dirty_strategy`）、切到下一任务分支，并在任务全部完成后自动合并多个任务分支到汇总分支
+   - 该命令会在当前分支自动定位下一个任务并更新状态（不切分支）
 
 ## 遇到阻塞时
 

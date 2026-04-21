@@ -27,12 +27,12 @@ fi
 cd "$WORKSPACE_DIR"
 
 echo ""
-echo "[1/5] 当前目录:"
+echo "[1/7] 当前目录:"
 echo "  仓库根目录: $REPO_ROOT"
 echo "  Harness 工作目录: $WORKSPACE_DIR"
 
 echo ""
-echo "[2/5] Git 状态:"
+echo "[2/7] Git 状态:"
 if git -C "$REPO_ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   git -C "$REPO_ROOT" status --short || echo "  (无 git 变更)"
 else
@@ -40,7 +40,7 @@ else
 fi
 
 echo ""
-echo "[3/5] 最近 10 条 commit:"
+echo "[3/7] 最近 10 条 commit:"
 if git -C "$REPO_ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   git -C "$REPO_ROOT" log --oneline -10 || echo "  (无 commit 历史)"
 else
@@ -48,7 +48,7 @@ else
 fi
 
 echo ""
-echo "[4/5] 功能完成进度:"
+echo "[4/7] 功能完成进度:"
 FEATURE_FILE="task-harness/features/backlog-core.json"
 ACTIVE_BUCKET="backlog-core"
 if [ ! -f "task-harness/index.json" ] && [ -f "feature_list.json" ]; then
@@ -127,8 +127,6 @@ import json
 from pathlib import Path
 
 mode = "soft_reset"
-flow_mode = "review_first"
-dirty_strategy = "stash_then_switch"
 path = Path("task.json")
 if path.exists():
     try:
@@ -139,22 +137,14 @@ if path.exists():
             if isinstance(sc, dict):
                 if sc.get("mode"):
                     mode = str(sc.get("mode"))
-                if sc.get("flow_mode"):
-                    flow_mode = str(sc.get("flow_mode"))
-                if sc.get("dirty_strategy"):
-                    dirty_strategy = str(sc.get("dirty_strategy"))
             elif harness.get("session_mode"):
                 mode = str(harness.get("session_mode"))
     except Exception:
         pass
 print(mode)
-print(flow_mode)
-print(dirty_strategy)
 PY
 )
 SESSION_MODE=$(printf "%s\n" "$SESSION_CONTROL" | sed -n '1p')
-FLOW_MODE=$(printf "%s\n" "$SESSION_CONTROL" | sed -n '2p')
-DIRTY_STRATEGY=$(printf "%s\n" "$SESSION_CONTROL" | sed -n '3p')
 case "$SESSION_MODE" in
   hard|new_session|hard_new_session)
     SESSION_MODE="hard_new_session"
@@ -164,8 +154,6 @@ case "$SESSION_MODE" in
     ;;
 esac
 echo "  session_mode: $SESSION_MODE"
-echo "  flow_mode: $FLOW_MODE"
-echo "  dirty_strategy: $DIRTY_STRATEGY"
 
 if [ "$SESSION_MODE" = "hard_new_session" ]; then
   BOUNDARY_FILE="$WORKSPACE_DIR/session-boundary.json"
@@ -223,7 +211,7 @@ PY
 fi
 
 echo ""
-echo "[6/7] 任务分支自动切换:"
+echo "[6/7] 任务自动定位（当前分支）:"
 BRANCH_SCRIPT=""
 if [ -f "$WORKSPACE_DIR/scripts/ensure_task_branch.py" ]; then
   BRANCH_SCRIPT="$WORKSPACE_DIR/scripts/ensure_task_branch.py"
@@ -231,9 +219,9 @@ elif [ -f "$REPO_ROOT/scripts/ensure_task_branch.py" ]; then
   BRANCH_SCRIPT="$REPO_ROOT/scripts/ensure_task_branch.py"
 fi
 if [ -n "$BRANCH_SCRIPT" ]; then
-  python3 "$BRANCH_SCRIPT" --target-dir "$REPO_ROOT" || echo "  (任务分支同步失败，可稍后手动执行)"
+  python3 "$BRANCH_SCRIPT" --target-dir "$REPO_ROOT" --sync-state || echo "  (任务定位失败，可稍后手动执行)"
 else
-  echo "  (未找到 ensure_task_branch.py，跳过自动切分支)"
+  echo "  (未找到 ensure_task_branch.py，跳过自动定位)"
 fi
 
 echo ""
@@ -263,10 +251,10 @@ echo "下一步操作:"
 echo "  1. 阅读 AGENTS.md（Harness 主闭环规则）"
 echo "  2. 阅读 ${WORKSPACE_PREFIX}TASK-HARNESS.md（任务层规则）"
 echo "  3. 阅读 ${WORKSPACE_PREFIX}task-harness/progress/*.md（${WORKSPACE_PREFIX}progress.txt 为最新快照）"
-echo "  4. 确认是否已自动切换到当前任务分支（必要时重跑 init.sh）"
+echo "  4. 确认已自动定位当前任务（默认在当前分支开发）"
 echo "  5. 若为 Java 项目，先阅读 ${WORKSPACE_PREFIX}docs/java-dev-conventions.md"
 echo "  6. 按 plan/build/qa 流程执行，单元测试通过后即可改 passes（QA 非阻塞）"
 echo "  7. 运行 python3 ${WORKSPACE_PREFIX}scripts/session_close.py --target-dir . --feature-id <feat-id>"
-echo "  8. 连续模式切任务可用：python3 ${WORKSPACE_PREFIX}scripts/task_switch.py continue --target-dir ."
+echo "  8. 自动续跑下个任务：python3 ${WORKSPACE_PREFIX}scripts/task_switch.py continue --target-dir ."
 echo "  9. git commit / git push"
 echo ""

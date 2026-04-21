@@ -298,7 +298,7 @@ def main():
     print("  3. 选择 passes=false 的 feature，执行 plan/build/qa 闭环")
     print(f"  4. 单元测试通过即可更新 passes=true（QA 非阻塞），并写入 {HARNESS_DIR_NAME}/task-harness/progress/YYYY-MM.md")
     print(f"  5. 会话结束执行：python3 {HARNESS_DIR_NAME}/scripts/session_close.py --target-dir . --feature-id <feat-id>")
-    print(f"  6. 连续切任务可用：python3 {HARNESS_DIR_NAME}/scripts/task_switch.py continue --target-dir .")
+    print(f"  6. 自动续跑下个任务（当前分支）：python3 {HARNESS_DIR_NAME}/scripts/task_switch.py continue --target-dir .")
 
 
 if __name__ == "__main__":

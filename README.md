@@ -6,7 +6,7 @@
 
 ```text
 santong-skills/
-└── by-harness/   # 独立融合版（初始化 + 持续拆任务 + 会话控制 + 自动分支协作）
+└── by-harness/   # 独立融合版（初始化 + 持续拆任务 + 会话控制 + 自动续跑）
 ```
 
 ## by-harness（独立融合版 Harness）
@@ -17,10 +17,9 @@ santong-skills/
 
 - 根目录极简：默认只放 `AGENTS.md`（以及隐藏运行目录 `.codex/.claude`）
 - 工作文件集中在 `.harness/`：`CLAUDE.md`、`docs/`、`TASK-HARNESS.md`、`task-harness/`、`progress.txt`、`init.sh`、`task.json`（`feature_list.json` 不再默认创建，仅 legacy 项目兼容）
-- 自动任务分支路由：`.harness/scripts/ensure_task_branch.py`（按任务状态/提示词选择分支）
+- 自动任务定位：`.harness/scripts/ensure_task_branch.py`（按任务状态/提示词选出当前要做的 feature，不切分支）
 - 会话收口：`.harness/scripts/session_close.py`（会话日志 + 快照 + 会话状态）
-- 连续切任务：`.harness/scripts/task_switch.py`（自动封箱 + 切下个任务分支）
-- 多分支汇总：任务全部完成后可自动合并到汇总分支（默认 `feat/{repo}/integration`）
+- 连续切任务：`.harness/scripts/task_switch.py`（当前分支自动续跑下个任务）
 - 持续拆任务：新任务增量写入 active bucket（仅当 legacy 项目已存在 `.harness/feature_list.json` 时才同步兼容镜像）
 - 每个任务闭环工件字段：`spec_path` / `contract_path` / `qa_report_path`
 - 门禁策略：单元测试通过即可 `passes=true`，QA 默认非阻塞
@@ -71,16 +70,10 @@ python3 .harness/scripts/session_close.py \
   --note "已完成 plan/build，准备进入 fix"
 ```
 
-连续模式一键切任务（自动封箱并切分支）：
+自动续跑下个任务（当前分支）：
 
 ```bash
 python3 .harness/scripts/task_switch.py continue --target-dir "."
-```
-
-强制触发汇总合并：
-
-```bash
-python3 .harness/scripts/task_switch.py continue --target-dir "." --finalize-merge
 ```
 
 ### 会话控制配置（`.harness/task.json`）
@@ -89,11 +82,7 @@ python3 .harness/scripts/task_switch.py continue --target-dir "." --finalize-mer
 {
   "harness": {
     "session_control": {
-      "mode": "soft_reset",
-      "flow_mode": "review_first",
-      "dirty_strategy": "stash_then_switch",
-      "auto_merge_on_all_done": true,
-      "rollup_target": "feat/{repo}/integration"
+      "mode": "soft_reset"
     }
   }
 }
@@ -102,16 +91,14 @@ python3 .harness/scripts/task_switch.py continue --target-dir "." --finalize-mer
 - `mode`
   - `soft_reset`：同一会话可继续，但自动提升 context epoch，要求忽略旧任务上下文
   - `hard_new_session`：任务收口后强制新会话
-- `flow_mode`
-  - `review_first`：先 review 再切任务
-  - `continuous`：一条命令自动封箱并切任务
-- `dirty_strategy`
-  - `stash_then_switch`：自动 stash（推荐）
-  - `wip_commit_then_switch`：自动本地 WIP commit
-  - `block`：检测到脏工作区直接阻止切换
 
 ### 老仓库升级建议
 
 - 可以再次执行 `scaffold.py`，默认不带 `--force` 时已有文件会 `SKIP`，不会直接覆盖任务数据
 - 不要在已有项目直接全量 `--force`
-- 升级重点是同步 `.harness/scripts/*.py`（尤其 `task_switch.py`）和 `.harness/task.json` 的 `session_control` 配置
+- 升级重点是同步 `.harness/scripts/*.py`（尤其 `ensure_task_branch.py` 与 `task_switch.py`）和 `.harness/task.json` 的 `session_control` 配置
+- 推荐直接使用升级脚本（自动备份 + 同步运行时 + 迁移配置）：
+
+```bash
+python3 by-harness/scripts/upgrade_legacy_repo.py --target-dir "<你的项目目录>"
+```

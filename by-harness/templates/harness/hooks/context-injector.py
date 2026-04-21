@@ -82,7 +82,7 @@ def run_auto_branch(prompt_text):
     repo = Path.cwd()
     script_path = find_branch_script(repo)
     if script_path is None:
-        return "Branch sync: ensure_task_branch.py not found (skip)."
+        return "Task sync: ensure_task_branch.py not found (skip)."
 
     cmd = ["python3", str(script_path), "--target-dir", str(repo)]
     if prompt_text:
@@ -96,7 +96,7 @@ def run_auto_branch(prompt_text):
             timeout=30,
         )
     except (subprocess.SubprocessError, FileNotFoundError):
-        return "Branch sync warning: failed to execute ensure_task_branch.py."
+        return "Task sync warning: failed to execute ensure_task_branch.py."
 
     output = (result.stdout or "").strip()
     if not output:
@@ -106,23 +106,9 @@ def run_auto_branch(prompt_text):
         lines = [line.strip() for line in output.splitlines() if line.strip()]
         output = " | ".join(lines[:4])
 
-    branch_now = "unknown"
-    try:
-        branch_now = (
-            subprocess.check_output(
-                ["git", "rev-parse", "--abbrev-ref", "HEAD"],
-                stderr=subprocess.DEVNULL,
-                timeout=5,
-            )
-            .decode()
-            .strip()
-        )
-    except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
-        pass
-
     if result.returncode == 0:
-        return f"Branch sync: {output or f'now on {branch_now}'}"
-    return f"Branch sync warning: {output or f'failed, current={branch_now}'}"
+        return f"Task sync: {output or 'ok'}"
+    return f"Task sync warning: {output or 'failed'}"
 
 
 def get_project_state():
@@ -368,7 +354,7 @@ def main():
             )
     parts.append(
         "Commit policy reminder: commit/push only on explicit user instruction; "
-        "use task-branch by default, and keep commit subject concise."
+        "develop on current branch by default, and keep commit subject concise."
     )
 
     if not parts:
