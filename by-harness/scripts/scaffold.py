@@ -17,6 +17,7 @@ from datetime import date
 from pathlib import Path
 
 HARNESS_DIR_NAME = ".harness"
+HARNESS_RUNTIME_VERSION = "2.1.0"
 
 
 def parse_args():
@@ -56,6 +57,7 @@ def substitute(template: str, args) -> str:
         "{{重要发现 1}}": "待首次会话补充",
         "{{重要发现 2}}": "待首次会话补充",
         "{{重要发现 3}}": "待首次会话补充",
+        "{{HARNESS_RUNTIME_VERSION}}": HARNESS_RUNTIME_VERSION,
     }
 
     out = template
@@ -186,10 +188,13 @@ def verify_outputs(target_dir: Path):
         f"{HARNESS_DIR_NAME}/TASK-HARNESS.md",
         f"{HARNESS_DIR_NAME}/task-harness/index.json",
         f"{HARNESS_DIR_NAME}/task-harness/features/backlog-core.json",
+        f"{HARNESS_DIR_NAME}/runtime-version.json",
+        f"{HARNESS_DIR_NAME}/update-policy.json",
         f"{HARNESS_DIR_NAME}/progress.txt",
         f"{HARNESS_DIR_NAME}/scripts/session_close.py",
         f"{HARNESS_DIR_NAME}/scripts/ensure_task_branch.py",
         f"{HARNESS_DIR_NAME}/scripts/task_switch.py",
+        f"{HARNESS_DIR_NAME}/scripts/update_runtime.py",
         f"{HARNESS_DIR_NAME}/init.sh",
         f"{HARNESS_DIR_NAME}/task.json",
         ".codex/config.toml",
@@ -244,6 +249,8 @@ def main():
         ("harness/codex/hooks/pre-completion-check.py", ".codex/hooks/pre-completion-check.py"),
         ("task/index.json", f"{HARNESS_DIR_NAME}/task-harness/index.json"),
         ("task/backlog-core.json", f"{HARNESS_DIR_NAME}/task-harness/features/backlog-core.json"),
+        ("task/runtime-version.json", f"{HARNESS_DIR_NAME}/runtime-version.json"),
+        ("task/update-policy.json", f"{HARNESS_DIR_NAME}/update-policy.json"),
         ("task/progress.txt", f"{HARNESS_DIR_NAME}/progress.txt"),
         ("task/init.sh", f"{HARNESS_DIR_NAME}/init.sh"),
         ("task/task.json", f"{HARNESS_DIR_NAME}/task.json"),
@@ -271,7 +278,13 @@ def main():
             skipped += 1
 
     # Ship runtime helpers into initialized project
-    for runtime_script in ("session_close.py", "ensure_task_branch.py", "task_switch.py"):
+    for runtime_script in (
+        "session_close.py",
+        "ensure_task_branch.py",
+        "task_switch.py",
+        "update_runtime.py",
+        "upgrade_legacy_repo.py",
+    ):
         if ship_runtime_script(skill_dir, harness_dir, runtime_script, args):
             created += 1
         else:
@@ -299,6 +312,7 @@ def main():
     print(f"  4. 单元测试通过即可更新 passes=true（QA 非阻塞），并写入 {HARNESS_DIR_NAME}/task-harness/progress/YYYY-MM.md")
     print(f"  5. 会话结束执行：python3 {HARNESS_DIR_NAME}/scripts/session_close.py --target-dir . --feature-id <feat-id>")
     print(f"  6. 自动续跑下个任务（当前分支）：python3 {HARNESS_DIR_NAME}/scripts/task_switch.py continue --target-dir .")
+    print(f"  7. 配置并启用远程更新：编辑 {HARNESS_DIR_NAME}/update-policy.json")
 
 
 if __name__ == "__main__":

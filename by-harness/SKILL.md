@@ -62,6 +62,8 @@ user-invocable: true
 - 任务分片：`.harness/task-harness/features/*.json`
 - 进度分片：`.harness/task-harness/progress/YYYY-MM.md`
 - 兼容镜像：`.harness/feature_list.json`（仅 legacy 项目存在时沿用，并同步 active bucket 视图）
+- 运行时版本：`.harness/runtime-version.json`（用于版本化升级）
+- 远程更新策略：`.harness/update-policy.json`（定时检查与自动升级策略）
 - 最新快照：`.harness/progress.txt`（由会话收口脚本刷新）
 
 ## 初始化（首次）
@@ -126,14 +128,26 @@ python3 {{SKILL_PATH}}/scripts/rebalance_tasks.py --target-dir "<项目目录>"
 ## 老仓库一键升级（推荐）
 
 ```bash
-python3 {{SKILL_PATH}}/scripts/upgrade_legacy_repo.py --target-dir "<项目目录>"
+python3 {{SKILL_PATH}}/scripts/update_runtime.py --target-dir "<项目目录>"
 ```
 
 默认行为：
 - 升级前自动备份 `.harness/task.json` 与 `.harness/scripts/*.py`
-- 同步最新运行时脚本：`session_close.py` / `ensure_task_branch.py` / `task_switch.py`
+- 若 `manifest_url` 已配置：从远程 manifest 拉取并同步运行时脚本
+- 若 `manifest_url` 未配置：执行本地兼容迁移（不依赖远程）
+- 读取 `.harness/runtime-version.json` 并按版本差异执行迁移链（缺失时自动推断旧版本）
+- 当本地版本高于内置或远程版本时，只告警并保持当前版本，不做降级覆盖
 - 自动迁移 `task.json` 的 `session_control` 到当前简化模式（仅保留 `mode` 相关配置）
 - 默认按“当前分支自动续跑”执行任务，不再依赖自动切分支配置
+
+远程检查（定时 + 自动应用）：
+
+```bash
+python3 .harness/scripts/update_runtime.py --target-dir . --check-remote
+```
+
+说明：
+- 默认 `update-policy.json` 为 `enabled=false`，需先配置 `manifest_url` 并开启后才会自动检查。
 
 ## 运行约束
 

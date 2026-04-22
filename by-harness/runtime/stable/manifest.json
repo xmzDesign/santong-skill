@@ -1,0 +1,33 @@
+{
+  "skill": "by-harness",
+  "channel": "stable",
+  "version": "2.1.1",
+  "min_compatible_version": "1.0.0",
+  "files": [
+    {
+      "path": "scripts/session_close.py",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/scripts/session_close.py",
+      "sha256": "b9d6ab5aaa931765676dd5fb82967c424013d65c55e52c3f8d966feed134d436"
+    },
+    {
+      "path": "scripts/ensure_task_branch.py",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/scripts/ensure_task_branch.py",
+      "sha256": "625087c1e1bc8560bf0df61924ae4d9ea2e0416f984a98df56df8e2fc7f314f5"
+    },
+    {
+      "path": "scripts/task_switch.py",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/scripts/task_switch.py",
+      "sha256": "e20de323b25e11319c121be4a56acc0d2fa41a16b80305f79186cd72284ef1a2"
+    },
+    {
+      "path": "scripts/update_runtime.py",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/scripts/update_runtime.py",
+      "sha256": "9413cc1a4fd3d3335d01f36267b29aac5dc01a7df68d5ed0b6c8ce6a8684c1e5"
+    },
+    {
+      "path": "scripts/upgrade_legacy_repo.py",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/scripts/upgrade_legacy_repo.py",
+      "sha256": "225aaf99d1da03b1393cc9bb62b091df557ddeeb4ed8bdb506afdeeb22a7a17a"
+    }
+  ]
+}

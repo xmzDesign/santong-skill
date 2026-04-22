@@ -140,6 +140,8 @@
 - `.harness/docs/plans/`：计划产物
 - `.harness/docs/java-dev-conventions.md`：Java 后端编码规范（Java 项目必读）
 - `.harness/feature_list.json`：legacy 兼容镜像（仅在历史项目存在时沿用）
+- `.harness/runtime-version.json`：运行时版本号（用于版本化升级）
+- `.harness/update-policy.json`：远程更新策略（定时检查与自动应用）
 - `.harness/TASK-HARNESS.md`：任务层执行契约（可选）
 
 ## 提示词示例（Codex）

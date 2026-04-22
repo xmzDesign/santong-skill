@@ -57,6 +57,31 @@ def ensure_script_path(repo: Path, workspace: Path) -> Path | None:
     return None
 
 
+def update_script_path(repo: Path, workspace: Path) -> Path | None:
+    candidates = [
+        workspace / "scripts" / "update_runtime.py",
+        repo / "scripts" / "update_runtime.py",
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def invoke_runtime_check(repo: Path, workspace: Path) -> tuple[int, str]:
+    script = update_script_path(repo, workspace)
+    if script is None:
+        return 0, "update_runtime.py not found (skip remote check)"
+    cmd = ["python3", str(script), "--target-dir", str(repo), "--check-remote"]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    out = (result.stdout or "").strip()
+    err = (result.stderr or "").strip()
+    detail = out if out else err
+    if result.returncode != 0:
+        return result.returncode, detail
+    return 0, detail
+
+
 def invoke_task_sync(repo: Path, workspace: Path, prompt: str) -> tuple[int, str]:
     script = ensure_script_path(repo, workspace)
     if script is None:
@@ -76,6 +101,12 @@ def main() -> int:
     args = parse_args()
     repo = Path(args.target_dir).resolve()
     workspace = detect_workspace_dir(repo)
+
+    rc_update, update_detail = invoke_runtime_check(repo, workspace)
+    if update_detail:
+        print(f"[switch] runtime-check: {update_detail}")
+    if rc_update != 0:
+        print("[switch] runtime-check failed; continue with current local runtime.")
 
     clear_session_markers(workspace)
     rc, detail = invoke_task_sync(repo, workspace, args.prompt)

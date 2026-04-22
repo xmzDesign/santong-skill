@@ -27,12 +27,12 @@ fi
 cd "$WORKSPACE_DIR"
 
 echo ""
-echo "[1/7] 当前目录:"
+echo "[1/8] 当前目录:"
 echo "  仓库根目录: $REPO_ROOT"
 echo "  Harness 工作目录: $WORKSPACE_DIR"
 
 echo ""
-echo "[2/7] Git 状态:"
+echo "[2/8] Git 状态:"
 if git -C "$REPO_ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   git -C "$REPO_ROOT" status --short || echo "  (无 git 变更)"
 else
@@ -40,7 +40,7 @@ else
 fi
 
 echo ""
-echo "[3/7] 最近 10 条 commit:"
+echo "[3/8] 最近 10 条 commit:"
 if git -C "$REPO_ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   git -C "$REPO_ROOT" log --oneline -10 || echo "  (无 commit 历史)"
 else
@@ -48,7 +48,7 @@ else
 fi
 
 echo ""
-echo "[4/7] 功能完成进度:"
+echo "[4/8] 功能完成进度:"
 FEATURE_FILE="task-harness/features/backlog-core.json"
 ACTIVE_BUCKET="backlog-core"
 if [ ! -f "task-harness/index.json" ] && [ -f "feature_list.json" ]; then
@@ -121,7 +121,38 @@ else
 fi
 
 echo ""
-echo "[5/7] 会话模式与上下文重置:"
+echo "[5/8] 运行时远程更新检查:"
+UPDATE_SCRIPT=""
+if [ -f "$WORKSPACE_DIR/scripts/update_runtime.py" ]; then
+  UPDATE_SCRIPT="$WORKSPACE_DIR/scripts/update_runtime.py"
+elif [ -f "$REPO_ROOT/scripts/update_runtime.py" ]; then
+  UPDATE_SCRIPT="$REPO_ROOT/scripts/update_runtime.py"
+fi
+if [ -n "$UPDATE_SCRIPT" ]; then
+  python3 "$UPDATE_SCRIPT" --target-dir "$REPO_ROOT" --check-remote || echo "  (远程更新检查失败，可手动重试)"
+else
+  echo "  (未找到 update_runtime.py，跳过远程更新检查)"
+fi
+
+echo ""
+echo "[6/8] 会话模式与上下文重置:"
+RUNTIME_VERSION="unknown"
+if [ -f "runtime-version.json" ]; then
+  RV=$(python3 - <<'PY'
+import json
+from pathlib import Path
+path = Path("runtime-version.json")
+try:
+    data = json.loads(path.read_text(encoding="utf-8"))
+except Exception:
+    print("unknown")
+else:
+    print(str(data.get("runtime_version", "unknown")))
+PY
+)
+  RUNTIME_VERSION=$(printf "%s\n" "$RV" | sed -n '1p')
+fi
+echo "  runtime_version: $RUNTIME_VERSION"
 SESSION_CONTROL=$(python3 - <<'PY'
 import json
 from pathlib import Path
@@ -211,7 +242,7 @@ PY
 fi
 
 echo ""
-echo "[6/7] 任务自动定位（当前分支）:"
+echo "[7/8] 任务自动定位（当前分支）:"
 BRANCH_SCRIPT=""
 if [ -f "$WORKSPACE_DIR/scripts/ensure_task_branch.py" ]; then
   BRANCH_SCRIPT="$WORKSPACE_DIR/scripts/ensure_task_branch.py"
@@ -225,7 +256,7 @@ else
 fi
 
 echo ""
-echo "[7/7] 依赖检查:"
+echo "[8/8] 依赖检查:"
 if [ -d "$REPO_ROOT/node_modules" ]; then
   echo "  node_modules 已存在"
 else
@@ -254,7 +285,8 @@ echo "  3. 阅读 ${WORKSPACE_PREFIX}task-harness/progress/*.md（${WORKSPACE_PR
 echo "  4. 确认已自动定位当前任务（默认在当前分支开发）"
 echo "  5. 若为 Java 项目，先阅读 ${WORKSPACE_PREFIX}docs/java-dev-conventions.md"
 echo "  6. 按 plan/build/qa 流程执行，单元测试通过后即可改 passes（QA 非阻塞）"
-echo "  7. 运行 python3 ${WORKSPACE_PREFIX}scripts/session_close.py --target-dir . --feature-id <feat-id>"
-echo "  8. 自动续跑下个任务：python3 ${WORKSPACE_PREFIX}scripts/task_switch.py continue --target-dir ."
-echo "  9. git commit / git push"
+echo "  7. 如需手动更新运行时：python3 ${WORKSPACE_PREFIX}scripts/update_runtime.py --target-dir . --dry-run"
+echo "  8. 运行 python3 ${WORKSPACE_PREFIX}scripts/session_close.py --target-dir . --feature-id <feat-id>"
+echo "  9. 自动续跑下个任务：python3 ${WORKSPACE_PREFIX}scripts/task_switch.py continue --target-dir ."
+echo " 10. git commit / git push"
 echo ""
