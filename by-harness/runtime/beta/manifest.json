@@ -1,7 +1,7 @@
 {
   "skill": "by-harness",
   "channel": "beta",
-  "version": "2.1.1",
+  "version": "2.1.4",
   "min_compatible_version": "1.0.0",
   "files": [
     {
@@ -22,12 +22,47 @@
     {
       "path": "scripts/update_runtime.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/scripts/update_runtime.py",
-      "sha256": "9413cc1a4fd3d3335d01f36267b29aac5dc01a7df68d5ed0b6c8ce6a8684c1e5"
+      "sha256": "b526c6aedc5c0edd557fc4172a8016059ce89250a4e9a1ca8d1662ec467a5d27"
     },
     {
       "path": "scripts/upgrade_legacy_repo.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/scripts/upgrade_legacy_repo.py",
       "sha256": "225aaf99d1da03b1393cc9bb62b091df557ddeeb4ed8bdb506afdeeb22a7a17a"
+    },
+    {
+      "path": "TASK-HARNESS.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/task/TASK-HARNESS.md",
+      "sha256": "3a557ee7b1dab489a78e6c88fb0d52af1ed00172e81d8c3e05efcbea9052e8ea"
+    },
+    {
+      "path": "docs/architecture.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/architecture.md",
+      "sha256": "c7df1ccc33f2158880c148010be52e1d96c9dc26e55ec38e7f4b8c9c5d3efa42"
+    },
+    {
+      "path": "docs/golden-principles.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/golden-principles.md",
+      "sha256": "4b2503a8a447d52feadeddbe8c1a38910492db99350c88a398323a10f16a9c84"
+    },
+    {
+      "path": "docs/sprint-workflow.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/sprint-workflow.md",
+      "sha256": "926acd7cd51539bb2a6e53dd4af2aedde6cfbf4d94cf8155d11912dfceaf61ef"
+    },
+    {
+      "path": "docs/java-dev-conventions.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/java-dev-conventions.md",
+      "sha256": "58a3d1d8599d7f94e90453361cea3862d42d80a902d74b3455fadc70f290805d"
+    },
+    {
+      "path": "docs/contracts/TEMPLATE.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/contracts/TEMPLATE.md",
+      "sha256": "b9251f2856f20208c961d10c7947a230100739f300635365e5229f12776b0410"
+    },
+    {
+      "path": "docs/frontend-dev-conventions.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend-dev-conventions.md",
+      "sha256": "2f590f73e79532b7ba9ee786f547dfab182ecd753b79de14aa9041f4249f8ee6"
     }
   ]
 }

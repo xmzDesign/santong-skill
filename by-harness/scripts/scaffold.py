@@ -205,6 +205,7 @@ def verify_outputs(target_dir: Path):
         ".claude/settings.json",
         f"{HARNESS_DIR_NAME}/docs/contracts/TEMPLATE.md",
         f"{HARNESS_DIR_NAME}/docs/java-dev-conventions.md",
+        f"{HARNESS_DIR_NAME}/docs/frontend-dev-conventions.md",
         f"{HARNESS_DIR_NAME}/docs/qa",
         f"{HARNESS_DIR_NAME}/task-harness/progress",
     ]
@@ -231,6 +232,7 @@ def main():
         ("harness/docs/golden-principles.md", f"{HARNESS_DIR_NAME}/docs/golden-principles.md"),
         ("harness/docs/sprint-workflow.md", f"{HARNESS_DIR_NAME}/docs/sprint-workflow.md"),
         ("harness/docs/java-dev-conventions.md", f"{HARNESS_DIR_NAME}/docs/java-dev-conventions.md"),
+        ("harness/docs/frontend-dev-conventions.md", f"{HARNESS_DIR_NAME}/docs/frontend-dev-conventions.md"),
         ("harness/docs/contracts/TEMPLATE.md", f"{HARNESS_DIR_NAME}/docs/contracts/TEMPLATE.md"),
         ("harness/agents/planner.md", ".claude/agents/planner.md"),
         ("harness/agents/generator.md", ".claude/agents/generator.md"),

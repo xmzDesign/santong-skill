@@ -45,6 +45,7 @@
 - 若 contract 缺失，先基于 `.harness/docs/contracts/TEMPLATE.md` 创建再实现。
 - 只允许实现 contract 范围内内容。
 - 若项目技术栈包含 Java/Spring Boot，编码前必须先阅读 `.harness/docs/java-dev-conventions.md` 并完成其中前置闸门确认。
+- 若项目技术栈包含 React/Vue/TypeScript/Next.js，编码前必须先阅读 `.harness/docs/frontend-dev-conventions.md` 并完成其中前置约束确认。
 - 所有新增/修改的函数、方法必须补充中文注释，至少说明：用途、关键参数、返回值与副作用（如状态变更/IO）。
 - 交付前必须自检：
   - 构建/编译通过
@@ -100,6 +101,10 @@
 
 - 若为 Java 项目：必须遵守 `.harness/docs/java-dev-conventions.md`。
 
+### 前端附加规则（适用时强制）
+
+- 若为前端项目：必须遵守 `.harness/docs/frontend-dev-conventions.md`。
+
 ## 与 Task Harness 的集成（可选但推荐）
 
 若项目存在 `.harness/task-harness/index.json` 与 `.harness/TASK-HARNESS.md`，按以下方式形成任务闭环：
@@ -139,6 +144,7 @@
 - `.harness/docs/contracts/`：冲刺契约
 - `.harness/docs/plans/`：计划产物
 - `.harness/docs/java-dev-conventions.md`：Java 后端编码规范（Java 项目必读）
+- `.harness/docs/frontend-dev-conventions.md`：前端工程级编码规范（前端项目必读）
 - `.harness/feature_list.json`：legacy 兼容镜像（仅在历史项目存在时沿用）
 - `.harness/runtime-version.json`：运行时版本号（用于版本化升级）
 - `.harness/update-policy.json`：远程更新策略（定时检查与自动应用）

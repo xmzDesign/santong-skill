@@ -17,6 +17,7 @@ santong-skills/
 
 - 根目录极简：默认只放 `AGENTS.md`（以及隐藏运行目录 `.codex/.claude`）
 - 工作文件集中在 `.harness/`：`CLAUDE.md`、`docs/`、`TASK-HARNESS.md`、`task-harness/`、`progress.txt`、`init.sh`、`task.json`（`feature_list.json` 不再默认创建，仅 legacy 项目兼容）
+- 默认下发工程规范文档：`.harness/docs/java-dev-conventions.md`（后端）与 `.harness/docs/frontend-dev-conventions.md`（前端）
 - 运行时版本文件：`.harness/runtime-version.json`（用于版本化升级）
 - 远程更新策略：`.harness/update-policy.json`（定时检查 + 自动升级策略）
 - 自动任务定位：`.harness/scripts/ensure_task_branch.py`（按任务状态/提示词选出当前要做的 feature，不切分支）
@@ -174,6 +175,8 @@ python3 .harness/scripts/update_runtime.py --target-dir . --check-remote --force
 ```
 
 远程 `manifest.json` 最小结构示例：
+
+说明：`files` 不仅可下发 `scripts/*`，也可下发 `.harness` 内的规范文档（如 `TASK-HARNESS.md`、`docs/*.md`），用于统一更新团队执行规范。
 
 ```json
 {

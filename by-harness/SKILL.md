@@ -81,6 +81,7 @@ python3 {{SKILL_PATH}}/scripts/scaffold.py \
 初始化后生成：
 - 根目录最小集：`AGENTS.md` + `.codex/` + `.claude/`
 - `.harness/`：`CLAUDE.md`、`docs/`、`TASK-HARNESS.md`、`task-harness/`、`progress.txt`、`init.sh`、`task.json`
+- 规范文档：`.harness/docs/java-dev-conventions.md`（后端）与 `.harness/docs/frontend-dev-conventions.md`（前端）
 - 收口工具：`.harness/scripts/session_close.py`
 
 ## 持续拆任务（可重复执行）

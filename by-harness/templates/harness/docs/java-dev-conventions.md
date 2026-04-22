@@ -2,9 +2,6 @@
 
 本规范用于 Java 后端项目在多人协作、跨仓协作、AI 并行开发场景下的统一工程约束与执行闸门。
 
-参考来源：
-- `/Users/xmz/git/skill-create/leadspark-spec/docs/common/backend-java-coding-standard.md`
-
 版本信息：
 - Version: `1.0`
 - Last Updated: `2026-04-20`
@@ -47,7 +44,6 @@
 ### 5.1 核心运行时
 
 - JDK：`1.8`
-- Spring Boot：`2.7.18`
 - 构建工具：Maven（支持多模块）
 
 ### 5.2 禁止项

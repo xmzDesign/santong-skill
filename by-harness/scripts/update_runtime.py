@@ -33,6 +33,15 @@ RUNTIME_SCRIPT_NAMES = (
     "update_runtime.py",
     "upgrade_legacy_repo.py",
 )
+RUNTIME_DOC_REL_PATHS = (
+    "TASK-HARNESS.md",
+    "docs/architecture.md",
+    "docs/golden-principles.md",
+    "docs/sprint-workflow.md",
+    "docs/java-dev-conventions.md",
+    "docs/frontend-dev-conventions.md",
+    "docs/contracts/TEMPLATE.md",
+)
 
 DEFAULT_MODE = "soft_reset"
 SUPPORTED_MODES = ["soft_reset", "hard_new_session"]
@@ -603,9 +612,9 @@ def apply_remote_update(
     timeout_seconds: int,
     require_checksum: bool,
 ) -> tuple[int, dict[str, int]]:
-    backup_targets = [harness_dir / "task.json", runtime_version_path(harness_dir)] + [
-        harness_dir / "scripts" / name for name in RUNTIME_SCRIPT_NAMES
-    ]
+    backup_targets = [harness_dir / "task.json", runtime_version_path(harness_dir)]
+    backup_targets.extend(harness_dir / "scripts" / name for name in RUNTIME_SCRIPT_NAMES)
+    backup_targets.extend(harness_dir / rel for rel in RUNTIME_DOC_REL_PATHS)
     if no_backup:
         print("Backup: skipped (--no-backup)")
         backed_up = 0
@@ -641,9 +650,9 @@ def fallback_local_update(
     no_backup: bool,
     dry_run: bool,
 ) -> None:
-    backup_targets = [harness_dir / "task.json", runtime_version_path(harness_dir)] + [
-        harness_dir / "scripts" / name for name in RUNTIME_SCRIPT_NAMES
-    ]
+    backup_targets = [harness_dir / "task.json", runtime_version_path(harness_dir)]
+    backup_targets.extend(harness_dir / "scripts" / name for name in RUNTIME_SCRIPT_NAMES)
+    backup_targets.extend(harness_dir / rel for rel in RUNTIME_DOC_REL_PATHS)
     if no_backup:
         print("Backup: skipped (--no-backup)")
     else:
