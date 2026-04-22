@@ -28,6 +28,14 @@ santong-skills/
 - 门禁策略：单元测试通过即可 `passes=true`，QA 默认非阻塞
 - 注释准则：所有新增/修改函数、方法必须补齐中文注释（用途、参数、返回值、副作用）
 
+### 任务索引与进度快照
+
+- `.harness/task-harness/index.json`：任务路由索引（给脚本读）
+- 作用：维护 `active_bucket` 与各 bucket 文件路径映射，帮助 `init.sh`、`ensure_task_branch.py`、`decompose/rebalance` 快速定位“当前任务桶”
+- `.harness/progress.txt`：最新进度快照（给人读）
+- 作用：记录最近一次会话收口后的摘要（当前 feature、完成项、风险与下一步），用于新会话快速接续
+- 详细历史仍在：`.harness/task-harness/progress/YYYY-MM.md`
+
 ### 一体化初始化
 
 ```bash
