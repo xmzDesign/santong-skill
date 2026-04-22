@@ -27,7 +27,9 @@ def detect_workspace_dir(repo: Path) -> Path:
 
 
 def clear_session_markers(workspace: Path) -> None:
-    context_path = workspace / "session-context.json"
+    context_path = workspace / "config" / "session-context.json"
+    if not context_path.exists():
+        context_path = workspace / "session-context.json"
     if not context_path.exists():
         return
     try:

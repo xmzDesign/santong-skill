@@ -3,7 +3,7 @@
 #  {{项目名称}} - Agent 环境初始化脚本
 # ==========================================
 # 用途：每个 Agent 会话开始时运行，快速恢复开发环境
-# 用法：bash .harness/init.sh（legacy 项目可用 bash init.sh）
+# 用法：bash .harness/scripts/init.sh（legacy 项目可用 bash .harness/init.sh）
 
 set -e
 
@@ -11,25 +11,45 @@ echo "=========================================="
 echo "  {{项目名称}} - Agent 环境初始化"
 echo "=========================================="
 
-WORKSPACE_DIR="$(cd "$(dirname "$0")" && pwd)"
-if [ -f "$WORKSPACE_DIR/AGENTS.md" ]; then
-  REPO_ROOT="$WORKSPACE_DIR"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+if [ "$(basename "$SCRIPT_DIR")" = "scripts" ] && [ -d "$SCRIPT_DIR/../task-harness" ]; then
+  HARNESS_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+elif [ -d "$SCRIPT_DIR/task-harness" ]; then
+  HARNESS_DIR="$SCRIPT_DIR"
 else
-  REPO_ROOT="$(cd "$WORKSPACE_DIR/.." && pwd)"
+  HARNESS_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 fi
-WORKSPACE_NAME="$(basename "$WORKSPACE_DIR")"
-if [ "$WORKSPACE_DIR" = "$REPO_ROOT" ]; then
+
+if [ -f "$HARNESS_DIR/../AGENTS.md" ]; then
+  REPO_ROOT="$(cd "$HARNESS_DIR/.." && pwd)"
+else
+  REPO_ROOT="$HARNESS_DIR"
+fi
+
+WORKSPACE_NAME="$(basename "$HARNESS_DIR")"
+if [ "$HARNESS_DIR" = "$REPO_ROOT" ]; then
   WORKSPACE_PREFIX=""
 else
   WORKSPACE_PREFIX="$WORKSPACE_NAME/"
 fi
 
-cd "$WORKSPACE_DIR"
+resolve_file() {
+  local rel
+  for rel in "$@"; do
+    if [ -f "$HARNESS_DIR/$rel" ]; then
+      echo "$HARNESS_DIR/$rel"
+      return 0
+    fi
+  done
+  echo "$HARNESS_DIR/$1"
+}
+
+cd "$HARNESS_DIR"
 
 echo ""
 echo "[1/8] 当前目录:"
 echo "  仓库根目录: $REPO_ROOT"
-echo "  Harness 工作目录: $WORKSPACE_DIR"
+echo "  Harness 工作目录: $HARNESS_DIR"
 
 echo ""
 echo "[2/8] Git 状态:"
@@ -123,8 +143,8 @@ fi
 echo ""
 echo "[5/8] 运行时远程更新检查:"
 UPDATE_SCRIPT=""
-if [ -f "$WORKSPACE_DIR/scripts/update_runtime.py" ]; then
-  UPDATE_SCRIPT="$WORKSPACE_DIR/scripts/update_runtime.py"
+if [ -f "$HARNESS_DIR/scripts/update_runtime.py" ]; then
+  UPDATE_SCRIPT="$HARNESS_DIR/scripts/update_runtime.py"
 elif [ -f "$REPO_ROOT/scripts/update_runtime.py" ]; then
   UPDATE_SCRIPT="$REPO_ROOT/scripts/update_runtime.py"
 fi
@@ -136,12 +156,15 @@ fi
 
 echo ""
 echo "[6/8] 会话模式与上下文重置:"
+RUNTIME_VERSION_FILE="$(resolve_file "config/runtime-version.json" "runtime-version.json")"
+TASK_FILE="$(resolve_file "config/task.json" "task.json")"
 RUNTIME_VERSION="unknown"
-if [ -f "runtime-version.json" ]; then
-  RV=$(python3 - <<'PY'
+if [ -f "$RUNTIME_VERSION_FILE" ]; then
+  RV=$(RUNTIME_VERSION_FILE="$RUNTIME_VERSION_FILE" python3 - <<'PY'
 import json
+import os
 from pathlib import Path
-path = Path("runtime-version.json")
+path = Path(os.environ["RUNTIME_VERSION_FILE"])
 try:
     data = json.loads(path.read_text(encoding="utf-8"))
 except Exception:
@@ -153,12 +176,13 @@ PY
   RUNTIME_VERSION=$(printf "%s\n" "$RV" | sed -n '1p')
 fi
 echo "  runtime_version: $RUNTIME_VERSION"
-SESSION_CONTROL=$(python3 - <<'PY'
+SESSION_CONTROL=$(TASK_FILE="$TASK_FILE" python3 - <<'PY'
 import json
+import os
 from pathlib import Path
 
 mode = "soft_reset"
-path = Path("task.json")
+path = Path(os.environ["TASK_FILE"])
 if path.exists():
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
@@ -187,7 +211,7 @@ esac
 echo "  session_mode: $SESSION_MODE"
 
 if [ "$SESSION_MODE" = "hard_new_session" ]; then
-  BOUNDARY_FILE="$WORKSPACE_DIR/session-boundary.json"
+  BOUNDARY_FILE="$(resolve_file "config/session-boundary.json" "session-boundary.json")"
   if [ -f "$BOUNDARY_FILE" ]; then
     BOUNDARY_FILE="$BOUNDARY_FILE" python3 - <<'PY'
 import json
@@ -211,7 +235,7 @@ PY
     echo "  无会话边界标记"
   fi
 else
-  CONTEXT_FILE="$WORKSPACE_DIR/session-context.json"
+  CONTEXT_FILE="$(resolve_file "config/session-context.json" "session-context.json")"
   if [ -f "$CONTEXT_FILE" ]; then
     CONTEXT_FILE="$CONTEXT_FILE" python3 - <<'PY'
 import json
@@ -244,8 +268,8 @@ fi
 echo ""
 echo "[7/8] 任务自动定位（当前分支）:"
 BRANCH_SCRIPT=""
-if [ -f "$WORKSPACE_DIR/scripts/ensure_task_branch.py" ]; then
-  BRANCH_SCRIPT="$WORKSPACE_DIR/scripts/ensure_task_branch.py"
+if [ -f "$HARNESS_DIR/scripts/ensure_task_branch.py" ]; then
+  BRANCH_SCRIPT="$HARNESS_DIR/scripts/ensure_task_branch.py"
 elif [ -f "$REPO_ROOT/scripts/ensure_task_branch.py" ]; then
   BRANCH_SCRIPT="$REPO_ROOT/scripts/ensure_task_branch.py"
 fi
@@ -267,7 +291,8 @@ if [ -f "$REPO_ROOT/AGENTS.md" ]; then
 else
   echo "  ⚠️ AGENTS.md 不存在，建议先执行 by-harness 脚手架初始化"
 fi
-if [ -f "$WORKSPACE_DIR/TASK-HARNESS.md" ]; then
+TASK_CONTRACT_FILE="$(resolve_file "docs/TASK-HARNESS.md" "TASK-HARNESS.md")"
+if [ -f "$TASK_CONTRACT_FILE" ]; then
   echo "  TASK-HARNESS.md 已存在（任务层执行契约）"
 else
   echo "  ⚠️ TASK-HARNESS.md 不存在，建议重新执行 by-harness 脚手架"
@@ -280,8 +305,8 @@ echo "=========================================="
 echo ""
 echo "下一步操作:"
 echo "  1. 阅读 AGENTS.md（Harness 主闭环规则）"
-echo "  2. 阅读 ${WORKSPACE_PREFIX}TASK-HARNESS.md（任务层规则）"
-echo "  3. 阅读 ${WORKSPACE_PREFIX}task-harness/progress/*.md（${WORKSPACE_PREFIX}progress.txt 为最新快照）"
+echo "  2. 阅读 ${WORKSPACE_PREFIX}docs/TASK-HARNESS.md（任务层规则）"
+echo "  3. 阅读 ${WORKSPACE_PREFIX}task-harness/progress/*.md（${WORKSPACE_PREFIX}task-harness/progress/latest.txt 为最新快照）"
 echo "  4. 确认已自动定位当前任务（默认在当前分支开发）"
 echo "  5. 若为 Java 项目，先阅读 ${WORKSPACE_PREFIX}docs/java-dev-conventions.md；若为前端项目，先阅读 ${WORKSPACE_PREFIX}docs/frontend-dev-conventions.md"
 echo "  6. 按 plan/build/qa 流程执行，单元测试通过后即可改 passes（QA 非阻塞）"

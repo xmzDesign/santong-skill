@@ -144,7 +144,9 @@ def normalize_session_mode(raw: str) -> str:
 
 
 def load_session_mode(workspace_dir: Path) -> str:
-    task_path = workspace_dir / "task.json"
+    task_path = workspace_dir / "config" / "task.json"
+    if not task_path.exists():
+        task_path = workspace_dir / "task.json"
     if not task_path.exists():
         return SESSION_MODE_SOFT
 
@@ -163,7 +165,9 @@ def load_session_mode(workspace_dir: Path) -> str:
 
 
 def load_session_boundary(workspace_dir: Path) -> dict[str, Any] | None:
-    path = workspace_dir / "session-boundary.json"
+    path = workspace_dir / "config" / "session-boundary.json"
+    if not path.exists():
+        path = workspace_dir / "session-boundary.json"
     if not path.exists():
         return None
     try:
@@ -356,7 +360,7 @@ def main() -> int:
                 "[task] blocked by session boundary: "
                 f"mode=hard_new_session closed_feature={closed_id} next_feature={next_id}"
             )
-            print("[task] run `bash .harness/init.sh` in a NEW session before next feature.")
+            print("[task] run `bash .harness/scripts/init.sh` in a NEW session before next feature.")
             return 2
 
     feature_file, legacy_mirror, _index_data = resolve_feature_file(workspace_dir)

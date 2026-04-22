@@ -17,7 +17,7 @@ from datetime import date
 from pathlib import Path
 
 HARNESS_DIR_NAME = ".harness"
-HARNESS_RUNTIME_VERSION = "2.1.0"
+HARNESS_RUNTIME_VERSION = "2.2.1"
 
 
 def parse_args():
@@ -184,19 +184,19 @@ def ship_runtime_script(
 def verify_outputs(target_dir: Path):
     required = [
         "AGENTS.md",
-        f"{HARNESS_DIR_NAME}/CLAUDE.md",
-        f"{HARNESS_DIR_NAME}/TASK-HARNESS.md",
+        "CLAUDE.md",
+        f"{HARNESS_DIR_NAME}/docs/TASK-HARNESS.md",
         f"{HARNESS_DIR_NAME}/task-harness/index.json",
         f"{HARNESS_DIR_NAME}/task-harness/features/backlog-core.json",
-        f"{HARNESS_DIR_NAME}/runtime-version.json",
-        f"{HARNESS_DIR_NAME}/update-policy.json",
-        f"{HARNESS_DIR_NAME}/progress.txt",
+        f"{HARNESS_DIR_NAME}/config/runtime-version.json",
+        f"{HARNESS_DIR_NAME}/config/update-policy.json",
+        f"{HARNESS_DIR_NAME}/config/task.json",
+        f"{HARNESS_DIR_NAME}/task-harness/progress/latest.txt",
         f"{HARNESS_DIR_NAME}/scripts/session_close.py",
         f"{HARNESS_DIR_NAME}/scripts/ensure_task_branch.py",
         f"{HARNESS_DIR_NAME}/scripts/task_switch.py",
         f"{HARNESS_DIR_NAME}/scripts/update_runtime.py",
-        f"{HARNESS_DIR_NAME}/init.sh",
-        f"{HARNESS_DIR_NAME}/task.json",
+        f"{HARNESS_DIR_NAME}/scripts/init.sh",
         ".codex/config.toml",
         ".codex/hooks.json",
         ".codex/hooks/context-injector.py",
@@ -227,7 +227,7 @@ def main():
     harness_dir = target_dir / HARNESS_DIR_NAME
     file_mappings = [
         ("harness/AGENTS.md", "AGENTS.md"),
-        ("harness/CLAUDE.md", f"{HARNESS_DIR_NAME}/CLAUDE.md"),
+        ("harness/CLAUDE.md", "CLAUDE.md"),
         ("harness/docs/architecture.md", f"{HARNESS_DIR_NAME}/docs/architecture.md"),
         ("harness/docs/golden-principles.md", f"{HARNESS_DIR_NAME}/docs/golden-principles.md"),
         ("harness/docs/sprint-workflow.md", f"{HARNESS_DIR_NAME}/docs/sprint-workflow.md"),
@@ -251,12 +251,12 @@ def main():
         ("harness/codex/hooks/pre-completion-check.py", ".codex/hooks/pre-completion-check.py"),
         ("task/index.json", f"{HARNESS_DIR_NAME}/task-harness/index.json"),
         ("task/backlog-core.json", f"{HARNESS_DIR_NAME}/task-harness/features/backlog-core.json"),
-        ("task/runtime-version.json", f"{HARNESS_DIR_NAME}/runtime-version.json"),
-        ("task/update-policy.json", f"{HARNESS_DIR_NAME}/update-policy.json"),
-        ("task/progress.txt", f"{HARNESS_DIR_NAME}/progress.txt"),
-        ("task/init.sh", f"{HARNESS_DIR_NAME}/init.sh"),
-        ("task/task.json", f"{HARNESS_DIR_NAME}/task.json"),
-        ("task/TASK-HARNESS.md", f"{HARNESS_DIR_NAME}/TASK-HARNESS.md"),
+        ("task/runtime-version.json", f"{HARNESS_DIR_NAME}/config/runtime-version.json"),
+        ("task/update-policy.json", f"{HARNESS_DIR_NAME}/config/update-policy.json"),
+        ("task/progress.txt", f"{HARNESS_DIR_NAME}/task-harness/progress/latest.txt"),
+        ("task/init.sh", f"{HARNESS_DIR_NAME}/scripts/init.sh"),
+        ("task/task.json", f"{HARNESS_DIR_NAME}/config/task.json"),
+        ("task/TASK-HARNESS.md", f"{HARNESS_DIR_NAME}/docs/TASK-HARNESS.md"),
     ]
 
     print(f"\nInitializing by-harness in: {target_dir}")
@@ -308,13 +308,13 @@ def main():
 
     print(f"\nDone. Created {created} files, skipped {skipped} files.")
     print("\nNext steps:")
-    print(f"  1. bash {HARNESS_DIR_NAME}/init.sh")
-    print(f"  2. 阅读 AGENTS.md 与 {HARNESS_DIR_NAME}/TASK-HARNESS.md")
+    print(f"  1. bash {HARNESS_DIR_NAME}/scripts/init.sh")
+    print(f"  2. 阅读 AGENTS.md 与 {HARNESS_DIR_NAME}/docs/TASK-HARNESS.md")
     print("  3. 选择 passes=false 的 feature，执行 plan/build/qa 闭环")
     print(f"  4. 单元测试通过即可更新 passes=true（QA 非阻塞），并写入 {HARNESS_DIR_NAME}/task-harness/progress/YYYY-MM.md")
     print(f"  5. 会话结束执行：python3 {HARNESS_DIR_NAME}/scripts/session_close.py --target-dir . --feature-id <feat-id>")
     print(f"  6. 自动续跑下个任务（当前分支）：python3 {HARNESS_DIR_NAME}/scripts/task_switch.py continue --target-dir .")
-    print(f"  7. 配置并启用远程更新：编辑 {HARNESS_DIR_NAME}/update-policy.json")
+    print(f"  7. 配置并启用远程更新：编辑 {HARNESS_DIR_NAME}/config/update-policy.json")
 
 
 if __name__ == "__main__":

@@ -21,11 +21,11 @@
   [x] 探索项目结构，了解技术架构
   [x] 制定开发计划
   [x] 创建 .harness/task-harness/features/backlog-core.json（N 个功能点）
-  [x] 创建 .harness/progress.txt（本文件）
-  [x] 创建 .harness/init.sh（环境初始化脚本）
-  [x] 创建 .harness/task.json（项目总览）
+  [x] 创建 .harness/task-harness/progress/latest.txt（本文件）
+  [x] 创建 .harness/scripts/init.sh（环境初始化脚本）
+  [x] 创建 .harness/config/task.json（项目总览）
   [x] 确认 AGENTS.md（Harness 主执行契约）已存在
-  [x] 创建 .harness/TASK-HARNESS.md（任务层执行契约）
+  [x] 创建 .harness/docs/TASK-HARNESS.md（任务层执行契约）
 
 关键发现:
   - {{重要发现 1}}

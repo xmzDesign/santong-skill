@@ -16,10 +16,11 @@ santong-skills/
 ### 核心能力
 
 - 根目录极简：默认只放 `AGENTS.md`（以及隐藏运行目录 `.codex/.claude`）
-- 工作文件集中在 `.harness/`：`CLAUDE.md`、`docs/`、`TASK-HARNESS.md`、`task-harness/`、`progress.txt`、`init.sh`、`task.json`（`feature_list.json` 不再默认创建，仅 legacy 项目兼容）
+- 根目录入口文件：`AGENTS.md`（Codex）与 `CLAUDE.md`（Claude）
+- 工作文件集中在 `.harness/`：`config/`、`docs/`、`scripts/`、`task-harness/`（`feature_list.json` 不再默认创建，仅 legacy 项目兼容）
 - 默认下发工程规范文档：`.harness/docs/java-dev-conventions.md`（后端）与 `.harness/docs/frontend-dev-conventions.md`（前端）
-- 运行时版本文件：`.harness/runtime-version.json`（用于版本化升级）
-- 远程更新策略：`.harness/update-policy.json`（定时检查 + 自动升级策略）
+- 运行时版本文件：`.harness/config/runtime-version.json`（用于版本化升级）
+- 远程更新策略：`.harness/config/update-policy.json`（定时检查 + 自动升级策略）
 - 自动任务定位：`.harness/scripts/ensure_task_branch.py`（按任务状态/提示词选出当前要做的 feature，不切分支）
 - 会话收口：`.harness/scripts/session_close.py`（会话日志 + 快照 + 会话状态）
 - 连续切任务：`.harness/scripts/task_switch.py`（当前分支自动续跑下个任务）
@@ -32,7 +33,7 @@ santong-skills/
 
 - `.harness/task-harness/index.json`：任务路由索引（给脚本读）
 - 作用：维护 `active_bucket` 与各 bucket 文件路径映射，帮助 `init.sh`、`ensure_task_branch.py`、`decompose/rebalance` 快速定位“当前任务桶”
-- `.harness/progress.txt`：最新进度快照（给人读）
+- `.harness/task-harness/progress/latest.txt`：最新进度快照（给人读）
 - 作用：记录最近一次会话收口后的摘要（当前 feature、完成项、风险与下一步），用于新会话快速接续
 - 详细历史仍在：`.harness/task-harness/progress/YYYY-MM.md`
 
@@ -50,7 +51,7 @@ python3 by-harness/scripts/scaffold.py \
 初始化后先执行：
 
 ```bash
-bash .harness/init.sh
+bash .harness/scripts/init.sh
 ```
 
 ### 常用命令
@@ -93,7 +94,7 @@ python3 .harness/scripts/task_switch.py continue --target-dir "."
 python3 .harness/scripts/update_runtime.py --target-dir "." --check-remote
 ```
 
-### 会话控制配置（`.harness/task.json`）
+### 会话控制配置（`.harness/config/task.json`）
 
 ```json
 {
@@ -113,7 +114,7 @@ python3 .harness/scripts/update_runtime.py --target-dir "." --check-remote
 
 - 可以再次执行 `scaffold.py`，默认不带 `--force` 时已有文件会 `SKIP`，不会直接覆盖任务数据
 - 不要在已有项目直接全量 `--force`
-- 升级由版本文件 `.harness/runtime-version.json` 驱动，脚本会自动同步运行时脚本与迁移 `task.json`
+- 升级由版本文件 `.harness/config/runtime-version.json` 驱动，脚本会自动同步运行时脚本与迁移 `config/task.json`
 - 推荐直接使用版本化升级脚本（自动备份 + 按版本差异迁移）：
 
 ```bash
@@ -133,7 +134,7 @@ python3 by-harness/scripts/upgrade_legacy_repo.py --target-dir "<你的项目目
 ### 远程自动更新配置
 
 1) 在远程维护 `manifest.json`（建议 stable / beta 分开）。  
-2) 在项目配置 `.harness/update-policy.json` 的 `manifest_url`。  
+2) 在项目配置 `.harness/config/update-policy.json` 的 `manifest_url`。  
 3) `init.sh` 与 `task_switch.py continue` 会自动触发定时检查，发现新版本按策略自动更新。
 默认模板里 `enabled=false`，配置 `manifest_url` 后请切换为 `true`。
 
@@ -184,13 +185,13 @@ python3 .harness/scripts/update_runtime.py --target-dir . --check-remote --force
 
 远程 `manifest.json` 最小结构示例：
 
-说明：`files` 不仅可下发 `scripts/*`，也可下发 `.harness` 内的规范文档（如 `TASK-HARNESS.md`、`docs/*.md`），用于统一更新团队执行规范。
+说明：`files` 不仅可下发 `scripts/*`，也可下发 `.harness` 内的规范文档（如 `docs/TASK-HARNESS.md`、`docs/*.md`），用于统一更新团队执行规范。
 
 ```json
 {
   "skill": "by-harness",
   "channel": "stable",
-  "version": "2.1.0",
+  "version": "2.2.1",
   "min_compatible_version": "1.0.0",
   "files": [
     {

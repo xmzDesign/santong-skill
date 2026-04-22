@@ -1,28 +1,33 @@
 {
   "skill": "by-harness",
   "channel": "stable",
-  "version": "2.1.4",
+  "version": "2.2.1",
   "min_compatible_version": "1.0.0",
   "files": [
     {
       "path": "scripts/session_close.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/scripts/session_close.py",
-      "sha256": "b9d6ab5aaa931765676dd5fb82967c424013d65c55e52c3f8d966feed134d436"
+      "sha256": "392b924babfcc57f2509d3d81d67ce5108d9430bd72e01361627b909638cb20c"
     },
     {
       "path": "scripts/ensure_task_branch.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/scripts/ensure_task_branch.py",
-      "sha256": "625087c1e1bc8560bf0df61924ae4d9ea2e0416f984a98df56df8e2fc7f314f5"
+      "sha256": "7954fd389f425ee1787e5c70a69674d05fdff13bb12b4ceaa4e4c23c13896f57"
     },
     {
       "path": "scripts/task_switch.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/scripts/task_switch.py",
-      "sha256": "e20de323b25e11319c121be4a56acc0d2fa41a16b80305f79186cd72284ef1a2"
+      "sha256": "9a5ffe136e93ac371428058b1d6599f246b780d3a3e4dbb68d9f113fb3f198e1"
     },
     {
       "path": "scripts/update_runtime.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/scripts/update_runtime.py",
-      "sha256": "b526c6aedc5c0edd557fc4172a8016059ce89250a4e9a1ca8d1662ec467a5d27"
+      "sha256": "ef27cdddc4b2a254fafdd1b024f640094287ae3314ec38d2c627f9c11fa78ad1"
+    },
+    {
+      "path": "scripts/init.sh",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/task/init.sh",
+      "sha256": "cf5e664c0ed7dd7a0b0cabd13060cb2b992286f5f847a23e31c56101f8ab91e3"
     },
     {
       "path": "scripts/upgrade_legacy_repo.py",
@@ -30,19 +35,19 @@
       "sha256": "225aaf99d1da03b1393cc9bb62b091df557ddeeb4ed8bdb506afdeeb22a7a17a"
     },
     {
-      "path": "TASK-HARNESS.md",
+      "path": "docs/TASK-HARNESS.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/task/TASK-HARNESS.md",
-      "sha256": "3a557ee7b1dab489a78e6c88fb0d52af1ed00172e81d8c3e05efcbea9052e8ea"
+      "sha256": "9bd6dc8587d7f5a2390876c42263e6f8d20e15c7c05ca776043244a579b73df0"
     },
     {
       "path": "docs/architecture.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/architecture.md",
-      "sha256": "c7df1ccc33f2158880c148010be52e1d96c9dc26e55ec38e7f4b8c9c5d3efa42"
+      "sha256": "b8a8c3953800806537e661c59e5a5ccdf189897bc7c732b7d52e44756947a5b5"
     },
     {
       "path": "docs/golden-principles.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/golden-principles.md",
-      "sha256": "4b2503a8a447d52feadeddbe8c1a38910492db99350c88a398323a10f16a9c84"
+      "sha256": "af55aa1226c4ce5ba568b421afb314a2a2a658c35f8cd6ddc640863c667a128d"
     },
     {
       "path": "docs/sprint-workflow.md",
@@ -52,7 +57,7 @@
     {
       "path": "docs/java-dev-conventions.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/java-dev-conventions.md",
-      "sha256": "58a3d1d8599d7f94e90453361cea3862d42d80a902d74b3455fadc70f290805d"
+      "sha256": "8201db26b53489c72824af1925d43670f9752d788cca051218a4dacba5e38fe6"
     },
     {
       "path": "docs/contracts/TEMPLATE.md",
@@ -63,6 +68,12 @@
       "path": "docs/frontend-dev-conventions.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend-dev-conventions.md",
       "sha256": "2f590f73e79532b7ba9ee786f547dfab182ecd753b79de14aa9041f4249f8ee6"
+    },
+    {
+      "path": "root/CLAUDE.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/CLAUDE.md",
+      "sha256": "7f2d3ccef64b4ece3d416367a696c603925db89a2c3504e401828ed9fe45afa2",
+      "render_project_context": true
     }
   ]
 }

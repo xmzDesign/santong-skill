@@ -218,8 +218,8 @@ def get_task_harness_state():
     state['total_features'] = total
     state['passed_features'] = passed
     state['pending_features'] = max(total - passed, 0)
-    state['has_task_contract'] = (workspace / 'TASK-HARNESS.md').exists()
-    state['has_progress_log'] = (workspace / 'progress.txt').exists()
+    state['has_task_contract'] = (workspace / 'docs' / 'TASK-HARNESS.md').exists() or (workspace / 'TASK-HARNESS.md').exists()
+    state['has_progress_log'] = (workspace / 'task-harness' / 'progress' / 'latest.txt').exists() or (workspace / 'progress.txt').exists()
     state['workspace_label'] = workspace_label
     state['task_source'] = source
 
@@ -244,7 +244,9 @@ def normalize_session_mode(raw):
 
 
 def get_session_mode(workspace: Path):
-    task_path = workspace / "task.json"
+    task_path = workspace / "config" / "task.json"
+    if not task_path.exists():
+        task_path = workspace / "task.json"
     if not task_path.exists():
         return SESSION_MODE_SOFT
     try:
@@ -266,8 +268,12 @@ def get_session_context_notice():
     cwd = Path.cwd()
     workspace = cwd / HARNESS_DIR_NAME if (cwd / HARNESS_DIR_NAME).exists() else cwd
     mode = get_session_mode(workspace)
-    context_path = workspace / "session-context.json"
-    boundary_path = workspace / "session-boundary.json"
+    context_path = workspace / "config" / "session-context.json"
+    if not context_path.exists():
+        context_path = workspace / "session-context.json"
+    boundary_path = workspace / "config" / "session-boundary.json"
+    if not boundary_path.exists():
+        boundary_path = workspace / "session-boundary.json"
 
     if mode == SESSION_MODE_HARD and boundary_path.exists():
         try:
@@ -345,12 +351,12 @@ def main():
         if not task_state.get('has_task_contract'):
             parts.append(
                 'Warning: task harness state exists but '
-                f"{task_state.get('workspace_label', '')}TASK-HARNESS.md is missing."
+                f"{task_state.get('workspace_label', '')}docs/TASK-HARNESS.md is missing."
             )
         if not task_state.get('has_progress_log'):
             parts.append(
                 'Warning: task harness state exists but '
-                f"{task_state.get('workspace_label', '')}progress.txt is missing."
+                f"{task_state.get('workspace_label', '')}task-harness/progress/latest.txt is missing."
             )
     parts.append(
         "Commit policy reminder: commit/push only on explicit user instruction; "

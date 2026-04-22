@@ -1,73 +1,160 @@
-# {{PROJECT_NAME}}
+# {{PROJECT_NAME}} Claude 指南
 
-> Harness Engineering Framework 已启用，Plan-Build-Verify 工作流已生效。
+本项目采用 Harness Engineering 工作流。在 Claude 中，请将此文件视为 `Plan -> Build -> Verify` 的执行契约。
 
-## 快速参考
+## 快速开始（Claude）
 
-| 命令 | 作用 |
-|---------|---------|
-| `/plan <description>` | 根据 1-4 句话生成功能 spec |
-| `/build` | 按冲刺流程实现最新 spec |
-| `/qa` | 对当前代码执行评估 |
-| `/sprint <description>` | 执行完整 Plan-Build-Verify 周期 |
+可使用以下任一意图：
 
-Codex 用户请参考 `../AGENTS.md`（提示词驱动工作流）。  
-Codex hooks 配置位于 `.codex/config.toml` 与 `.codex/hooks.json`。
+1. `/plan <功能描述>`
+2. `/build`
+3. `/qa`
+4. `/sprint <功能描述>`（完整周期）
 
-## 架构
+## Claude 意图路由
 
-系统设计请见 [docs/architecture.md](docs/architecture.md)。
+当用户请求匹配下列意图时，执行对应流程。
 
-## Java 规范（按需）
+| 意图 | 触发示例 | 必要动作 | 必要输出 |
+|---|---|---|---|
+| `/plan` | “/plan login flow”, “/plan 设计订单取消流程” | 澄清歧义、检查相关代码、编写 spec | `.harness/docs/specs/<feature>.md` |
+| `/build` | “/build”, “按最新 spec 实现” | 读取 spec+contract，按范围实现并自检 | 代码改动 + 冲刺报告 |
+| `/qa` | “/qa”, “评估当前实现” | 读取 contract，逐条测试并评分（非阻塞） | 结构化 QA 报告 + 分数 |
+| `/sprint` | “/sprint 构建用户权限” | 依次执行 plan+contract+build+qa+fix | spec + contract + 实现 + 报告 |
 
-若项目包含 Java/Spring Boot 实现，请先阅读 [docs/java-dev-conventions.md](docs/java-dev-conventions.md) 再开始编码。
+## 执行契约
 
-## 黄金原则
+### Plan 契约
 
-请阅读 [docs/golden-principles.md](docs/golden-principles.md)，这些规则不可妥协。
+- 不允许编写实现代码。
+- Spec 必须包含：
+  - 问题陈述（Problem statement）
+  - 用户故事（User stories）
+  - 可机器验证的验收标准
+  - 组件边界（Component boundaries）
+  - 数据流（Data flow）
+  - 错误处理（Error handling）
+  - 至少 3 个边界场景
+  - 依赖项（Dependencies）
+- 保存路径：`.harness/docs/specs/<feature-name>.md`
 
-## 智能体
+### Build 契约
 
-| Agent | 角色 | 触发 |
-|-------|------|---------|
-| planner | 将简述需求扩展为 spec | `/plan` |
-| generator | 按 sprint 实现功能 | `/build` |
-| evaluator | 测试并评分 | `/qa` |
-| doc-gardener | 维护文档新鲜度 | Sprint 完成后 |
+- 从 `.harness/docs/specs/` 读取目标 spec。
+- 从 `.harness/docs/contracts/` 读取目标 contract。
+- 若 contract 缺失，先基于 `.harness/docs/contracts/TEMPLATE.md` 创建再实现。
+- 只允许实现 contract 范围内内容。
+- 若项目技术栈包含 Java/Spring Boot，编码前必须先阅读 `.harness/docs/java-dev-conventions.md` 并完成其中前置闸门确认。
+- 若项目技术栈包含 React/Vue/TypeScript/Next.js，编码前必须先阅读 `.harness/docs/frontend-dev-conventions.md` 并完成其中前置约束确认。
+- 所有新增/修改的函数、方法必须补充中文注释，至少说明：用途、关键参数、返回值与副作用（如状态变更/IO）。
+- 交付前必须自检：
+  - 构建/编译通过
+  - 测试通过（既有 + 新增）
+  - 验收标准逐条核对
+  - 新增/修改函数与方法的中文注释完整
+  - 无调试残留
 
-## 冲刺工作流
+### QA 契约
 
-1. **Plan**：Planner 在 `.harness/docs/specs/` 产出 spec  
-2. **Contract**：Generator + Evaluator 先对“完成标准”达成一致  
-3. **Build**：Generator 完成一个 sprint 的实现  
-4. **Verify**：Evaluator 按 contract 测试并产出 QA 报告（非阻塞）  
-5. **Fix**：若单元测试失败，Generator 进入修复（最多 3 轮）  
-6. **Complete**：更新文档并执行 doc-gardener  
+- 评分只依据 contract 标准。
+- 每条标准状态仅允许：`PASS` / `FAIL` / `PARTIAL`。
+- 评分公式：
+  - `score = (pass + 0.5 * partial) / total * 100`
+- QA 结果默认**非阻塞**（用于质量跟踪与修复建议）。
+- 每个 FAIL 必须包含：
+  - 预期行为
+  - 实际行为
+  - 复现步骤
+  - 修复建议
 
-完整流程请见 [docs/sprint-workflow.md](docs/sprint-workflow.md)。
+### Sprint 契约
 
-## 项目结构
+- 顺序必须严格遵守：
+  1. Plan
+  2. Contract
+  3. Build
+  4. QA
+  5. Fix loop（必要时）
+  6. 文档新鲜度检查
+- Fix loop 最大迭代：`3`。
+- 若 3 轮后单元测试仍失败：
+  - 记录失败项与建议
+  - 保持当前 feature `passes=false`
+  - 继续下一个 feature（不阻塞整体流程）
 
-``` 
-.harness/docs/
-  architecture.md      -- 系统设计
-  golden-principles.md -- 核心规则
-  sprint-workflow.md   -- 冲刺流程
-  contracts/           -- Sprint 完成定义
-  specs/               -- 功能规格
-  plans/               -- 实施计划
-.claude/
-  agents/             -- 智能体定义
-  commands/           -- 斜杠命令
-  hooks/              -- 自动守卫
-```
+## 操作规则
 
-## 已启用 Hook
+- 先 spec 后代码。
+- 先 contract 后 build。
+- 一次只做一个 sprint。
+- 会话切换策略由 `.harness/config/task.json` 的 `harness.session_control.mode` 控制：
+  - `soft_reset`（默认）：feature 收口后自动切换 context epoch，继续会话时必须忽略旧 feature 上下文。
+  - `hard_new_session`：feature 收口后必须新开会话，未新开会话前不允许进入下一 feature。
+- 可用一条命令自动续跑下个任务（当前分支）：
+  - `python3 .harness/scripts/task_switch.py continue --target-dir .`
+- 禁止隐式扩范围。
+- 问题必须显式暴露并附证据。
+- 优先可回滚、低风险的朴素方案。
+- 不得省略函数/方法中文注释；注释质量不达标视为未完成。
 
-- **循环检测**：同一文件编辑超过 5 次后阻断
-- **完成前检查**：标记完成前注入检查清单
-- **上下文注入**：会话开始时补充环境信息
+### Java 后端附加规则（适用时强制）
+
+- 若为 Java 项目：必须遵守 `.harness/docs/java-dev-conventions.md`。
+
+### 前端附加规则（适用时强制）
+
+- 若为前端项目：必须遵守 `.harness/docs/frontend-dev-conventions.md`。
+
+## 与 Task Harness 的集成（可选但推荐）
+
+若项目存在 `.harness/task-harness/index.json` 与 `.harness/docs/TASK-HARNESS.md`，按以下方式形成任务闭环：
+
+1. 从 active bucket 任务文件（默认 `.harness/task-harness/features/backlog-core.json`）选择优先级最高且 `passes=false` 的 feature
+2. 严格执行 `plan -> contract -> build -> qa -> fix` 主流程
+3. 单元测试通过即可将该 feature 的 `passes` 置为 `true`
+4. 在 `.harness/task-harness/progress/latest.txt` 记录本轮实现、验证结果与下一步
+5. 若达到 3 轮仍失败，保持 `passes=false` 并继续下一个任务
+
+集成约束：
+- `AGENTS.md` 负责主闭环，不负责改任务定义
+- `.harness/docs/TASK-HARNESS.md` 负责任务追踪，不得覆盖主闭环规则
+- QA 结论用于质量跟踪，不作为阻塞门禁
+
+## Claude Hook 运行时
+
+- Claude hooks 定义在 `.claude/settings.json`
+- hook 脚本位于 `.claude/hooks/`
+- 主要目标：
+  - PreToolUse 循环检测
+  - UserPromptSubmit 上下文注入
+  - Stop 阶段完成前检查提醒
+
+## 项目布局
+
+- `AGENTS.md`：Codex 执行入口
+- `CLAUDE.md`：Claude 执行入口
+- `.claude/agents/`：角色定义
+- `.claude/commands/`：标准命令流程
+- `.claude/hooks/`：循环/上下文/检查 hook
+- `.harness/docs/specs/`：功能规格
+- `.harness/docs/contracts/`：冲刺契约
+- `.harness/docs/plans/`：计划产物
+- `.harness/docs/java-dev-conventions.md`：Java 后端编码规范（Java 项目必读）
+- `.harness/docs/frontend-dev-conventions.md`：前端工程级编码规范（前端项目必读）
+- `.harness/feature_list.json`：legacy 兼容镜像（仅在历史项目存在时沿用）
+- `.harness/config/runtime-version.json`：运行时版本号（用于版本化升级）
+- `.harness/config/update-policy.json`：远程更新策略（定时检查与自动应用）
+- `.harness/docs/TASK-HARNESS.md`：任务层执行契约（可选）
+
+## 提示词示例（Claude）
+
+- `/plan 增加邮箱魔法链接免密登录`
+- `/build`
+- `/qa`
+- `/sprint 在 dashboard 中增加组织切换器`
 
 ## 技术栈
 
-{{TECH_STACK}}
+- 项目：`{{PROJECT_NAME}}`
+- 类型：`{{PROJECT_TYPE}}`
+- 技术栈：`{{TECH_STACK}}`

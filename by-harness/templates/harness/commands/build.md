@@ -48,5 +48,5 @@ argument-hint: 可选 - 指定 .harness/docs/specs/ 中要实现的 spec 文件
 若单元测试通过：
 - 更新契约中的冲刺日志。
 - 若项目使用 task-harness（存在 `.harness/task-harness/index.json`），更新 active bucket 中对应 feature 的 `passes=true`（若存在 `.harness/feature_list.json` 则脚本会同步兼容镜像）。
-- 在 `.harness/progress.txt` 记录本轮结果（若文件存在）。
+- 在 `.harness/task-harness/progress/latest.txt` 记录本轮结果（若文件存在）。
 - 询问用户是否执行 `doc-gardener` 做文档新鲜度检查。

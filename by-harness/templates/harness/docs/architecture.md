@@ -64,7 +64,7 @@ Codex 运行时：
 | 组件 | 文件 | 作用 |
 |-----------|------|------|
 | Codex 指南 | `AGENTS.md` | Codex 入口与工作流规则 |
-| 项目地图 | `.harness/CLAUDE.md` | Claude 入口与渐进披露导航 |
+| 项目地图 | `CLAUDE.md` | Claude 入口与渐进披露导航 |
 | Planner 智能体 | `.claude/agents/planner.md` | 将需求扩展为规格 |
 | Generator 智能体 | `.claude/agents/generator.md` | 执行功能实现 |
 | Evaluator 智能体 | `.claude/agents/evaluator.md` | 测试并评分 |
@@ -84,7 +84,7 @@ Codex 运行时：
 | 契约模板 | `.harness/docs/contracts/TEMPLATE.md` | 冲刺契约结构 |
 | 任务清单（默认） | `.harness/task-harness/features/backlog-core.json` | task-harness active bucket 任务状态源（passes） |
 | 任务清单（legacy 兼容） | `.harness/feature_list.json` | 历史项目兼容镜像（若存在则同步） |
-| 任务层契约（可选） | `.harness/TASK-HARNESS.md` | task-harness 任务追踪规则 |
+| 任务层契约（可选） | `.harness/docs/TASK-HARNESS.md` | task-harness 任务追踪规则 |
 
 ## MCP 工具映射
 

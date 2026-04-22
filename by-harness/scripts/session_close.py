@@ -4,7 +4,7 @@ Session close helper for by-harness projects.
 
 Actions:
 1) Append session log (monthly in sharded mode / progress.txt in legacy mode)
-2) Update latest progress snapshot (.harness/progress.txt in sharded mode)
+2) Update latest progress snapshot (.harness/task-harness/progress/latest.txt in sharded mode)
 3) Print next task recommendation
 """
 
@@ -92,7 +92,9 @@ def normalize_session_mode(raw: str) -> str:
 
 def load_session_control(workspace_dir: Path) -> dict[str, str]:
     control = {"context_mode": SESSION_MODE_SOFT}
-    task_path = workspace_dir / "task.json"
+    task_path = workspace_dir / "config" / "task.json"
+    if not task_path.exists():
+        task_path = workspace_dir / "task.json"
     if not task_path.exists():
         return control
     try:
@@ -259,8 +261,8 @@ def build_session_entry(
         f"  - 已完成: {passed}/{total}\n"
         f"  - 下一个: {next_text}\n"
         "\n下一会话建议:\n"
-        "  1. bash .harness/init.sh（legacy 项目可用 bash init.sh）\n"
-        "  2. 阅读 AGENTS.md 与 .harness/TASK-HARNESS.md\n"
+        "  1. bash .harness/scripts/init.sh（legacy 项目可用 bash .harness/init.sh）\n"
+        "  2. 阅读 AGENTS.md 与 .harness/docs/TASK-HARNESS.md\n"
         f"  3. 优先处理: {next_text}\n"
         "  4. 执行 read task -> plan -> build -> qa(non-blocking) -> fix -> mark_pass\n"
     )
@@ -295,8 +297,8 @@ def build_latest_snapshot(feature, outcome: str, qa_score: float, total: int, pa
         f"- 下一任务建议: {next_text}\n"
         f"- 会话日志文件: {log_path.name}\n\n"
         "下一步:\n"
-        "1. 运行 `.harness/init.sh`\n"
-        "2. 阅读 `AGENTS.md` 和 `.harness/TASK-HARNESS.md`\n"
+        "1. 运行 `.harness/scripts/init.sh`\n"
+        "2. 阅读 `AGENTS.md` 和 `.harness/docs/TASK-HARNESS.md`\n"
         "3. 继续推进下一任务\n"
     )
 
@@ -322,7 +324,11 @@ def build_session_meta(feature, next_feature, outcome: str, context_mode: str):
 
 
 def bump_session_context(workspace_dir: Path, meta: dict, context_mode: str) -> tuple[Path, int]:
-    context_path = workspace_dir / "session-context.json"
+    context_path = workspace_dir / "config" / "session-context.json"
+    if not context_path.exists():
+        legacy = workspace_dir / "session-context.json"
+        if legacy.exists():
+            context_path = legacy
     epoch = 0
     if context_path.exists():
         try:
@@ -348,7 +354,11 @@ def bump_session_context(workspace_dir: Path, meta: dict, context_mode: str) -> 
 
 
 def write_hard_boundary(workspace_dir: Path, meta: dict, epoch: int) -> Path:
-    boundary_path = workspace_dir / "session-boundary.json"
+    boundary_path = workspace_dir / "config" / "session-boundary.json"
+    if not boundary_path.exists():
+        legacy = workspace_dir / "session-boundary.json"
+        if legacy.exists():
+            boundary_path = legacy
     payload = dict(meta)
     payload["require_new_session"] = True
     payload["epoch"] = epoch
@@ -408,7 +418,7 @@ def main():
     session_no = append_session_log(session_log_path, entry)
 
     if store["mode"] == "sharded":
-        snapshot_path = workspace_dir / "progress.txt"
+        snapshot_path = workspace_dir / "task-harness" / "progress" / "latest.txt"
         snapshot = build_latest_snapshot(
             feature=feature,
             outcome=args.outcome,

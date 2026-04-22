@@ -2,7 +2,7 @@
 """Versioned runtime updater for by-harness projects.
 
 This updater supports:
-1) Runtime version tracking via `.harness/runtime-version.json`
+1) Runtime version tracking via `.harness/config/runtime-version.json`
 2) Periodic remote manifest checks
 3) Auto-apply based on update policy
 4) Incremental migrations by local version chain
@@ -22,11 +22,24 @@ from pathlib import Path
 from typing import Any
 
 HARNESS_DIR_NAME = ".harness"
-VERSION_FILE_NAME = "runtime-version.json"
-POLICY_FILE_NAME = "update-policy.json"
-STATE_FILE_NAME = "update-state.json"
-LATEST_RUNTIME_VERSION = "2.1.0"
+VERSION_FILE_NAME = "config/runtime-version.json"
+POLICY_FILE_NAME = "config/update-policy.json"
+STATE_FILE_NAME = "config/update-state.json"
+TASK_FILE_NAME = "config/task.json"
+SESSION_CONTEXT_FILE_NAME = "config/session-context.json"
+SESSION_BOUNDARY_FILE_NAME = "config/session-boundary.json"
+TASK_CONTRACT_FILE_NAME = "docs/TASK-HARNESS.md"
+
+LEGACY_VERSION_FILE_NAME = "runtime-version.json"
+LEGACY_POLICY_FILE_NAME = "update-policy.json"
+LEGACY_STATE_FILE_NAME = "update-state.json"
+LEGACY_TASK_FILE_NAME = "task.json"
+LEGACY_SESSION_CONTEXT_FILE_NAME = "session-context.json"
+LEGACY_SESSION_BOUNDARY_FILE_NAME = "session-boundary.json"
+LEGACY_TASK_CONTRACT_FILE_NAME = "TASK-HARNESS.md"
+LATEST_RUNTIME_VERSION = "2.2.1"
 RUNTIME_SCRIPT_NAMES = (
+    "init.sh",
     "session_close.py",
     "ensure_task_branch.py",
     "task_switch.py",
@@ -34,7 +47,8 @@ RUNTIME_SCRIPT_NAMES = (
     "upgrade_legacy_repo.py",
 )
 RUNTIME_DOC_REL_PATHS = (
-    "TASK-HARNESS.md",
+    "root/CLAUDE.md",
+    TASK_CONTRACT_FILE_NAME,
     "docs/architecture.md",
     "docs/golden-principles.md",
     "docs/sprint-workflow.md",
@@ -42,6 +56,7 @@ RUNTIME_DOC_REL_PATHS = (
     "docs/frontend-dev-conventions.md",
     "docs/contracts/TEMPLATE.md",
 )
+REPO_ROOT_PREFIX = "root/"
 
 DEFAULT_MODE = "soft_reset"
 SUPPORTED_MODES = ["soft_reset", "hard_new_session"]
@@ -81,6 +96,7 @@ DEFAULT_POLICY = {
 MIGRATIONS: dict[str, tuple[str, str]] = {
     "1.0.0": ("2.0.0", "migrate_remove_branch_switching"),
     "2.0.0": ("2.1.0", "migrate_runtime_versioning"),
+    "2.1.0": ("2.2.1", "migrate_runtime_versioning"),
 }
 
 
@@ -119,6 +135,35 @@ def detect_harness_dir(target: Path) -> Path:
     if harness_dir.exists():
         return harness_dir
     raise RuntimeError(f"未检测到 {HARNESS_DIR_NAME} 目录：{target}")
+
+
+def resolve_existing_path(harness_dir: Path, primary: str, legacy: str) -> Path | None:
+    primary_path = harness_dir / primary
+    if primary_path.exists():
+        return primary_path
+    legacy_path = harness_dir / legacy
+    if legacy_path.exists():
+        return legacy_path
+    return None
+
+
+def resolve_preferred_path(harness_dir: Path, primary: str, legacy: str) -> Path:
+    existing = resolve_existing_path(harness_dir, primary, legacy)
+    if existing is not None:
+        return existing
+    return harness_dir / primary
+
+
+def task_json_path(harness_dir: Path) -> Path:
+    return resolve_preferred_path(harness_dir, TASK_FILE_NAME, LEGACY_TASK_FILE_NAME)
+
+
+def session_context_path(harness_dir: Path) -> Path:
+    return resolve_preferred_path(harness_dir, SESSION_CONTEXT_FILE_NAME, LEGACY_SESSION_CONTEXT_FILE_NAME)
+
+
+def session_boundary_path(harness_dir: Path) -> Path:
+    return resolve_preferred_path(harness_dir, SESSION_BOUNDARY_FILE_NAME, LEGACY_SESSION_BOUNDARY_FILE_NAME)
 
 
 def parse_semver(value: str) -> tuple[int, int, int] | None:
@@ -170,6 +215,38 @@ def to_int(value: Any, default: int) -> int:
         return default
 
 
+def load_project_render_context(harness_dir: Path) -> dict[str, str]:
+    task_path = task_json_path(harness_dir)
+    project_name = harness_dir.parent.name
+    project_type = "General"
+    tech_stack = "Not specified"
+    if task_path.exists():
+        try:
+            task = load_json(task_path)
+        except (json.JSONDecodeError, OSError, ValueError):
+            task = {}
+        if isinstance(task, dict):
+            project_name = str(task.get("project") or project_name).strip() or project_name
+            project_type = str(task.get("project_type") or project_type).strip() or project_type
+            tech_stack = str(task.get("tech_stack") or tech_stack).strip() or tech_stack
+    return {
+        "{{PROJECT_NAME}}": project_name,
+        "{{TECH_STACK}}": tech_stack,
+        "{{PROJECT_TYPE}}": project_type,
+    }
+
+
+def render_project_context(data: bytes, harness_dir: Path) -> bytes:
+    try:
+        text = data.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise RuntimeError(f"render_project_context requires utf-8 text, got binary data: {exc}") from exc
+    context = load_project_render_context(harness_dir)
+    for key, value in context.items():
+        text = text.replace(key, value)
+    return text.encode("utf-8")
+
+
 def load_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -180,7 +257,7 @@ def dump_json(path: Path, payload: dict[str, Any]) -> None:
 
 
 def load_policy(harness_dir: Path) -> dict[str, Any]:
-    policy_path = harness_dir / POLICY_FILE_NAME
+    policy_path = resolve_preferred_path(harness_dir, POLICY_FILE_NAME, LEGACY_POLICY_FILE_NAME)
     if not policy_path.exists():
         return dict(DEFAULT_POLICY)
     try:
@@ -195,7 +272,7 @@ def load_policy(harness_dir: Path) -> dict[str, Any]:
 
 
 def load_state(harness_dir: Path) -> dict[str, Any]:
-    state_path = harness_dir / STATE_FILE_NAME
+    state_path = resolve_preferred_path(harness_dir, STATE_FILE_NAME, LEGACY_STATE_FILE_NAME)
     if not state_path.exists():
         return {}
     try:
@@ -208,7 +285,7 @@ def load_state(harness_dir: Path) -> dict[str, Any]:
 
 
 def save_state(harness_dir: Path, state: dict[str, Any], dry_run: bool) -> None:
-    path = harness_dir / STATE_FILE_NAME
+    path = resolve_preferred_path(harness_dir, STATE_FILE_NAME, LEGACY_STATE_FILE_NAME)
     if dry_run:
         print(f"[dry-run] write state: {path}")
         return
@@ -216,7 +293,7 @@ def save_state(harness_dir: Path, state: dict[str, Any], dry_run: bool) -> None:
 
 
 def runtime_version_path(harness_dir: Path) -> Path:
-    return harness_dir / VERSION_FILE_NAME
+    return resolve_preferred_path(harness_dir, VERSION_FILE_NAME, LEGACY_VERSION_FILE_NAME)
 
 
 def infer_current_version(harness_dir: Path) -> tuple[str, str]:
@@ -226,11 +303,11 @@ def infer_current_version(harness_dir: Path) -> tuple[str, str]:
             payload = load_json(version_path)
             v = str(payload.get("runtime_version", "")).strip()
             if parse_semver(v):
-                return v, VERSION_FILE_NAME
+                return v, str(version_path.relative_to(harness_dir))
         except (json.JSONDecodeError, OSError, ValueError):
             pass
 
-    task_path = harness_dir / "task.json"
+    task_path = task_json_path(harness_dir)
     if not task_path.exists():
         return "1.0.0", "default"
     try:
@@ -244,7 +321,7 @@ def infer_current_version(harness_dir: Path) -> tuple[str, str]:
         return "1.0.0", "task-json"
     if any(key in sc for key in LEGACY_CONTROL_KEYS):
         return "1.0.0", "task-json-legacy-keys"
-    return "2.0.0", "task-json-modern-no-version-file"
+    return "2.0.0", f"{task_path.relative_to(harness_dir)}-modern-no-version-file"
 
 
 def normalize_mode(raw: Any) -> str:
@@ -293,6 +370,18 @@ def migrate_task_json_to_current_branch_mode(task_data: dict[str, Any]) -> tuple
         if "legacy_feature_list" not in files:
             files["legacy_feature_list"] = ".harness/feature_list.json"
             changed = True
+        if files.get("task_index") != ".harness/task-harness/index.json":
+            files["task_index"] = ".harness/task-harness/index.json"
+            changed = True
+        if files.get("feature_buckets") != ".harness/task-harness/features/":
+            files["feature_buckets"] = ".harness/task-harness/features/"
+            changed = True
+        if files.get("progress_shards") != ".harness/task-harness/progress/":
+            files["progress_shards"] = ".harness/task-harness/progress/"
+            changed = True
+        if files.get("progress_log") != ".harness/task-harness/progress/latest.txt":
+            files["progress_log"] = ".harness/task-harness/progress/latest.txt"
+            changed = True
         if files.get("runtime_version") != f".harness/{VERSION_FILE_NAME}":
             files["runtime_version"] = f".harness/{VERSION_FILE_NAME}"
             changed = True
@@ -301,6 +390,21 @@ def migrate_task_json_to_current_branch_mode(task_data: dict[str, Any]) -> tuple
             changed = True
         if files.get("update_state") != f".harness/{STATE_FILE_NAME}":
             files["update_state"] = f".harness/{STATE_FILE_NAME}"
+            changed = True
+        if files.get("session_context") != f".harness/{SESSION_CONTEXT_FILE_NAME}":
+            files["session_context"] = f".harness/{SESSION_CONTEXT_FILE_NAME}"
+            changed = True
+        if files.get("session_boundary") != f".harness/{SESSION_BOUNDARY_FILE_NAME}":
+            files["session_boundary"] = f".harness/{SESSION_BOUNDARY_FILE_NAME}"
+            changed = True
+        if files.get("init_script") != ".harness/scripts/init.sh":
+            files["init_script"] = ".harness/scripts/init.sh"
+            changed = True
+        if files.get("main_contract") != "AGENTS.md":
+            files["main_contract"] = "AGENTS.md"
+            changed = True
+        if files.get("task_contract") != f".harness/{TASK_CONTRACT_FILE_NAME}":
+            files["task_contract"] = f".harness/{TASK_CONTRACT_FILE_NAME}"
             changed = True
         harness["files"] = files
 
@@ -355,9 +459,53 @@ def remove_file(path: Path, dry_run: bool) -> bool:
     return True
 
 
+def relocate_path(harness_dir: Path, target_rel: str, legacy_rel: str, dry_run: bool) -> bool:
+    target = harness_dir / target_rel
+    legacy = harness_dir / legacy_rel
+    if not legacy.exists() or target.exists():
+        return False
+    if dry_run:
+        print(f"[dry-run] relocate: {legacy} -> {target}")
+        return True
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(legacy), str(target))
+    return True
+
+
+def migrate_grouped_layout(harness_dir: Path, dry_run: bool) -> dict[str, int]:
+    moved = 0
+    for target_rel, legacy_rel in (
+        (TASK_FILE_NAME, LEGACY_TASK_FILE_NAME),
+        (VERSION_FILE_NAME, LEGACY_VERSION_FILE_NAME),
+        (POLICY_FILE_NAME, LEGACY_POLICY_FILE_NAME),
+        (STATE_FILE_NAME, LEGACY_STATE_FILE_NAME),
+        (SESSION_CONTEXT_FILE_NAME, LEGACY_SESSION_CONTEXT_FILE_NAME),
+        (SESSION_BOUNDARY_FILE_NAME, LEGACY_SESSION_BOUNDARY_FILE_NAME),
+        (TASK_CONTRACT_FILE_NAME, LEGACY_TASK_CONTRACT_FILE_NAME),
+        ("scripts/init.sh", "init.sh"),
+        ("task-harness/progress/latest.txt", "progress.txt"),
+    ):
+        if relocate_path(harness_dir, target_rel, legacy_rel, dry_run):
+            moved += 1
+    return {"layout_moved": moved}
+
+
+def promote_claude_to_repo_root(harness_dir: Path, dry_run: bool) -> bool:
+    src = harness_dir / "CLAUDE.md"
+    dst = harness_dir.parent / "CLAUDE.md"
+    if not src.exists() or dst.exists():
+        return False
+    if dry_run:
+        print(f"[dry-run] promote CLAUDE.md to repo root: {src} -> {dst}")
+        return True
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(src, dst)
+    return True
+
+
 def migrate_remove_branch_switching(harness_dir: Path, dry_run: bool) -> dict[str, int]:
-    stats = {"task_json_changed": 0, "context_cleaned": 0, "files_removed": 0}
-    task_path = harness_dir / "task.json"
+    stats = {"task_json_changed": 0, "context_cleaned": 0, "files_removed": 0, "claude_promoted": 0, "layout_moved": 0}
+    task_path = task_json_path(harness_dir)
     task_data = load_json(task_path)
     migrated, changed = migrate_task_json_to_current_branch_mode(task_data)
     if changed:
@@ -366,16 +514,20 @@ def migrate_remove_branch_switching(harness_dir: Path, dry_run: bool) -> dict[st
         else:
             dump_json(task_path, migrated)
         stats["task_json_changed"] += 1
-    if cleanup_session_context(harness_dir / "session-context.json", dry_run):
+    if cleanup_session_context(session_context_path(harness_dir), dry_run):
         stats["context_cleaned"] += 1
     if remove_file(harness_dir / "branch-rollup.json", dry_run):
         stats["files_removed"] += 1
+    if promote_claude_to_repo_root(harness_dir, dry_run):
+        stats["claude_promoted"] += 1
+    layout = migrate_grouped_layout(harness_dir, dry_run)
+    stats["layout_moved"] += layout.get("layout_moved", 0)
     return stats
 
 
 def migrate_runtime_versioning(harness_dir: Path, dry_run: bool) -> dict[str, int]:
-    stats = {"task_json_changed": 0, "context_cleaned": 0, "files_removed": 0}
-    task_path = harness_dir / "task.json"
+    stats = {"task_json_changed": 0, "context_cleaned": 0, "files_removed": 0, "claude_promoted": 0, "layout_moved": 0}
+    task_path = task_json_path(harness_dir)
     task_data = load_json(task_path)
     migrated, changed = migrate_task_json_to_current_branch_mode(task_data)
     if changed:
@@ -384,8 +536,12 @@ def migrate_runtime_versioning(harness_dir: Path, dry_run: bool) -> dict[str, in
         else:
             dump_json(task_path, migrated)
         stats["task_json_changed"] += 1
-    if cleanup_session_context(harness_dir / "session-context.json", dry_run):
+    if cleanup_session_context(session_context_path(harness_dir), dry_run):
         stats["context_cleaned"] += 1
+    if promote_claude_to_repo_root(harness_dir, dry_run):
+        stats["claude_promoted"] += 1
+    layout = migrate_grouped_layout(harness_dir, dry_run)
+    stats["layout_moved"] += layout.get("layout_moved", 0)
     return stats
 
 
@@ -422,10 +578,18 @@ def write_runtime_version(harness_dir: Path, version: str, dry_run: bool, update
 
 def backup_files(harness_dir: Path, backup_root: Path, paths: list[Path], dry_run: bool) -> int:
     count = 0
+    repo_root = harness_dir.parent.resolve()
+    harness_root = harness_dir.resolve()
     for src in paths:
         if not src.exists():
             continue
-        rel = src.relative_to(harness_dir)
+        src_resolved = src.resolve()
+        if harness_root in src_resolved.parents or src_resolved == harness_root:
+            rel = src_resolved.relative_to(harness_root)
+        elif repo_root in src_resolved.parents or src_resolved == repo_root:
+            rel = Path("__repo__") / src_resolved.relative_to(repo_root)
+        else:
+            raise RuntimeError(f"backup path escapes repo: {src}")
         dst = backup_root / rel
         if dry_run:
             print(f"[dry-run] backup: {src} -> {dst}")
@@ -519,10 +683,18 @@ def validate_manifest(manifest: dict[str, Any], current_version: str) -> tuple[s
     return target_version, files
 
 
-def secure_target_path(harness_dir: Path, rel_path: str) -> Path:
+def secure_target_path(harness_dir: Path, repo_root: Path, rel_path: str) -> Path:
     raw = str(rel_path or "").strip().replace("\\", "/")
     if not raw or raw.startswith("/") or ".." in raw.split("/"):
         raise RuntimeError(f"invalid manifest file path: {rel_path}")
+    if raw.startswith(REPO_ROOT_PREFIX):
+        rel = raw[len(REPO_ROOT_PREFIX):].strip("/")
+        if not rel:
+            raise RuntimeError(f"invalid root path: {rel_path}")
+        path = (repo_root / rel).resolve()
+        if repo_root.resolve() not in path.parents and path != repo_root.resolve():
+            raise RuntimeError(f"path escapes repo root: {rel_path}")
+        return path
     path = (harness_dir / raw).resolve()
     if harness_dir.resolve() not in path.parents and path != harness_dir.resolve():
         raise RuntimeError(f"path escapes harness directory: {rel_path}")
@@ -531,6 +703,7 @@ def secure_target_path(harness_dir: Path, rel_path: str) -> Path:
 
 def materialize_manifest_files(
     harness_dir: Path,
+    repo_root: Path,
     files: list[dict[str, Any]],
     *,
     timeout_seconds: int,
@@ -541,7 +714,7 @@ def materialize_manifest_files(
         if not isinstance(item, dict):
             raise RuntimeError("manifest file item must be an object")
         rel_path = str(item.get("path", "")).strip()
-        target = secure_target_path(harness_dir, rel_path)
+        target = secure_target_path(harness_dir, repo_root, rel_path)
 
         if "content" in item:
             content = item.get("content")
@@ -562,6 +735,9 @@ def materialize_manifest_files(
             actual = sha256_hex(data)
             if actual != expected:
                 raise RuntimeError(f"sha256 mismatch for {rel_path}: expected={expected} actual={actual}")
+
+        if bool(item.get("render_project_context", False)):
+            data = render_project_context(data, harness_dir)
         rendered.append((target, data))
     return rendered
 
@@ -582,7 +758,7 @@ def write_rendered_files(rendered: list[tuple[Path, bytes]], dry_run: bool) -> i
 
 
 def run_known_migrations(harness_dir: Path, current_version: str, target_version: str, dry_run: bool) -> dict[str, int]:
-    stats = {"task_json_changed": 0, "context_cleaned": 0, "files_removed": 0}
+    stats = {"task_json_changed": 0, "context_cleaned": 0, "files_removed": 0, "claude_promoted": 0, "layout_moved": 0}
     version = current_version
     while True:
         step = MIGRATIONS.get(version)
@@ -602,6 +778,7 @@ def run_known_migrations(harness_dir: Path, current_version: str, target_version
 def apply_remote_update(
     *,
     harness_dir: Path,
+    repo_root: Path,
     manifest: dict[str, Any],
     current_version: str,
     target_version: str,
@@ -612,9 +789,9 @@ def apply_remote_update(
     timeout_seconds: int,
     require_checksum: bool,
 ) -> tuple[int, dict[str, int]]:
-    backup_targets = [harness_dir / "task.json", runtime_version_path(harness_dir)]
+    backup_targets = [task_json_path(harness_dir), runtime_version_path(harness_dir), repo_root / "CLAUDE.md"]
     backup_targets.extend(harness_dir / "scripts" / name for name in RUNTIME_SCRIPT_NAMES)
-    backup_targets.extend(harness_dir / rel for rel in RUNTIME_DOC_REL_PATHS)
+    backup_targets.extend(secure_target_path(harness_dir, repo_root, rel) for rel in RUNTIME_DOC_REL_PATHS)
     if no_backup:
         print("Backup: skipped (--no-backup)")
         backed_up = 0
@@ -624,6 +801,7 @@ def apply_remote_update(
 
     rendered = materialize_manifest_files(
         harness_dir,
+        repo_root,
         files,
         timeout_seconds=timeout_seconds,
         require_checksum=require_checksum,
@@ -632,6 +810,8 @@ def apply_remote_update(
     print(f"Manifest files applied: {updated_files}")
 
     stats = run_known_migrations(harness_dir, current_version, target_version, dry_run)
+    layout = migrate_grouped_layout(harness_dir, dry_run)
+    stats["layout_moved"] = stats.get("layout_moved", 0) + layout.get("layout_moved", 0)
     wrote_version = write_runtime_version(
         harness_dir,
         target_version,
@@ -645,14 +825,15 @@ def apply_remote_update(
 def fallback_local_update(
     *,
     harness_dir: Path,
+    repo_root: Path,
     current_version: str,
     backup_root: Path,
     no_backup: bool,
     dry_run: bool,
 ) -> None:
-    backup_targets = [harness_dir / "task.json", runtime_version_path(harness_dir)]
+    backup_targets = [task_json_path(harness_dir), runtime_version_path(harness_dir), repo_root / "CLAUDE.md"]
     backup_targets.extend(harness_dir / "scripts" / name for name in RUNTIME_SCRIPT_NAMES)
-    backup_targets.extend(harness_dir / rel for rel in RUNTIME_DOC_REL_PATHS)
+    backup_targets.extend(secure_target_path(harness_dir, repo_root, rel) for rel in RUNTIME_DOC_REL_PATHS)
     if no_backup:
         print("Backup: skipped (--no-backup)")
     else:
@@ -660,6 +841,8 @@ def fallback_local_update(
         print(f"Backup files: {backed_up} -> {backup_root}")
 
     stats = run_known_migrations(harness_dir, current_version, LATEST_RUNTIME_VERSION, dry_run)
+    layout = migrate_grouped_layout(harness_dir, dry_run)
+    stats["layout_moved"] = stats.get("layout_moved", 0) + layout.get("layout_moved", 0)
     target_version = LATEST_RUNTIME_VERSION
     if semver_gt(current_version, LATEST_RUNTIME_VERSION):
         # 当前版本已经高于本地内置迁移认知版本，禁止本地 fallback 降级覆盖。
@@ -679,7 +862,8 @@ def fallback_local_update(
         "Migration summary: "
         f"task_json_changed={stats['task_json_changed']}, "
         f"context_cleaned={stats['context_cleaned']}, "
-        f"files_removed={stats['files_removed']}"
+        f"files_removed={stats['files_removed']}, "
+        f"layout_moved={stats.get('layout_moved', 0)}"
     )
 
 
@@ -698,13 +882,20 @@ def main() -> int:
         print(f"Error: {exc}")
         return 1
 
-    task_path = harness_dir / "task.json"
+    pre_layout = migrate_grouped_layout(harness_dir, args.dry_run)
+    if pre_layout.get("layout_moved", 0) > 0:
+        print(f"Layout migration applied before update: moved={pre_layout.get('layout_moved', 0)}")
+    if promote_claude_to_repo_root(harness_dir, args.dry_run):
+        print("Layout migration applied before update: promoted .harness/CLAUDE.md -> root/CLAUDE.md")
+
+    task_path = task_json_path(harness_dir)
     if not task_path.exists():
-        print(f"Error: task.json 不存在：{task_path}")
+        print(f"Error: task.json 不存在（new/legacy 均未找到）：{task_path}")
         return 1
 
     policy = load_policy(harness_dir)
     state = load_state(harness_dir)
+    repo_root = harness_dir.parent
     current_version, source = infer_current_version(harness_dir)
     if parse_semver(current_version) is None:
         print(f"Error: 无法识别当前版本：{current_version}")
@@ -735,7 +926,7 @@ def main() -> int:
             return 0
         print(f"Remote check trigger: {reason}")
         if not manifest_url:
-            print("Remote check skipped: manifest_url not configured in update-policy.json")
+            print("Remote check skipped: manifest_url not configured in .harness/config/update-policy.json")
             update_state_after_check(
                 harness_dir,
                 state,
@@ -786,6 +977,7 @@ def main() -> int:
         try:
             apply_remote_update(
                 harness_dir=harness_dir,
+                repo_root=repo_root,
                 manifest=manifest,
                 current_version=current_version,
                 target_version=target_version,
@@ -833,6 +1025,7 @@ def main() -> int:
             try:
                 apply_remote_update(
                     harness_dir=harness_dir,
+                    repo_root=repo_root,
                     manifest=manifest,
                     current_version=current_version,
                     target_version=target_version,
@@ -869,6 +1062,7 @@ def main() -> int:
     print("Manual mode: manifest_url not configured, run local migration fallback only.")
     fallback_local_update(
         harness_dir=harness_dir,
+        repo_root=repo_root,
         current_version=current_version,
         backup_root=backup_root,
         no_backup=args.no_backup,

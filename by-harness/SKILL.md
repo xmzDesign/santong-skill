@@ -24,7 +24,7 @@ user-invocable: true
 执行动作：
 1. 收集参数（项目名、描述、技术栈、类型、target-dir）
 2. 执行 `scripts/scaffold.py`
-3. 执行 `bash .harness/init.sh`
+3. 执行 `bash .harness/scripts/init.sh`
 4. 回报首个推荐任务
 
 ### 2) `持续拆任务 主题：...`
@@ -62,9 +62,9 @@ user-invocable: true
 - 任务分片：`.harness/task-harness/features/*.json`
 - 进度分片：`.harness/task-harness/progress/YYYY-MM.md`
 - 兼容镜像：`.harness/feature_list.json`（仅 legacy 项目存在时沿用，并同步 active bucket 视图）
-- 运行时版本：`.harness/runtime-version.json`（用于版本化升级）
-- 远程更新策略：`.harness/update-policy.json`（定时检查与自动升级策略）
-- 最新快照：`.harness/progress.txt`（由会话收口脚本刷新）
+- 运行时版本：`.harness/config/runtime-version.json`（用于版本化升级）
+- 远程更新策略：`.harness/config/update-policy.json`（定时检查与自动升级策略）
+- 最新快照：`.harness/task-harness/progress/latest.txt`（由会话收口脚本刷新）
 
 ## 初始化（首次）
 
@@ -79,8 +79,8 @@ python3 {{SKILL_PATH}}/scripts/scaffold.py \
 ```
 
 初始化后生成：
-- 根目录最小集：`AGENTS.md` + `.codex/` + `.claude/`
-- `.harness/`：`CLAUDE.md`、`docs/`、`TASK-HARNESS.md`、`task-harness/`、`progress.txt`、`init.sh`、`task.json`
+- 根目录最小集：`AGENTS.md`、`CLAUDE.md` + `.codex/` + `.claude/`
+- `.harness/`：`config/`、`docs/`、`scripts/`、`task-harness/`
 - 规范文档：`.harness/docs/java-dev-conventions.md`（后端）与 `.harness/docs/frontend-dev-conventions.md`（前端）
 - 收口工具：`.harness/scripts/session_close.py`
 
@@ -112,7 +112,7 @@ python3 .harness/scripts/session_close.py \
 
 该脚本会自动完成三件事：
 1. 追加进度日志（分片或 legacy）
-2. 刷新 `.harness/progress.txt` 最新快照
+2. 刷新 `.harness/task-harness/progress/latest.txt` 最新快照
 3. 输出下一任务建议
 
 ## 任务重平衡（任务越来越多时）
@@ -133,10 +133,10 @@ python3 {{SKILL_PATH}}/scripts/update_runtime.py --target-dir "<项目目录>"
 ```
 
 默认行为：
-- 升级前自动备份 `.harness/task.json` 与 `.harness/scripts/*.py`
+- 升级前自动备份 `.harness/config/task.json` 与 `.harness/scripts/*.py`
 - 若 `manifest_url` 已配置：从远程 manifest 拉取并同步运行时脚本
 - 若 `manifest_url` 未配置：执行本地兼容迁移（不依赖远程）
-- 读取 `.harness/runtime-version.json` 并按版本差异执行迁移链（缺失时自动推断旧版本）
+- 读取 `.harness/config/runtime-version.json` 并按版本差异执行迁移链（缺失时自动推断旧版本）
 - 当本地版本高于内置或远程版本时，只告警并保持当前版本，不做降级覆盖
 - 自动迁移 `task.json` 的 `session_control` 到当前简化模式（仅保留 `mode` 相关配置）
 - 默认按“当前分支自动续跑”执行任务，不再依赖自动切分支配置
@@ -153,7 +153,7 @@ python3 .harness/scripts/update_runtime.py --target-dir . --check-remote
 ## 运行约束
 
 - `AGENTS.md` 是主契约，定义 Plan/Build/Verify/Fix。
-- `.harness/TASK-HARNESS.md` 是任务层契约，不得覆盖主契约。
+- `.harness/docs/TASK-HARNESS.md` 是任务层契约，不得覆盖主契约。
 - 单元测试通过即可 `passes=false -> true`；QA 默认非阻塞。
 - 所有新增/修改函数、方法必须补齐中文注释（用途、参数、返回值、副作用）。
 - 常规执行只改 `passes`，不改任务结构字段。

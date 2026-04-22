@@ -87,7 +87,7 @@
 - 先 spec 后代码。
 - 先 contract 后 build。
 - 一次只做一个 sprint。
-- 会话切换策略由 `.harness/task.json` 的 `harness.session_control.mode` 控制：
+- 会话切换策略由 `.harness/config/task.json` 的 `harness.session_control.mode` 控制：
   - `soft_reset`（默认）：feature 收口后自动切换 context epoch，继续会话时必须忽略旧 feature 上下文。
   - `hard_new_session`：feature 收口后必须新开会话，未新开会话前不允许进入下一 feature。
 - 可用一条命令自动续跑下个任务（当前分支）：
@@ -107,17 +107,17 @@
 
 ## 与 Task Harness 的集成（可选但推荐）
 
-若项目存在 `.harness/task-harness/index.json` 与 `.harness/TASK-HARNESS.md`，按以下方式形成任务闭环：
+若项目存在 `.harness/task-harness/index.json` 与 `.harness/docs/TASK-HARNESS.md`，按以下方式形成任务闭环：
 
 1. 从 active bucket 任务文件（默认 `.harness/task-harness/features/backlog-core.json`）选择优先级最高且 `passes=false` 的 feature
 2. 严格执行 `plan -> contract -> build -> qa -> fix` 主流程
 3. 单元测试通过即可将该 feature 的 `passes` 置为 `true`
-4. 在 `.harness/progress.txt` 记录本轮实现、验证结果与下一步
+4. 在 `.harness/task-harness/progress/latest.txt` 记录本轮实现、验证结果与下一步
 5. 若达到 3 轮仍失败，保持 `passes=false` 并继续下一个任务
 
 集成约束：
 - `AGENTS.md` 负责主闭环，不负责改任务定义
-- `.harness/TASK-HARNESS.md` 负责任务追踪，不得覆盖主闭环规则
+- `.harness/docs/TASK-HARNESS.md` 负责任务追踪，不得覆盖主闭环规则
 - QA 结论用于质量跟踪，不作为阻塞门禁
 
 ## Codex Hook 运行时
@@ -133,7 +133,7 @@
 ## 项目布局
 
 - `AGENTS.md`：Codex 执行入口
-- `.harness/CLAUDE.md`：Claude 执行入口
+- `CLAUDE.md`：Claude 执行入口
 - `.codex/config.toml`：Codex hooks 开关
 - `.codex/hooks.json`：Codex hooks 注册
 - `.codex/hooks/`：Codex hook 脚本
@@ -146,9 +146,9 @@
 - `.harness/docs/java-dev-conventions.md`：Java 后端编码规范（Java 项目必读）
 - `.harness/docs/frontend-dev-conventions.md`：前端工程级编码规范（前端项目必读）
 - `.harness/feature_list.json`：legacy 兼容镜像（仅在历史项目存在时沿用）
-- `.harness/runtime-version.json`：运行时版本号（用于版本化升级）
-- `.harness/update-policy.json`：远程更新策略（定时检查与自动应用）
-- `.harness/TASK-HARNESS.md`：任务层执行契约（可选）
+- `.harness/config/runtime-version.json`：运行时版本号（用于版本化升级）
+- `.harness/config/update-policy.json`：远程更新策略（定时检查与自动应用）
+- `.harness/docs/TASK-HARNESS.md`：任务层执行契约（可选）
 
 ## 提示词示例（Codex）
 

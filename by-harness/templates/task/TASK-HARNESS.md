@@ -11,12 +11,12 @@
 
 ## 会话启动（必须按顺序）
 
-1. 运行 `bash .harness/init.sh`（legacy 项目可用 `bash init.sh`）
+1. 运行 `bash .harness/scripts/init.sh`（legacy 项目可用 `bash .harness/init.sh`）
 2. 阅读根目录 `AGENTS.md`（主工作流约束）
-3. 阅读 `.harness/TASK-HARNESS.md`（任务追踪约束）
+3. 阅读 `.harness/docs/TASK-HARNESS.md`（任务追踪约束）
 4. 阅读 `.harness/task-harness/index.json`（定位 active bucket）
 5. 阅读对应任务文件（如 `.harness/task-harness/features/backlog-core.json`；若存在 `.harness/feature_list.json`，仅作兼容查看）
-6. 阅读 `.harness/task-harness/progress/*.md`（`.harness/progress.txt` 为最新快照）
+6. 阅读 `.harness/task-harness/progress/*.md`（`.harness/task-harness/progress/latest.txt` 为最新快照）
 7. 选择优先级最高且 `passes=false` 的 1 个功能
 
 ## 闭环执行契约（严格遵循 Harness Engineering）
@@ -40,12 +40,12 @@
 
 ## 会话结束前必须完成
 
-1. 写入进度日志（`.harness/task-harness/progress/YYYY-MM.md`，并刷新 `.harness/progress.txt` 快照）
+1. 写入进度日志（`.harness/task-harness/progress/YYYY-MM.md`，并刷新 `.harness/task-harness/progress/latest.txt` 快照）
 2. 若该 feature 单元测试通过：更新 `passes=true`
 3. 运行会话收口脚本：`python3 .harness/scripts/session_close.py --target-dir . --feature-id <feat-id>`
 4. 提交 git commit（建议一个 feature 一个 commit）
 5. 输出下一步建议（下一个 feature 或阻塞处理方案）
-6. 根据 `.harness/task.json` 的 `harness.session_control.mode` 自动执行会话切换：
+6. 根据 `.harness/config/task.json` 的 `harness.session_control.mode` 自动执行会话切换：
    - `soft_reset`：继续当前会话时，必须按新 epoch 上下文处理下一 feature
    - `hard_new_session`：必须新开会话后再开始下一 feature
 7. 自动续跑下一个任务可执行：
@@ -56,7 +56,7 @@
 
 - 立即停止当前 feature 的继续堆叠开发，先记录阻塞证据
 - 若同一 feature 修复 3 轮仍未通过单元测试：保持 `passes=false`，并继续下一个任务
-- 在 `.harness/task-harness/progress/YYYY-MM.md` 记录（并由收口脚本刷新 `.harness/progress.txt`）：
+- 在 `.harness/task-harness/progress/YYYY-MM.md` 记录（并由收口脚本刷新 `.harness/task-harness/progress/latest.txt`）：
   - 阻塞现象
   - 已尝试方案
   - 失败原因
@@ -64,7 +64,7 @@
 
 ## Codex 提示词示例
 
-- `先运行 .harness/init.sh，然后按 AGENTS.md + .harness/TASK-HARNESS.md 执行下一个 feature`
+- `先运行 .harness/scripts/init.sh，然后按 AGENTS.md + .harness/docs/TASK-HARNESS.md 执行下一个 feature`
 - `执行 feat-03：严格按 read task -> plan -> build -> qa(non-blocking) -> fix -> mark_pass`
 - `按 harness 工作流修复 feat-05，最多 3 轮；若单测仍失败则继续下一个任务`
 

@@ -58,7 +58,7 @@ Generator 在交给 Evaluator 前必须先完成自检。
 
 **为什么**：遵循“地图而非百科全书”原则。入口轻量、细节可跳转，可兼顾上下文精简与深度可达。（OpenAI）
 
-**如何执行**：`AGENTS.md`（Codex）与 `.harness/CLAUDE.md`（Claude）作为入口地图；`.harness/docs/` 承载细节；spec 与 contract 承载任务深度。
+**如何执行**：`AGENTS.md`（Codex）与 `CLAUDE.md`（Claude）作为入口地图；`.harness/docs/` 承载细节；spec 与 contract 承载任务深度。
 
 ## 8. 文档新鲜度（Doc Freshness）
 

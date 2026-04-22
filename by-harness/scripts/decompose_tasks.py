@@ -253,7 +253,9 @@ def sync_legacy_view(workspace_dir: Path, data) -> bool:
 
 
 def update_task_summary(workspace_dir: Path, all_features):
-    task_json = workspace_dir / "task.json"
+    task_json = workspace_dir / "config" / "task.json"
+    if not task_json.exists():
+        task_json = workspace_dir / "task.json"
     if not task_json.exists():
         return
 
