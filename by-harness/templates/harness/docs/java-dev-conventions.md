@@ -3,8 +3,8 @@
 本规范用于 Java 后端项目在多人协作、跨仓协作、AI 并行开发场景下的统一工程约束与执行闸门。
 
 版本信息：
-- Version: `1.0`
-- Last Updated: `2026-04-20`
+- Version: `1.1`
+- Last Updated: `2026-04-28`
 
 ## 1. 适用范围
 
@@ -32,10 +32,12 @@
 
 1. 已阅读当前任务 `spec/contract` 与仓库范围约束文档。
 2. 已阅读本规范及来源标准文档。
-7. SQL 约束确认：MyBatis SQL 写在 XML Mapper，禁止 Java 注解内联 SQL。
-8. 调度约束确认：定时任务统一基于 XXL-Job，不新增 ad-hoc 调度框架。
-9. 数据库策略确认：migration 默认不是必选交付项，按任务卡显式要求执行。
-10. 分布式约束确认：凡涉及并发、锁、缓存、消息、事务一致性、容错、可观测性、发布停机，逐项满足第 14 章。
+3. SQL 位置确认：MyBatis SQL 写在 XML Mapper，禁止 Java 注解内联 SQL。
+4. SQL 语义确认：统计、NULL 判断、分页、多表列限定、数据订正已逐条满足第 8 章。
+5. ORM 映射确认：字段清单、`resultMap`、参数绑定、更新字段范围与 `update_time` 已逐条满足第 8 章。
+6. 调度约束确认：定时任务统一基于 XXL-Job，不新增 ad-hoc 调度框架。
+7. 数据库策略确认：migration 默认不是必选交付项，按任务卡显式要求执行。
+8. 分布式约束确认：凡涉及并发、锁、缓存、消息、事务一致性、容错、可观测性、发布停机，逐项满足第 14 章。
 
 若缺失任一确认，不得直接实现。
 
@@ -85,12 +87,48 @@
 
 ## 8. 数据库与 MyBatis 规范
 
+本章为 SQL 与 ORM 映射的强制编码底线。凡新增或修改 Mapper、XML SQL、分页查询、数据订正脚本、表结构说明，均必须逐项自检。
+
+### 8.1 SQL 基础约束（MUST）
+
 - 表名/字段名/索引名统一 `lower_snake_case`。
 - 主键统一 `id`，外键统一 `<entity>_id`。
 - SQL 必须位于 `resources/mapper/**/*.xml`。
 - Mapper 接口仅保留方法签名，禁止 `@Select/@Update/@Insert/@Delete` 注解内联 SQL。
 - 新增/修改 Mapper 必须同步提交 XML 与接口签名并通过启动期映射校验。
 - 事务边界应由 `application` 层管理，禁止跨层隐式扩散。
+- 行数统计统一使用 `count(*)`，禁止用 `count(列名)` 或 `count(常量)` 代替。
+- 使用 `count(distinct col)` 时必须明确其只统计非 NULL 不重复值；多列 `count(distinct col1, col2)` 中任一参与列为 NULL 的行不计入统计，如果其中一列全为 NULL，即使另一列存在不同值也返回 `0`。
+- 聚合函数必须处理 NULL 结果：`count(col)` 在列全 NULL 时返回 `0`，`sum(col)` 在列全 NULL 时返回 `NULL`；业务读取 `sum` 结果必须使用 `IFNULL(SUM(column), 0)` 或等价兜底，避免 NPE。
+- NULL 判断统一使用 `ISNULL(column)` / `NOT ISNULL(column)`，禁止使用 `= NULL`、`<> NULL` 或依赖 NULL 与普通值直接比较的结果。
+- 分页查询必须先执行 count；当 count 为 `0` 时直接返回空分页结果，禁止继续执行分页明细查询。
+- 禁止使用数据库外键与级联更新/删除；外键关系、级联语义、约束校验必须在应用层或领域规则中解决。
+- 禁止使用存储过程承载业务逻辑，避免调试、扩展、迁移和审计困难。
+- 数据订正、删除或批量修改前必须先 `select` 确认命中范围，确认无误后才能执行 `update/delete`。
+- 多表查询、更新、删除中涉及的所有列必须加表别名或表名限定，禁止裸列名。
+
+### 8.2 SQL 写法建议（SHOULD）
+
+- SQL 表别名建议使用 `as t1`、`as t2`、`as t3` 顺序命名，提升多表 SQL 可读性与审查效率。
+- `in` 操作能避免则避免；确需使用时必须评估集合规模，原则上控制在 `1000` 个元素以内。
+- 涉及字符长度判断时必须区分字节数与字符数：`LENGTH` 返回字节长度，`CHARACTER_LENGTH` 返回字符数量；需要存储表情时使用 `utf8mb4`。
+- 开发代码中不建议使用 `TRUNCATE TABLE`；它速度快但无事务且不触发 trigger，误用风险高。清理数据必须按任务给出的审批、备份和回滚要求执行。
+
+### 8.3 ORM / MyBatis 映射约束（MUST）
+
+- 查询字段必须显式列出，禁止 `select *`。
+- POJO 布尔属性禁止以 `is` 开头；数据库布尔字段必须使用 `is_` 前缀，并在 `resultMap` 中显式映射字段与属性。
+- 禁止使用 `resultClass` 作为返回映射；每个表必须有对应 `<resultMap>`，即使字段名与属性名完全一致也必须显式定义。
+- SQL XML 参数绑定统一使用 `#{}`，禁止使用 `${}` 拼接用户输入或业务参数，避免 SQL 注入。
+- 禁止使用 iBATIS `queryForList(String statementName, int start, int size)` 做分页；分页参数必须下推到 SQL，例如通过 `start`、`size` 参数传入 Mapper。
+- 查询结果禁止直接输出为 `HashMap` 或 `Hashtable`；必须定义明确 DO/DTO 与 `<resultMap>`，避免数据库版本或驱动差异导致类型不一致。
+- 更新数据表记录时，必须同步更新该记录的 `update_time` 为当前时间。
+
+### 8.4 ORM / MyBatis 写法建议（SHOULD）
+
+- 不要设计“大而全”的更新接口。更新 SQL 只允许写入本次业务真正需要变更的字段，避免误覆盖、降低执行成本并减少 binlog 膨胀。
+- `@Transactional` 不得滥用。启用事务前必须确认数据库 QPS 影响、事务边界、回滚范围，以及缓存、搜索引擎、消息、统计数据等外部副作用的补偿方案。
+- 维护历史 iBATIS 动态 SQL 时，必须准确区分条件标签语义：`<isEqual>` 的 `compareValue` 是与属性值比较的常量，`<isNotEmpty>` 表示非空字符串且非 NULL，`<isNotNull>` 仅表示非 NULL。
 
 ## 9. 分布式运行规则（摘要）
 

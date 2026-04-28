@@ -17,7 +17,7 @@ from datetime import date
 from pathlib import Path
 
 HARNESS_DIR_NAME = ".harness"
-HARNESS_RUNTIME_VERSION = "2.2.1"
+HARNESS_RUNTIME_VERSION = "2.2.2"
 
 
 def parse_args():
@@ -202,6 +202,7 @@ def verify_outputs(target_dir: Path):
         ".codex/hooks/context-injector.py",
         ".codex/hooks/loop-detector.py",
         ".codex/hooks/pre-completion-check.py",
+        ".codex/hooks/convention-check.py",
         ".claude/settings.json",
         f"{HARNESS_DIR_NAME}/docs/contracts/TEMPLATE.md",
         f"{HARNESS_DIR_NAME}/docs/java-dev-conventions.md",
@@ -245,10 +246,12 @@ def main():
         ("harness/hooks/loop-detector.py", ".claude/hooks/loop-detector.py"),
         ("harness/hooks/pre-completion-check.py", ".claude/hooks/pre-completion-check.py"),
         ("harness/hooks/context-injector.py", ".claude/hooks/context-injector.py"),
+        ("harness/hooks/convention-check.py", ".claude/hooks/convention-check.py"),
         ("harness/codex/config.toml", ".codex/config.toml"),
         ("harness/codex/hooks/context-injector.py", ".codex/hooks/context-injector.py"),
         ("harness/codex/hooks/loop-detector.py", ".codex/hooks/loop-detector.py"),
         ("harness/codex/hooks/pre-completion-check.py", ".codex/hooks/pre-completion-check.py"),
+        ("harness/codex/hooks/convention-check.py", ".codex/hooks/convention-check.py"),
         ("task/index.json", f"{HARNESS_DIR_NAME}/task-harness/index.json"),
         ("task/backlog-core.json", f"{HARNESS_DIR_NAME}/task-harness/features/backlog-core.json"),
         ("task/runtime-version.json", f"{HARNESS_DIR_NAME}/config/runtime-version.json"),

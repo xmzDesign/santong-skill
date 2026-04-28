@@ -20,6 +20,8 @@ color: green
 
 - 阅读 spec，理解要构建什么
 - 阅读 sprint contract，明确“完成”的定义
+- 如果当前仓库是 Java/Spring/MyBatis 项目，必须读取 `.harness/docs/java-dev-conventions.md`，并把其中与本次改动相关的硬约束纳入实现计划。
+- 如果本次改动包含 Mapper XML、SQL、DAO/Repository、分页查询或数据更新，编码前必须先列出本次适用的 SQL/ORM 规则，至少覆盖：禁止注解 SQL、禁止 `select *`、禁止 `${}`、强制 `resultMap`、`count(*)`、`sum` NULL 兜底、更新 `update_time`、禁止外键/级联/存储过程。
 - 阅读相关现有代码（只读必要部分，控制上下文预算）
 - **不要**通读整个代码库
 
@@ -41,7 +43,8 @@ color: green
 3. **测试检查**：既有测试是否通过？新增测试是否通过？
 4. **验收标准检查**：逐条对照 contract 验证是否达成。
 5. **中文注释检查**：确认所有新增/修改函数、方法均有清晰中文注释。
-6. **调试残留检查**：移除 `console.log/print`、`TODO`、临时代码等。
+6. **SQL/ORM 规范检查**：若涉及 Java/MyBatis/SQL，运行 `.codex/hooks/convention-check.py --changed-only` 或 `.claude/hooks/convention-check.py --changed-only`；fail 必须修复，warn 必须修复或解释。
+7. **调试残留检查**：移除 `console.log/print`、`TODO`、临时代码等。
 
 不要跳过此步骤。跳过自检会显著降低交付质量。
 
@@ -50,6 +53,7 @@ color: green
 在回复中给出简短报告（不要写到文件），包含：
 - 实现了什么
 - 如何完成自检
+- 若涉及 Java/MyBatis/SQL，必须包含“SQL/ORM 规范自检结果”，说明 convention-check 是否通过、warn 是否已处理或解释
 - 需要 evaluator 重点关注什么
 - 是否偏离 spec（若有，说明原因）
 

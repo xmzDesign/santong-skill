@@ -16,11 +16,12 @@ CHECKLIST = [
     "4. No debug artifacts left (console.log/TODO/temp code)?",
     "5. Docs updated if behavior changed?",
     "6. Do all newly added/modified functions and methods include clear Chinese comments?",
+    "7. If Java/MyBatis/SQL changed, convention-check.py --changed-only has no FAIL and WARN is fixed or explained?",
 ]
 
 TASK_HARNESS_CHECKLIST = [
-    "7. If this sprint maps to active bucket task file, unit tests passed before passes=true?",
-    "8. QA report is recorded (non-blocking), and progress logs are updated?",
+    "8. If this sprint maps to active bucket task file, unit tests passed before passes=true?",
+    "9. QA report is recorded (non-blocking), and progress logs are updated?",
 ]
 
 

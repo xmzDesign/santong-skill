@@ -29,6 +29,12 @@
         "hooks": [
           {
             "type": "command",
+            "command": "/usr/bin/env python3 \"$(git rev-parse --show-toplevel 2>/dev/null || pwd)/.codex/hooks/convention-check.py\" --changed-only --format hook",
+            "timeout": 10,
+            "statusMessage": "Checking Java/MyBatis conventions"
+          },
+          {
+            "type": "command",
             "command": "/usr/bin/env python3 \"$(git rev-parse --show-toplevel 2>/dev/null || pwd)/.codex/hooks/pre-completion-check.py\"",
             "timeout": 5
           }

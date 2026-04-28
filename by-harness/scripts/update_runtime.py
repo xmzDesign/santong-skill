@@ -37,7 +37,7 @@ LEGACY_TASK_FILE_NAME = "task.json"
 LEGACY_SESSION_CONTEXT_FILE_NAME = "session-context.json"
 LEGACY_SESSION_BOUNDARY_FILE_NAME = "session-boundary.json"
 LEGACY_TASK_CONTRACT_FILE_NAME = "TASK-HARNESS.md"
-LATEST_RUNTIME_VERSION = "2.2.1"
+LATEST_RUNTIME_VERSION = "2.2.2"
 RUNTIME_SCRIPT_NAMES = (
     "init.sh",
     "session_close.py",
@@ -47,7 +47,19 @@ RUNTIME_SCRIPT_NAMES = (
     "upgrade_legacy_repo.py",
 )
 RUNTIME_DOC_REL_PATHS = (
+    "root/AGENTS.md",
     "root/CLAUDE.md",
+    "root/.codex/config.toml",
+    "root/.codex/hooks.json",
+    "root/.codex/hooks/context-injector.py",
+    "root/.codex/hooks/loop-detector.py",
+    "root/.codex/hooks/pre-completion-check.py",
+    "root/.codex/hooks/convention-check.py",
+    "root/.claude/settings.json",
+    "root/.claude/hooks/context-injector.py",
+    "root/.claude/hooks/loop-detector.py",
+    "root/.claude/hooks/pre-completion-check.py",
+    "root/.claude/hooks/convention-check.py",
     TASK_CONTRACT_FILE_NAME,
     "docs/architecture.md",
     "docs/golden-principles.md",
@@ -97,6 +109,7 @@ MIGRATIONS: dict[str, tuple[str, str]] = {
     "1.0.0": ("2.0.0", "migrate_remove_branch_switching"),
     "2.0.0": ("2.1.0", "migrate_runtime_versioning"),
     "2.1.0": ("2.2.1", "migrate_runtime_versioning"),
+    "2.2.1": ("2.2.2", "migrate_runtime_versioning"),
 }
 
 
@@ -708,13 +721,14 @@ def materialize_manifest_files(
     *,
     timeout_seconds: int,
     require_checksum: bool,
-) -> list[tuple[Path, bytes]]:
-    rendered: list[tuple[Path, bytes]] = []
+) -> list[tuple[Path, bytes, str]]:
+    rendered: list[tuple[Path, bytes, str]] = []
     for item in files:
         if not isinstance(item, dict):
             raise RuntimeError("manifest file item must be an object")
         rel_path = str(item.get("path", "")).strip()
         target = secure_target_path(harness_dir, repo_root, rel_path)
+        merge_strategy = str(item.get("merge_strategy", "") or item.get("merge", "")).strip()
 
         if "content" in item:
             content = item.get("content")
@@ -738,18 +752,112 @@ def materialize_manifest_files(
 
         if bool(item.get("render_project_context", False)):
             data = render_project_context(data, harness_dir)
-        rendered.append((target, data))
+        rendered.append((target, data, merge_strategy))
     return rendered
 
 
-def write_rendered_files(rendered: list[tuple[Path, bytes]], dry_run: bool) -> int:
+def hook_group_signature(group: dict[str, Any]) -> str:
+    matcher = group.get("matcher", "")
+    hooks = group.get("hooks", [])
+    hook_sigs = []
+    if isinstance(hooks, list):
+        for hook in hooks:
+            if isinstance(hook, dict):
+                hook_sigs.append(f"{hook.get('type', '')}:{hook.get('command', '')}")
+    return f"{matcher}|{'|'.join(hook_sigs)}"
+
+
+def load_json_object_from_bytes(data: bytes, label: str) -> dict[str, Any]:
+    try:
+        payload = json.loads(data.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise RuntimeError(f"{label} must be a JSON object: {exc}") from exc
+    if not isinstance(payload, dict):
+        raise RuntimeError(f"{label} must be a JSON object")
+    return payload
+
+
+def load_existing_json_object(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise RuntimeError(f"cannot merge invalid JSON file {path}: {exc}") from exc
+    if not isinstance(payload, dict):
+        raise RuntimeError(f"cannot merge non-object JSON file {path}")
+    return payload
+
+
+def merge_hook_groups(existing: dict[str, Any], template: dict[str, Any]) -> None:
+    if "hooks" not in existing or not isinstance(existing.get("hooks"), dict):
+        existing["hooks"] = {}
+    for event_name, groups in template.get("hooks", {}).items():
+        if not isinstance(groups, list):
+            continue
+        if event_name not in existing["hooks"] or not isinstance(existing["hooks"][event_name], list):
+            existing["hooks"][event_name] = groups
+            continue
+        existing_sigs = {
+            hook_group_signature(group)
+            for group in existing["hooks"][event_name]
+            if isinstance(group, dict)
+        }
+        for group in groups:
+            if not isinstance(group, dict):
+                continue
+            sig = hook_group_signature(group)
+            if sig not in existing_sigs:
+                existing["hooks"][event_name].append(group)
+                existing_sigs.add(sig)
+
+
+def merge_permissions(existing: dict[str, Any], template: dict[str, Any]) -> None:
+    existing_permissions = existing.get("permissions", {})
+    template_permissions = template.get("permissions", {})
+    if not isinstance(existing_permissions, dict):
+        existing_permissions = {}
+    if not isinstance(template_permissions, dict):
+        template_permissions = {}
+    merged_permissions = {}
+    for key in ("allow", "deny"):
+        values = []
+        for source in (existing_permissions.get(key, []), template_permissions.get(key, [])):
+            if not isinstance(source, list):
+                continue
+            for item in source:
+                if item not in values:
+                    values.append(item)
+        if values:
+            merged_permissions[key] = values
+    if merged_permissions:
+        existing["permissions"] = merged_permissions
+
+
+def render_merge_strategy(target: Path, data: bytes, merge_strategy: str) -> bytes:
+    template = load_json_object_from_bytes(data, str(target))
+    existing = load_existing_json_object(target)
+    if merge_strategy == "codex_hooks":
+        merge_hook_groups(existing, template)
+    elif merge_strategy == "claude_settings":
+        merge_hook_groups(existing, template)
+        merge_permissions(existing, template)
+    else:
+        raise RuntimeError(f"unsupported merge_strategy for {target}: {merge_strategy}")
+    return (json.dumps(existing, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
+
+
+def write_rendered_files(rendered: list[tuple[Path, bytes, str]], dry_run: bool) -> int:
     count = 0
-    for target, data in rendered:
+    for target, data, merge_strategy in rendered:
         if dry_run:
-            print(f"[dry-run] write file: {target}")
+            action = "merge file" if merge_strategy else "write file"
+            print(f"[dry-run] {action}: {target}")
             count += 1
             continue
         target.parent.mkdir(parents=True, exist_ok=True)
+        if merge_strategy:
+            data = render_merge_strategy(target, data, merge_strategy)
         target.write_bytes(data)
         if target.suffix in {".py", ".sh"}:
             target.chmod(target.stat().st_mode | 0o755)

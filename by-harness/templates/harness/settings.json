@@ -36,6 +36,11 @@
         "hooks": [
           {
             "type": "command",
+            "command": "python3 .claude/hooks/convention-check.py --changed-only --format hook",
+            "timeout": 10
+          },
+          {
+            "type": "command",
             "command": "python3 .claude/hooks/pre-completion-check.py",
             "timeout": 5
           }

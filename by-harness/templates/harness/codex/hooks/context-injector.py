@@ -4,6 +4,7 @@ Codex UserPromptSubmit hook: inject concise project context.
 """
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -11,6 +12,22 @@ from pathlib import Path
 HARNESS_DIR_NAME = ".harness"
 SESSION_MODE_SOFT = "soft_reset"
 SESSION_MODE_HARD = "hard_new_session"
+SQL_ORM_SPECIFIC_RE = re.compile(r"(mapper|mybatis|sql|dao|repository|分页|更新|查询)", re.IGNORECASE)
+CODE_TRIGGER_RE = re.compile(r"(build|implement|code|编码|实现)", re.IGNORECASE)
+SQL_ORM_RULE_CARD = "\n".join(
+    [
+        "SQL/ORM guardrails for this coding turn:",
+        "- Read .harness/docs/java-dev-conventions.md before Java/Spring/MyBatis edits.",
+        "- SQL must be in XML Mapper; @Select/@Update/@Insert/@Delete are forbidden.",
+        "- Query columns must be explicit; select * is forbidden.",
+        "- XML parameters must use #{}; ${} is forbidden.",
+        "- Use resultMap; resultClass is forbidden.",
+        "- Row count must use count(*); sum() must be NULL-safe with IFNULL/COALESCE.",
+        "- Updated records must maintain update_time.",
+        "- Foreign keys, cascade actions, and stored procedures are forbidden.",
+        "- Run .codex/hooks/convention-check.py --changed-only before claiming completion.",
+    ]
+)
 
 
 def emit(payload):
@@ -43,6 +60,22 @@ def extract_prompt_text(hook_input):
     if not candidates:
         return ""
     return sorted(candidates, key=len, reverse=True)[0]
+
+
+def should_inject_sql_orm_rules(prompt_text: str) -> bool:
+    cwd = Path.cwd()
+    workspace = cwd / HARNESS_DIR_NAME if (cwd / HARNESS_DIR_NAME).exists() else cwd
+    is_java_project = (workspace / "docs" / "java-dev-conventions.md").exists() and any(
+        candidate.exists()
+        for candidate in [
+            cwd / "pom.xml",
+            cwd / "build.gradle",
+            cwd / "src" / "main" / "resources",
+        ]
+    )
+    if SQL_ORM_SPECIFIC_RE.search(prompt_text or ""):
+        return True
+    return is_java_project and bool(CODE_TRIGGER_RE.search(prompt_text or ""))
 
 
 def _find_branch_script(repo: Path):
@@ -356,6 +389,8 @@ def main():
                 "Warning: task harness state exists but "
                 f"{task_state.get('workspace_label', '')}task-harness/progress/latest.txt is missing."
             )
+    if should_inject_sql_orm_rules(prompt_text):
+        parts.append(SQL_ORM_RULE_CARD)
     parts.append(
         "Commit policy reminder: commit/push only on explicit user instruction; "
         "develop on current branch by default, and keep commit subject concise."
