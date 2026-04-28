@@ -15,7 +15,20 @@ HARNESS_DIR_NAME = ".harness"
 
 JAVA_EXTENSIONS = {".java"}
 SQL_EXTENSIONS = {".xml", ".sql"}
-IGNORED_PARTS = {".git", ".idea", ".vscode", "target", "build", "dist", "node_modules", ".harness"}
+FRONTEND_EXTENSIONS = {".ts", ".tsx", ".js", ".jsx", ".vue", ".css", ".scss", ".less"}
+STYLE_EXTENSIONS = {".css", ".scss", ".less", ".vue"}
+IGNORED_PARTS = {
+    ".git",
+    ".idea",
+    ".vscode",
+    "target",
+    "build",
+    "dist",
+    "node_modules",
+    ".harness",
+    "coverage",
+    ".next",
+}
 
 SQL_RULE_CARD = [
     "SQL/ORM guardrails:",
@@ -27,6 +40,16 @@ SQL_RULE_CARD = [
     "6. sum() results must be NULL-safe with IFNULL/COALESCE.",
     "7. Updated records must maintain update_time.",
     "8. Foreign keys, cascade, and stored procedures are forbidden.",
+]
+
+FRONTEND_RULE_CARD = [
+    "Frontend guardrails:",
+    "1. Business styles should use design tokens/theme variables; hardcoded colors are not allowed outside token/theme files.",
+    "2. Inline style in TSX/JSX/Vue is forbidden unless it is a documented dynamic geometry/chart/virtual-list exception.",
+    "3. Avoid naked global overrides; Antd overrides must be scoped through CSS Modules or a root class.",
+    "4. Do not use !important unless explaining a third-party compatibility exception.",
+    "5. Avoid generic AI-product visuals such as purple gradients, glassmorphism, and decorative orbs.",
+    "6. Frontend changes must cover loading/empty/error/disabled/focus-visible states where applicable.",
 ]
 
 
@@ -98,7 +121,7 @@ def all_relevant_files(root: Path) -> list[Path]:
 
 
 def is_relevant(path: Path) -> bool:
-    return path.suffix.lower() in (JAVA_EXTENSIONS | SQL_EXTENSIONS)
+    return path.suffix.lower() in (JAVA_EXTENSIONS | SQL_EXTENSIONS | FRONTEND_EXTENSIONS)
 
 
 def is_ignored(path: Path) -> bool:
@@ -117,6 +140,19 @@ def read_text(path: Path) -> str:
         return path.read_text(encoding="utf-8")
     except UnicodeDecodeError:
         return path.read_text(encoding="utf-8", errors="ignore")
+
+
+def is_frontend_token_or_theme_file(root: Path, path: Path) -> bool:
+    rel = rel_path(root, path).replace("\\", "/").lower()
+    name = path.name.lower()
+    return (
+        "/tokens/" in rel
+        or "/theme/" in rel
+        or "/styles/variables" in rel
+        or "token" in name
+        or "theme" in name
+        or name in {"variables.scss", "variables.less", "antd-theme.less"}
+    )
 
 
 def add_finding(findings: list[Finding], severity: str, rule: str, root: Path, path: Path, line_no: int, message: str, line: str):
@@ -212,6 +248,92 @@ def scan_sql(root: Path, path: Path, findings: list[Finding]):
             add_finding(findings, "warn", "SQL_UPDATE_TIME", root, path, line_no, "Record updates must also maintain update_time; verify this update is exempt or add update_time.", line)
 
 
+def scan_frontend(root: Path, path: Path, findings: list[Finding]):
+    text = read_text(path)
+    suffix = path.suffix.lower()
+    is_token_or_theme = is_frontend_token_or_theme_file(root, path)
+    for line_no, line in enumerate(text.splitlines(), start=1):
+        lowered = line.lower()
+        if suffix in {".tsx", ".jsx", ".vue"} and re.search(r"\bstyle\s*=\s*\{\{", line):
+            add_finding(
+                findings,
+                "fail",
+                "FE_INLINE_STYLE",
+                root,
+                path,
+                line_no,
+                "Inline style is forbidden unless it is a documented dynamic geometry/chart/virtual-list exception.",
+                line,
+            )
+        if not is_token_or_theme and re.search(r"#[0-9a-fA-F]{3,8}\b", line):
+            severity = "fail" if suffix in STYLE_EXTENSIONS else "warn"
+            add_finding(
+                findings,
+                severity,
+                "FE_HARDCODED_COLOR",
+                root,
+                path,
+                line_no,
+                "Hardcoded color found outside token/theme files; use semantic token or existing theme variable.",
+                line,
+            )
+        if not is_token_or_theme and re.search(r"var\(--color-[^)]+\)", line):
+            add_finding(
+                findings,
+                "warn",
+                "FE_PRIMITIVE_TOKEN",
+                root,
+                path,
+                line_no,
+                "Primitive color token referenced in component/business style; prefer semantic token such as bg/fg/border/intent/agent.",
+                line,
+            )
+        if suffix in STYLE_EXTENSIONS and "!important" in line:
+            add_finding(
+                findings,
+                "warn",
+                "FE_IMPORTANT",
+                root,
+                path,
+                line_no,
+                "Avoid !important; scope overrides or explain the third-party compatibility exception.",
+                line,
+            )
+        if suffix in STYLE_EXTENSIONS and ".ant-" in line and ":global" not in line and ":where" not in line:
+            add_finding(
+                findings,
+                "warn",
+                "FE_NAKED_ANTD_OVERRIDE",
+                root,
+                path,
+                line_no,
+                "Antd override appears unscoped; wrap it in CSS Modules :global under a module root class.",
+                line,
+            )
+        if "backdrop-filter" in lowered:
+            add_finding(
+                findings,
+                "warn",
+                "FE_GLASSMORPHISM",
+                root,
+                path,
+                line_no,
+                "Glassmorphism is not part of the default B2B SaaS visual baseline; remove or justify.",
+                line,
+            )
+        if "linear-gradient" in lowered and re.search(r"(8b5cf6|7c3aed|a855f7|purple|violet)", lowered):
+            add_finding(
+                findings,
+                "warn",
+                "FE_AI_PURPLE_GRADIENT",
+                root,
+                path,
+                line_no,
+                "Avoid generic purple AI gradients unless explicitly required by the product design system.",
+                line,
+            )
+
+
 def scan_files(root: Path, files: list[Path]) -> list[Finding]:
     findings: list[Finding] = []
     for path in files:
@@ -220,6 +342,8 @@ def scan_files(root: Path, files: list[Path]) -> list[Finding]:
             scan_java(root, path, findings)
         elif suffix in SQL_EXTENSIONS:
             scan_sql(root, path, findings)
+        elif suffix in FRONTEND_EXTENSIONS:
+            scan_frontend(root, path, findings)
     return findings
 
 
@@ -230,8 +354,12 @@ def format_text(findings: list[Finding], files: list[Path], root: Path) -> str:
     fails = [item for item in findings if item.severity == "fail"]
     warns = [item for item in findings if item.severity == "warn"]
     lines = []
-    lines.extend(SQL_RULE_CARD)
-    lines.append("")
+    if any(item.rule.startswith(("SQL_", "JAVA_", "MYBATIS_", "IBATIS_", "MAP_")) for item in findings):
+        lines.extend(SQL_RULE_CARD)
+        lines.append("")
+    if any(item.rule.startswith("FE_") for item in findings):
+        lines.extend(FRONTEND_RULE_CARD)
+        lines.append("")
     lines.append(f"Convention check found {len(fails)} fail(s), {len(warns)} warn(s) in {len(files)} relevant file(s).")
     for item in findings[:60]:
         label = "FAIL" if item.severity == "fail" else "WARN"

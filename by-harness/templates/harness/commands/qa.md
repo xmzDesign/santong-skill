@@ -24,6 +24,7 @@ argument-hint: 可选 - 指定要评估的 contract 或 spec
 3. 用 Chrome DevTools 检查控制台错误、网络与性能。
 4. 若涉及 UI，结合截图进行视觉检查。
 5. 阅读源码并校验逻辑正确性。
+6. 若涉及前端，读取 `.harness/docs/frontend-dev-conventions.md`、`.harness/docs/frontend/` 三层规范和对应 BYAI HTML 参考页，检查 token、状态覆盖、响应式、可访问性、视觉一致性与反例规避。
 
 ### 3. 评分报告
 

@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Maria Santos · Lead detail · BYAI</title>
+<link rel="stylesheet" href="../assets/fonts.css" />
+<link rel="stylesheet" href="../tokens/tokens.css" />
+<link rel="stylesheet" href="../assets/shell.css" />
+<style>
+  /* ---------- Lead detail specific ---------- */
+  .detail-head {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-4);
+  }
+  .avatar-lg {
+    width: 56px; height: 56px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(135deg, var(--color-amber-400), var(--color-amber-600));
+    color: #fff;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: var(--font-weight-semibold);
+    flex-shrink: 0;
+  }
+  .detail-head__main { flex: 1; min-width: 0; }
+  .detail-head__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-4);
+    margin-top: var(--space-2);
+    font-size: var(--font-size-small);
+    color: var(--fg-muted);
+  }
+  .detail-head__meta .sep { color: var(--border-default); }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: var(--space-6);
+    margin-top: var(--space-6);
+  }
+
+  /* ---------- Property grid ---------- */
+  .prop-grid {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    row-gap: var(--space-2);
+    column-gap: var(--space-4);
+    font-size: var(--font-size-small);
+  }
+  .prop-grid dt { color: var(--fg-muted); }
+  .prop-grid dd { margin: 0; color: var(--fg-strong); font-weight: var(--font-weight-medium); }
+  .prop-grid dd.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+  /* ---------- Score card ---------- */
+  .score-card { display: grid; grid-template-columns: auto 1fr; gap: var(--space-4); align-items: center; }
+  .score-ring {
+    width: 88px; height: 88px;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .score-ring__label {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: var(--font-weight-semibold);
+    font-variant-numeric: tabular-nums;
+    color: var(--fg-strong);
+  }
+  .score-ring__label small {
+    display: block;
+    font-family: var(--font-body);
+    font-size: 10px;
+    font-weight: var(--font-weight-medium);
+    color: var(--fg-subtle);
+    text-transform: uppercase;
+    letter-spacing: var(--font-tracking-wider);
+    margin-top: 2px;
+  }
+  .score-factors { display: flex; flex-direction: column; gap: var(--space-2); }
+  .factor-row { display: grid; grid-template-columns: 1fr 60px 40px; align-items: center; gap: var(--space-2); font-size: var(--font-size-caption); }
+  .factor-row__label { color: var(--fg-default); }
+  .factor-row__bar { height: 4px; background: var(--bg-surface-subtle); border-radius: var(--radius-full); overflow: hidden; }
+  .factor-row__bar > span { display: block; height: 100%; background: var(--color-amber-500); border-radius: inherit; }
+  .factor-row__bar > span.low { background: var(--color-warm-grey-400); }
+  .factor-row__value { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 11px; color: var(--fg-strong); text-align: right; }
+
+  /* ---------- Timeline ---------- */
+  .timeline {
+    position: relative;
+    padding-left: var(--space-6);
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    top: 8px; bottom: 8px;
+    left: 8px;
+    width: 1px;
+    background: var(--border-subtle);
+  }
+  .tl-item { position: relative; padding-bottom: var(--space-5); }
+  .tl-item:last-child { padding-bottom: 0; }
+  .tl-item__dot {
+    position: absolute;
+    left: -20px;
+    top: 4px;
+    width: 16px; height: 16px;
+    border-radius: var(--radius-full);
+    background: var(--bg-surface);
+    border: 2px solid var(--border-default);
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .tl-item__dot .icon { width: 8px; height: 8px; color: var(--fg-muted); }
+  .tl-item--agent .tl-item__dot {
+    border-color: var(--agent-border-default);
+    background: var(--agent-bg-message);
+  }
+  .tl-item--agent .tl-item__dot .icon { color: var(--fg-agent); }
+  .tl-item--call .tl-item__dot {
+    border-color: var(--intent-positive-border);
+    background: var(--intent-positive-surface);
+  }
+  .tl-item--call .tl-item__dot .icon { color: var(--intent-positive-text); }
+  .tl-item__head {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    margin-bottom: var(--space-1);
+  }
+  .tl-item__title { font-size: var(--font-size-small); color: var(--fg-strong); font-weight: var(--font-weight-medium); }
+  .tl-item__time { font-size: var(--font-size-caption); color: var(--fg-subtle); font-variant-numeric: tabular-nums; }
+  .tl-item__body { font-size: var(--font-size-small); color: var(--fg-default); line-height: var(--font-line-body); }
+  .tl-item__body .quote {
+    margin-top: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    background: var(--bg-surface-subtle);
+    border-left: 2px solid var(--border-subtle);
+    font-style: italic;
+    color: var(--fg-muted);
+  }
+  .tl-item__meta {
+    margin-top: var(--space-2);
+    display: flex; gap: var(--space-3);
+    font-size: 11px;
+    color: var(--fg-subtle);
+    font-family: var(--font-mono);
+  }
+
+  /* ---------- Section heads ---------- */
+  .section-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: var(--space-4);
+  }
+  .section-head__title {
+    font-family: var(--font-display);
+    font-size: var(--font-size-h3);
+    font-weight: var(--font-weight-semibold);
+    color: var(--fg-strong);
+    margin: 0;
+  }
+
+  /* ---------- Side panel cards ---------- */
+  .side-card { margin-bottom: var(--space-4); }
+  .side-card:last-child { margin-bottom: 0; }
+
+  .note {
+    padding: var(--space-3);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background: var(--bg-surface-subtle);
+    font-size: var(--font-size-small);
+    line-height: var(--font-line-body);
+  }
+  .note + .note { margin-top: var(--space-2); }
+  .note__meta { font-size: 11px; color: var(--fg-muted); margin-bottom: var(--space-1); display: flex; justify-content: space-between; }
+
+  .quick-action {
+    display: flex; align-items: center; gap: var(--space-2);
+    padding: var(--space-2);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-small);
+    color: var(--fg-default);
+    cursor: pointer;
+  }
+  .quick-action:hover { background: var(--bg-hover); }
+  .quick-action .icon { width: 14px; height: 14px; color: var(--fg-muted); }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ==================== Topbar ==================== -->
+  <header class="topbar">
+    <a href="../index.html" class="topbar__brand" title="Back to index"><span class="dot"></span><span>BYAI</span></a>
+    <div class="topbar__search" role="search">
+      <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <span>Search leads, campaigns, or docs…</span>
+      <span class="kbd">⌘K</span>
+    </div>
+    <div class="topbar__actions">
+      <button class="icon-btn" aria-label="Notifications">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </button>
+      <span class="topbar__avatar">WL</span>
+    </div>
+  </header>
+
+  <!-- ==================== Left Nav ==================== -->
+  <nav class="nav" aria-label="Primary">
+    <div class="nav__section-title">Workspace</div>
+    <a class="nav__item" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Overview</a>
+    <a class="nav__item" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Campaigns<span class="badge">12</span></a>
+    <a class="nav__item is-active" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Leads<span class="badge">2,847</span></a>
+    <a class="nav__item" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>Agents</a>
+    <a class="nav__item" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>Analytics</a>
+
+    <div class="nav__section-title">Library</div>
+    <a class="nav__item" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Playbooks</a>
+    <a class="nav__item" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Templates</a>
+    <a class="nav__item" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 7.3 12 12 3.5 7.3"/><path d="M3 7v10a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.7V7a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 7"/><path d="M12 22V12"/></svg>Integrations</a>
+
+    <div class="nav__section-title">Admin</div>
+    <a class="nav__item" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11h-6"/></svg>Team</a>
+    <a class="nav__item" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Billing</a>
+    <a class="nav__item" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Audit log</a>
+
+    <div class="nav__footer">
+      <a class="nav__item" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</a>
+    </div>
+  </nav>
+
+  <!-- ==================== Main ==================== -->
+  <main class="main">
+    <div class="page-header">
+      <div class="page-header__breadcrumb">
+        <a href="#">Leads</a>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        <a href="#">Philippines · Insurance</a>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        <span>Maria Santos</span>
+      </div>
+
+      <div class="detail-head">
+        <span class="avatar-lg">MS</span>
+        <div class="detail-head__main">
+          <h1 class="page-header__title" style="font-size: 22px; line-height: 28px;">Maria Santos</h1>
+          <div class="detail-head__meta">
+            <span class="tag tag--primary"><span class="dot"></span>Qualified</span>
+            <span>Score <strong class="num text-brand">87</strong></span>
+            <span class="sep">·</span>
+            <span>Manila, PH</span>
+            <span class="sep">·</span>
+            <span>Motor Insurance</span>
+            <span class="sep">·</span>
+            <span class="num">+63 917 ••• 4521</span>
+            <span class="sep">·</span>
+            <span>maria.santos@gmail.com</span>
+          </div>
+        </div>
+        <div class="page-header__actions">
+          <button class="btn btn--secondary">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            Email
+          </button>
+          <button class="btn btn--primary">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            Call now
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-body">
+
+      <div class="two-col">
+
+        <!-- ========== Left: main detail ========== -->
+        <div>
+
+          <!-- Lead properties -->
+          <div class="card" style="margin-bottom: var(--space-6);">
+            <div class="section-head">
+              <h2 class="section-head__title">Overview</h2>
+              <button class="btn btn--ghost btn--sm">Edit</button>
+            </div>
+            <dl class="prop-grid">
+              <dt>Source</dt>            <dd>Facebook Lead Ad · <span class="text-muted">Campaign: PH-Motor-Q2</span></dd>
+              <dt>Captured</dt>          <dd class="num">Apr 19, 2026 · 14:32 PHT <span class="text-muted">(2 days ago)</span></dd>
+              <dt>Vehicle</dt>           <dd>Toyota Vios 2022 · Plate ABK-1234</dd>
+              <dt>Current insurer</dt>   <dd>Standard Insurance <span class="text-muted">· expires May 15, 2026</span></dd>
+              <dt>Income band</dt>       <dd class="num">₱45,000–60,000 / mo</dd>
+              <dt>Preferred contact</dt> <dd>WhatsApp · Tagalog / English</dd>
+              <dt>Assigned agent</dt>    <dd><span class="tag tag--agent">✨ Orion-4</span> <span class="text-muted" style="margin-left: 6px;">since Apr 19</span></dd>
+              <dt>Owner</dt>             <dd>陈美玲 (Sales · PH team)</dd>
+            </dl>
+          </div>
+
+          <!-- Timeline -->
+          <div class="card">
+            <div class="section-head">
+              <h2 class="section-head__title">Activity timeline</h2>
+              <div class="segmented" role="tablist" style="display: inline-flex; padding: 2px; background: var(--bg-surface-subtle); border: 1px solid var(--border-subtle); border-radius: var(--radius-md);">
+                <button class="is-on" style="height: 24px; padding: 0 var(--space-2); font-family: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-medium); color: var(--fg-strong); background: var(--bg-surface); border: 0; border-radius: var(--radius-sm); box-shadow: var(--shadow-xs); cursor: pointer;">All</button>
+                <button style="height: 24px; padding: 0 var(--space-2); font-family: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-medium); color: var(--fg-muted); background: transparent; border: 0; border-radius: var(--radius-sm); cursor: pointer;">Agent</button>
+                <button style="height: 24px; padding: 0 var(--space-2); font-family: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-medium); color: var(--fg-muted); background: transparent; border: 0; border-radius: var(--radius-sm); cursor: pointer;">Human</button>
+              </div>
+            </div>
+
+            <div class="timeline">
+
+              <div class="tl-item tl-item--call">
+                <span class="tl-item__dot">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </span>
+                <div class="tl-item__head">
+                  <span class="tl-item__title">Qualification call completed · 4m 12s</span>
+                  <span class="tl-item__time">Today · 10:48</span>
+                </div>
+                <div class="tl-item__body">
+                  Agent <span class="text-agent">Orion-4</span> confirmed policy expiration date, vehicle details, and budget ceiling ₱18,000/yr. Lead agreed to receive quote via WhatsApp.
+                  <div class="quote">"Yes, my policy expires next month. I'd like to see options around ₱15–18K — comprehensive with own-damage."</div>
+                  <div class="tl-item__meta">
+                    <span>transcript_id: <span class="text-brand">tr_0198a3f</span></span>
+                    <span>connection_score: 0.94</span>
+                    <span>intent_score: 0.87</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="tl-item tl-item--agent">
+                <span class="tl-item__dot">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                </span>
+                <div class="tl-item__head">
+                  <span class="tl-item__title">Orion-4 enriched lead profile</span>
+                  <span class="tl-item__time">Today · 10:52</span>
+                </div>
+                <div class="tl-item__body">
+                  Looked up LTO registry → confirmed plate active. Pulled Makati City average premium benchmark → recommended package tier B. Score bumped <strong class="text-brand">72 → 87</strong>.
+                </div>
+              </div>
+
+              <div class="tl-item">
+                <span class="tl-item__dot">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                </span>
+                <div class="tl-item__head">
+                  <span class="tl-item__title">Quote email sent</span>
+                  <span class="tl-item__time">Today · 10:55</span>
+                </div>
+                <div class="tl-item__body text-muted">
+                  Template <em>ph-motor-quote-v3</em> sent to maria.santos@gmail.com · 3 quote options attached.
+                </div>
+              </div>
+
+              <div class="tl-item tl-item--call">
+                <span class="tl-item__dot">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </span>
+                <div class="tl-item__head">
+                  <span class="tl-item__title">First contact call · 2m 48s · Voicemail</span>
+                  <span class="tl-item__time">Apr 19 · 15:02</span>
+                </div>
+                <div class="tl-item__body text-muted">
+                  No pickup. Orion-4 left a Tagalog voicemail referencing the Facebook ad she responded to.
+                </div>
+              </div>
+
+              <div class="tl-item">
+                <span class="tl-item__dot">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </span>
+                <div class="tl-item__head">
+                  <span class="tl-item__title">Lead created</span>
+                  <span class="tl-item__time">Apr 19 · 14:32</span>
+                </div>
+                <div class="tl-item__body text-muted">
+                  Source: Facebook Lead Ad <em>PH-Motor-Q2</em>. Auto-assigned to Orion-4 (confidence 0.93).
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ========== Right: side panels ========== -->
+        <aside>
+
+          <!-- Score breakdown -->
+          <div class="card side-card">
+            <h3 class="section-head__title" style="font-size: var(--font-size-body); margin-bottom: var(--space-4);">Lead score</h3>
+            <div class="score-card">
+              <div class="score-ring">
+                <svg width="88" height="88" viewBox="0 0 88 88">
+                  <circle cx="44" cy="44" r="36" fill="none" stroke="var(--bg-surface-subtle)" stroke-width="8"/>
+                  <circle cx="44" cy="44" r="36" fill="none"
+                    stroke="var(--color-amber-600)"
+                    stroke-width="8"
+                    stroke-linecap="round"
+                    stroke-dasharray="226.2"
+                    stroke-dashoffset="29.4"
+                    transform="rotate(-90 44 44)"/>
+                </svg>
+                <div class="score-ring__label">87<small>Hot</small></div>
+              </div>
+              <div class="score-factors">
+                <div class="factor-row"><span class="factor-row__label">Intent</span><span class="factor-row__bar"><span style="width: 92%"></span></span><span class="factor-row__value">92</span></div>
+                <div class="factor-row"><span class="factor-row__label">Budget fit</span><span class="factor-row__bar"><span style="width: 85%"></span></span><span class="factor-row__value">85</span></div>
+                <div class="factor-row"><span class="factor-row__label">Urgency</span><span class="factor-row__bar"><span style="width: 88%"></span></span><span class="factor-row__value">88</span></div>
+                <div class="factor-row"><span class="factor-row__label">Reachability</span><span class="factor-row__bar"><span class="low" style="width: 76%"></span></span><span class="factor-row__value">76</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick actions -->
+          <div class="card side-card">
+            <h3 class="section-head__title" style="font-size: var(--font-size-body); margin-bottom: var(--space-3);">Quick actions</h3>
+            <div class="quick-action"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>Send WhatsApp message</div>
+            <div class="quick-action"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Schedule follow-up</div>
+            <div class="quick-action"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Reassign agent</div>
+            <div class="quick-action"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>Mark as Do Not Contact</div>
+          </div>
+
+          <!-- Agent notes -->
+          <div class="card side-card">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-3);">
+              <h3 class="section-head__title" style="font-size: var(--font-size-body); margin: 0;">Notes</h3>
+              <button class="btn btn--ghost btn--sm">+ Add</button>
+            </div>
+            <div class="note">
+              <div class="note__meta"><span><strong style="color: var(--fg-agent);">✨ Orion-4</strong></span><span>Today · 10:53</span></div>
+              Customer mentioned she may also insure her husband's Honda City next year. Flag for cross-sell in 8 months.
+            </div>
+            <div class="note">
+              <div class="note__meta"><span>陈美玲</span><span>Apr 19 · 16:10</span></div>
+              Previous lead from same address — husband bought auto policy in 2023. Household good fit.
+            </div>
+          </div>
+
+        </aside>
+
+      </div>
+
+    </div>
+  </main>
+
+</div>
+
+</body>
+</html>

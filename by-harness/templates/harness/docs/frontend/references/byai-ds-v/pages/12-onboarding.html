@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Welcome to BYAI · Get started</title>
+<link rel="stylesheet" href="../assets/fonts.css" />
+<link rel="stylesheet" href="../tokens/tokens.css" />
+<link rel="stylesheet" href="../assets/shell.css" />
+<style>
+  /* ---------- Onboarding layout ---------- */
+  .ob-canvas {
+    padding: var(--space-8) var(--space-8) var(--space-10);
+    max-width: 920px;
+    margin: 0 auto;
+  }
+
+  /* ---------- Editorial hero ---------- */
+  .ob-hero {
+    padding: var(--space-8) 0 var(--space-6);
+    border-bottom: 1px solid var(--border-subtle);
+    margin-bottom: var(--space-8);
+  }
+  .ob-hero__eyebrow {
+    font-size: 11px;
+    font-weight: var(--font-weight-medium);
+    letter-spacing: var(--font-tracking-wider);
+    text-transform: uppercase;
+    color: var(--fg-brand);
+    margin-bottom: var(--space-3);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ob-hero__eyebrow::before {
+    content: '';
+    width: 20px; height: 1px;
+    background: currentColor;
+  }
+  .ob-hero__title {
+    font-family: var(--font-display);
+    font-size: 44px;
+    line-height: 50px;
+    letter-spacing: -0.025em;
+    font-weight: var(--font-weight-semibold);
+    color: var(--fg-strong);
+    margin: 0 0 var(--space-4);
+  }
+  .ob-hero__title em {
+    font-style: italic;
+    color: var(--fg-brand);
+    font-weight: var(--font-weight-regular);
+  }
+  .ob-hero__lede {
+    font-size: 17px;
+    line-height: 26px;
+    color: var(--fg-muted);
+    max-width: 640px;
+    margin: 0;
+  }
+  .ob-hero__meta {
+    display: flex;
+    gap: var(--space-6);
+    margin-top: var(--space-5);
+    font-size: var(--font-size-small);
+    color: var(--fg-muted);
+  }
+  .ob-hero__meta .num { color: var(--fg-strong); font-weight: var(--font-weight-semibold); font-family: var(--font-mono); }
+
+  /* ---------- Progress strip ---------- */
+  .progress-strip {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4) var(--space-5);
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+  }
+  .progress-strip__label {
+    font-size: var(--font-size-small);
+    font-weight: var(--font-weight-medium);
+    color: var(--fg-strong);
+    white-space: nowrap;
+  }
+  .progress-strip__count {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--font-size-small);
+    color: var(--fg-muted);
+  }
+  .progress-strip__count strong {
+    color: var(--fg-brand);
+    font-weight: var(--font-weight-semibold);
+  }
+  .progress-strip__bar {
+    flex: 1;
+    height: 6px;
+    background: var(--bg-surface-subtle);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+  }
+  .progress-strip__bar > span {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-amber-500), var(--color-amber-700));
+    border-radius: inherit;
+    transition: width var(--motion-duration-base);
+  }
+
+  /* ---------- Checklist ---------- */
+  .checklist {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+  .step {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+    display: grid;
+    grid-template-columns: 44px 1fr auto;
+    gap: var(--space-4);
+    align-items: start;
+    transition: border-color var(--motion-duration-base);
+  }
+  .step:hover { border-color: var(--border-default); }
+
+  /* ---- Step marker ---- */
+  .step__marker {
+    width: 32px; height: 32px;
+    border-radius: var(--radius-full);
+    border: 2px solid var(--border-default);
+    color: var(--fg-muted);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: var(--font-weight-semibold);
+    font-variant-numeric: tabular-nums;
+    background: var(--bg-surface);
+    flex-shrink: 0;
+  }
+  .step--done .step__marker {
+    background: var(--intent-primary-bg);
+    border-color: transparent;
+    color: var(--intent-primary-fg);
+  }
+  .step--active {
+    border-color: var(--color-amber-400);
+    background: linear-gradient(180deg, var(--color-amber-50) 0%, var(--bg-surface) 50%);
+  }
+  .step--active .step__marker {
+    border-color: var(--color-amber-500);
+    color: var(--color-amber-700);
+    box-shadow: 0 0 0 4px rgba(217, 147, 39, 0.15);
+  }
+
+  /* ---- Step body ---- */
+  .step__body { min-width: 0; }
+  .step__title {
+    font-size: var(--font-size-body);
+    font-weight: var(--font-weight-semibold);
+    color: var(--fg-strong);
+    margin: 0 0 var(--space-1);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .step__est {
+    font-size: 11px;
+    font-weight: var(--font-weight-regular);
+    color: var(--fg-subtle);
+    padding: 2px 8px;
+    background: var(--bg-surface-subtle);
+    border-radius: var(--radius-sm);
+  }
+  .step--done .step__title { color: var(--fg-muted); text-decoration: line-through; text-decoration-color: var(--border-default); text-decoration-thickness: 1px; }
+  .step__desc {
+    font-size: var(--font-size-small);
+    line-height: 22px;
+    color: var(--fg-muted);
+    margin: 0 0 var(--space-3);
+    max-width: 540px;
+  }
+  .step--done .step__desc { color: var(--fg-subtle); }
+
+  .step__result {
+    margin-top: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    background: var(--bg-surface-subtle);
+    border-left: 2px solid var(--color-amber-500);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-size: var(--font-size-small);
+    color: var(--fg-default);
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+  .step__result .kv { display: inline-flex; gap: 4px; margin-right: var(--space-3); }
+  .step__result .kv-k { color: var(--fg-muted); }
+
+  /* ---- Step actions ---- */
+  .step__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-shrink: 0;
+  }
+  .step--done .step__actions .btn { visibility: hidden; }
+  .step__done-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--font-size-caption);
+    color: var(--color-amber-700);
+    font-weight: var(--font-weight-medium);
+  }
+
+  /* ---------- Side-by-side cards ---------- */
+  .ob-extras {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+    margin-top: var(--space-8);
+  }
+  .ob-extras__card {
+    padding: var(--space-5);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+  }
+  .ob-extras__card h3 {
+    font-family: var(--font-display);
+    font-size: var(--font-size-h4);
+    font-weight: var(--font-weight-semibold);
+    color: var(--fg-strong);
+    margin: 0 0 var(--space-2);
+  }
+  .ob-extras__card p {
+    font-size: var(--font-size-small);
+    line-height: 20px;
+    color: var(--fg-muted);
+    margin: 0 0 var(--space-3);
+  }
+  .ob-extras__links {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .ob-extras__link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    background: var(--bg-surface-subtle);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-small);
+    color: var(--fg-default);
+    text-decoration: none;
+    transition: background var(--motion-duration-fast);
+  }
+  .ob-extras__link:hover { background: var(--bg-hover); color: var(--fg-brand); }
+  .ob-extras__link .icon { width: 14px; height: 14px; color: var(--fg-muted); }
+  .ob-extras__link:hover .icon { color: var(--fg-brand); }
+  .ob-extras__link .arrow { margin-left: auto; color: var(--fg-subtle); }
+
+  /* Dismissible banner */
+  .dismiss-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: var(--space-6);
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--border-subtle);
+    font-size: var(--font-size-caption);
+    color: var(--fg-muted);
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ==================== Topbar ==================== -->
+  <header class="topbar">
+    <a href="../index.html" class="topbar__brand" title="Back to index">
+      <span class="dot"></span>
+      <span>BYAI</span>
+    </a>
+    <div class="topbar__search" role="search">
+      <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <span>Search leads, campaigns, or docs…</span>
+      <span class="kbd">⌘K</span>
+    </div>
+    <div class="topbar__actions">
+      <button class="icon-btn" aria-label="Notifications">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </button>
+      <button class="icon-btn" aria-label="Help">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </button>
+      <span class="topbar__avatar">WL</span>
+    </div>
+  </header>
+
+  <!-- ==================== Left Nav ==================== -->
+  <nav class="nav" aria-label="Primary">
+    <div class="nav__section-title">Workspace</div>
+    <a class="nav__item is-active" href="#">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Overview
+    </a>
+    <a class="nav__item" href="#">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Leads
+      <span class="badge">0</span>
+    </a>
+    <a class="nav__item" href="#">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2 4 4 .6-3 2.9.8 4.5-3.8-2-3.8 2 .8-4.5-3-2.9 4-.6z"/></svg>
+      Agents
+    </a>
+    <a class="nav__item" href="#">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg>
+      Campaigns
+    </a>
+
+    <div class="nav__section-title">Insights</div>
+    <a class="nav__item" href="#">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Analytics
+    </a>
+    <a class="nav__item" href="#">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Audit log
+    </a>
+
+    <div class="nav__section-title">Admin</div>
+    <a class="nav__item" href="#">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Team
+    </a>
+    <a class="nav__item" href="#">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      Billing
+    </a>
+    <a class="nav__item" href="#">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><path d="M14 3h7v7"/><path d="M3 14h7v7"/></svg>
+      Integrations
+    </a>
+    <a class="nav__item" href="#">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9 1.65 1.65 0 0 0 4.27 7.18l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Settings
+    </a>
+
+    <div class="nav__footer">
+      <a class="nav__item" href="#">
+        <span class="topbar__avatar" style="width:20px;height:20px;font-size:9px;">BY</span>
+        <span>BYAI's Team</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- ==================== Main ==================== -->
+  <main class="main">
+    <div class="ob-canvas">
+
+      <!-- ============ Editorial hero ============ -->
+      <section class="ob-hero">
+        <span class="ob-hero__eyebrow">Welcome, Wang Lei</span>
+        <h1 class="ob-hero__title">
+          Let's get your<br/>
+          first agent <em>earning its keep</em>.
+        </h1>
+        <p class="ob-hero__lede">
+          Five steps, about twenty minutes. By the end of this checklist your
+          agents will be making real calls, logging to your CRM, and routing
+          HITL approvals to 飞书. No slide deck — just the thing, working.
+        </p>
+        <div class="ob-hero__meta">
+          <span><span class="num">5</span> steps total</span>
+          <span><span class="num">~20 min</span> estimated</span>
+          <span><span class="num">Free trial</span> · 500 min included</span>
+        </div>
+      </section>
+
+      <!-- ============ Progress ============ -->
+      <div class="progress-strip">
+        <span class="progress-strip__label">Setup progress</span>
+        <div class="progress-strip__bar"><span style="width: 40%;"></span></div>
+        <span class="progress-strip__count"><strong>2</strong> of <strong>5</strong> · 40%</span>
+      </div>
+
+      <!-- ============ Checklist ============ -->
+      <div class="checklist">
+
+        <!-- Step 1 — Done -->
+        <article class="step step--done">
+          <div class="step__marker">
+            <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="step__body">
+            <h3 class="step__title">
+              Create your workspace
+              <span class="step__est">~1 min</span>
+            </h3>
+            <p class="step__desc">
+              Your workspace is where leads, agents, and team members live. We created one using your
+              company name from Google SSO — you can rename it anytime in Settings.
+            </p>
+            <div class="step__result">
+              <span class="kv"><span class="kv-k">name:</span> BYAI's Team</span>
+              <span class="kv"><span class="kv-k">region:</span> ap-northeast-1 (Tokyo)</span>
+              <span class="kv"><span class="kv-k">plan:</span> Trial</span>
+            </div>
+          </div>
+          <div class="step__actions">
+            <span class="step__done-badge">
+              <svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Done
+            </span>
+          </div>
+        </article>
+
+        <!-- Step 2 — Done -->
+        <article class="step step--done">
+          <div class="step__marker">
+            <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="step__body">
+            <h3 class="step__title">
+              Invite your team
+              <span class="step__est">~2 min</span>
+            </h3>
+            <p class="step__desc">
+              Bring in the humans who'll be overseeing agents, reviewing HITL approvals, and reading dashboards.
+              You can invite more later and manage roles in Team settings.
+            </p>
+            <div class="step__result">
+              <span class="kv"><span class="kv-k">invited:</span> 3 members</span>
+              <span class="kv"><span class="kv-k">accepted:</span> 2</span>
+              <span class="kv"><span class="kv-k">pending:</span> k.tanaka@telos.ai</span>
+            </div>
+          </div>
+          <div class="step__actions">
+            <span class="step__done-badge">
+              <svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Done
+            </span>
+          </div>
+        </article>
+
+        <!-- Step 3 — Active -->
+        <article class="step step--active">
+          <div class="step__marker">3</div>
+          <div class="step__body">
+            <h3 class="step__title">
+              Connect a CRM
+              <span class="step__est">~5 min</span>
+            </h3>
+            <p class="step__desc">
+              Agents need a place to log qualified leads and pull context. HubSpot,
+              Salesforce, and 销售易 (Sales Easy) are the fastest to connect — two-way sync,
+              no mapping required. Custom CRM? Use our webhook.
+            </p>
+            <div style="display:flex;gap:var(--space-2);flex-wrap:wrap;margin-top:var(--space-3);">
+              <span class="tag tag--outline">HubSpot</span>
+              <span class="tag tag--outline">Salesforce</span>
+              <span class="tag tag--outline">销售易</span>
+              <span class="tag tag--outline">Pipedrive</span>
+              <span class="tag tag--outline">Attio</span>
+              <span class="tag tag--outline">Custom webhook</span>
+            </div>
+          </div>
+          <div class="step__actions">
+            <button class="btn btn--ghost btn--sm">Skip</button>
+            <button class="btn btn--primary">
+              Connect CRM
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </button>
+          </div>
+        </article>
+
+        <!-- Step 4 — Pending -->
+        <article class="step">
+          <div class="step__marker">4</div>
+          <div class="step__body">
+            <h3 class="step__title">
+              Configure your first agent
+              <span class="step__est">~8 min</span>
+            </h3>
+            <p class="step__desc">
+              We'll clone one of our battle-tested templates —
+              <strong>Insurance outbound (Tagalog)</strong>,
+              <strong>B2B SaaS qualifier (EN)</strong>,
+              or <strong>教育销售跟进 (中文)</strong> — so you can edit instead of starting from scratch.
+              You'll be able to test the voice and the prompt before going live.
+            </p>
+          </div>
+          <div class="step__actions">
+            <button class="btn btn--ghost btn--sm" disabled style="opacity:0.4;">Skip</button>
+            <button class="btn btn--secondary" disabled style="opacity:0.5;cursor:not-allowed;">
+              Pick a template
+            </button>
+          </div>
+        </article>
+
+        <!-- Step 5 — Pending -->
+        <article class="step">
+          <div class="step__marker">5</div>
+          <div class="step__body">
+            <h3 class="step__title">
+              Import or capture your first 10 leads
+              <span class="step__est">~4 min</span>
+            </h3>
+            <p class="step__desc">
+              Upload a CSV, sync from your CRM, paste Facebook Lead Ad IDs, or drop
+              in a JSON list. Your agent won't make calls until you explicitly
+              enable it — so importing is safe to do ahead of go-live.
+            </p>
+          </div>
+          <div class="step__actions">
+            <button class="btn btn--ghost btn--sm" disabled style="opacity:0.4;">Skip</button>
+            <button class="btn btn--secondary" disabled style="opacity:0.5;cursor:not-allowed;">
+              Import leads
+            </button>
+          </div>
+        </article>
+      </div>
+
+      <!-- ============ Extras ============ -->
+      <div class="ob-extras">
+        <div class="ob-extras__card">
+          <h3>Learn the patterns</h3>
+          <p>Fifteen-minute videos covering the things most first-time users get wrong about agents, HITL, and usage billing.</p>
+          <div class="ob-extras__links">
+            <a href="#" class="ob-extras__link">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+              Your first agent, from zero
+              <span class="arrow">→</span>
+            </a>
+            <a href="#" class="ob-extras__link">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+              Designing good HITL approval flows
+              <span class="arrow">→</span>
+            </a>
+            <a href="#" class="ob-extras__link">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+              Reading the economics dashboard
+              <span class="arrow">→</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="ob-extras__card">
+          <h3>Talk to a human</h3>
+          <p>For teams upgrading from 10+ seats, a solutions engineer can help you migrate and design your first three agents with you — free, no strings.</p>
+          <div class="ob-extras__links">
+            <a href="#" class="ob-extras__link">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              Book a 30-min onboarding call
+              <span class="arrow">→</span>
+            </a>
+            <a href="#" class="ob-extras__link">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+              Join the BYAI operators Slack
+              <span class="arrow">→</span>
+            </a>
+            <a href="#" class="ob-extras__link">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              Email success@byai.com
+              <span class="arrow">→</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ Dismiss ============ -->
+      <div class="dismiss-row">
+        <span>Setting up later? This checklist stays in your overview until you dismiss it.</span>
+        <button class="btn btn--ghost btn--sm">Dismiss checklist</button>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

@@ -19,6 +19,8 @@ santong-skills/
 - 根目录入口文件：`AGENTS.md`（Codex）与 `CLAUDE.md`（Claude）
 - 工作文件集中在 `.harness/`：`config/`、`docs/`、`scripts/`、`task-harness/`（`feature_list.json` 不再默认创建，仅 legacy 项目兼容）
 - 默认下发工程规范文档：`.harness/docs/java-dev-conventions.md`（后端）与 `.harness/docs/frontend-dev-conventions.md`（前端）
+- 默认下发前端三层规范：`.harness/docs/frontend/rules.md`（约束层）、`code-design.md`（示范层）、`ui-design.md`（视觉层），用于约束 AI 生成前端页面、组件、样式和交互
+- 默认下发 BYAI HTML 参考：`.harness/docs/frontend/references/byai-ds-v/`，包含页面 gallery、12 个页面设计稿、组件 showcase、tokens 与设计说明快照
 - 运行时版本文件：`.harness/config/runtime-version.json`（用于版本化升级）
 - 远程更新策略：`.harness/config/update-policy.json`（定时检查 + 自动升级策略）
 - 自动任务定位：`.harness/scripts/ensure_task_branch.py`（按任务状态/提示词选出当前要做的 feature，不切分支）

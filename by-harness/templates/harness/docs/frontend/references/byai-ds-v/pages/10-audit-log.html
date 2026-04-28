@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Audit log · BYAI</title>
+<link rel="stylesheet" href="../assets/fonts.css" />
+<link rel="stylesheet" href="../tokens/tokens.css" />
+<link rel="stylesheet" href="../assets/shell.css" />
+<style>
+  /* ---------- Filter bar ---------- */
+  .filter-bar {
+    display: flex;
+    gap: var(--space-2);
+    padding: var(--space-4) var(--space-8);
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-subtle);
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .filter-chip {
+    height: 28px;
+    padding: 0 var(--space-2) 0 var(--space-3);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    background: var(--bg-surface);
+    font-size: var(--font-size-caption);
+    color: var(--fg-default);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .filter-chip:hover { border-color: var(--border-strong); }
+  .filter-chip.is-active {
+    background: var(--intent-primary-surface);
+    border-color: var(--border-focus);
+    color: var(--intent-primary-text-on-surface);
+    font-weight: var(--font-weight-medium);
+  }
+  .filter-chip .icon { width: 12px; height: 12px; color: var(--fg-subtle); }
+  .filter-chip__label { font-weight: var(--font-weight-medium); color: var(--fg-muted); }
+  .filter-chip__value { color: var(--fg-strong); }
+  .filter-chip.is-active .filter-chip__label { color: var(--intent-primary-text-on-surface); opacity: 0.75; }
+  .filter-chip.is-active .filter-chip__value { color: var(--intent-primary-text-on-surface); }
+  .filter-bar__spacer { flex: 1; }
+
+  /* ---------- Toolbar summary ---------- */
+  .result-bar {
+    padding: var(--space-3) var(--space-8);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: var(--font-size-caption);
+    color: var(--fg-muted);
+    background: var(--bg-canvas);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .result-bar .num { color: var(--fg-strong); font-weight: var(--font-weight-medium); }
+
+  /* ---------- Log table ---------- */
+  .log-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--font-size-small);
+  }
+  .log-table thead th {
+    text-align: left;
+    padding: var(--space-2) var(--space-4);
+    font-size: 11px;
+    font-weight: var(--font-weight-medium);
+    letter-spacing: var(--font-tracking-wider);
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    background: var(--bg-surface-subtle);
+    border-bottom: 1px solid var(--border-subtle);
+    white-space: nowrap;
+  }
+  .log-table tbody td {
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--border-subtle);
+    vertical-align: top;
+  }
+  .log-table tbody tr:hover td { background: var(--bg-hover); }
+  .log-table tbody tr.is-expanded td { background: var(--bg-surface-subtle); }
+  .log-table .ts {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--fg-muted);
+    white-space: nowrap;
+  }
+  .log-table .chevron {
+    width: 14px; height: 14px;
+    color: var(--fg-subtle);
+    transition: transform var(--motion-duration-fast);
+  }
+  .log-table tr.is-expanded .chevron { transform: rotate(90deg); color: var(--fg-brand); }
+
+  .actor {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    white-space: nowrap;
+  }
+  .actor__avatar {
+    width: 22px; height: 22px;
+    border-radius: var(--radius-full);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: var(--font-weight-semibold);
+    flex-shrink: 0;
+  }
+  .actor__avatar--user {
+    background: var(--color-amber-500);
+    color: #fff;
+  }
+  .actor__avatar--agent {
+    background: var(--color-violet-100);
+    color: var(--color-violet-700);
+    border: 1px solid var(--color-violet-200);
+  }
+  .actor__avatar--system {
+    background: var(--bg-surface-subtle);
+    color: var(--fg-muted);
+    border: 1px solid var(--border-subtle);
+  }
+  .actor__name {
+    color: var(--fg-strong);
+    font-weight: var(--font-weight-medium);
+  }
+  .actor__sub {
+    font-size: 11px;
+    color: var(--fg-subtle);
+    margin-top: 1px;
+  }
+
+  .action-cell { font-family: var(--font-mono); font-size: 12px; color: var(--fg-default); }
+  .action-cell .verb { color: var(--fg-strong); font-weight: var(--font-weight-medium); }
+  .resource-cell a {
+    color: var(--intent-info-text);
+    text-decoration: none;
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+  .resource-cell a:hover { text-decoration: underline; }
+
+  .status-dot {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--font-size-caption);
+    color: var(--fg-default);
+    white-space: nowrap;
+  }
+  .status-dot::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+  }
+  .status-dot--ok::before { background: var(--color-amber-600); }
+  .status-dot--info::before { background: var(--intent-info-icon); }
+  .status-dot--warn::before { background: var(--color-amber-500); }
+  .status-dot--fail::before { background: var(--intent-danger-icon); }
+
+  /* ---------- Expand panel ---------- */
+  .log-detail {
+    padding: var(--space-4) var(--space-6) var(--space-5) calc(var(--space-4) + 22px + var(--space-2));
+    background: var(--bg-canvas);
+    border-top: 1px dashed var(--border-subtle);
+  }
+  .log-detail__grid {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: var(--space-2) var(--space-4);
+    font-size: var(--font-size-small);
+    margin-bottom: var(--space-3);
+  }
+  .log-detail__grid dt { color: var(--fg-muted); }
+  .log-detail__grid dd { margin: 0; color: var(--fg-strong); font-family: var(--font-mono); font-size: 12px; }
+  .diff {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 18px;
+    background: var(--bg-surface-subtle);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+    overflow-x: auto;
+  }
+  .diff .rm { color: var(--intent-danger-text); background: var(--intent-danger-surface); display: block; padding: 2px var(--space-2); margin: 0 calc(-1 * var(--space-2)); }
+  .diff .add { color: var(--color-amber-800); background: var(--color-amber-100); display: block; padding: 2px var(--space-2); margin: 0 calc(-1 * var(--space-2)); }
+
+  /* ---------- Pagination ---------- */
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-4) var(--space-8);
+    font-size: var(--font-size-caption);
+    color: var(--fg-muted);
+    border-top: 1px solid var(--border-subtle);
+    background: var(--bg-surface);
+  }
+  .pagination__pages { display: flex; gap: 4px; }
+  .page-btn {
+    min-width: 28px; height: 28px;
+    padding: 0 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border-default);
+    background: var(--bg-surface);
+    color: var(--fg-default);
+    font-size: var(--font-size-caption);
+    font-family: inherit;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+  .page-btn.is-active {
+    background: var(--intent-primary-bg);
+    color: var(--intent-primary-fg);
+    border-color: transparent;
+    font-weight: var(--font-weight-medium);
+  }
+  .page-btn:not(.is-active):hover { background: var(--bg-hover); }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ==================== Topbar ==================== -->
+  <header class="topbar">
+    <a href="../index.html" class="topbar__brand" title="Back to index">
+      <span class="dot"></span>
+      <span>BYAI</span>
+    </a>
+    <div class="topbar__search" role="search">
+      <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <span>Search leads, campaigns, or docs…</span>
+      <span class="kbd">⌘K</span>
+    </div>
+    <div class="topbar__actions">
+      <button class="icon-btn" aria-label="Notifications">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </button>
+      <button class="icon-btn" aria-label="Help">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </button>
+      <span class="topbar__avatar">WL</span>
+    </div>
+  </header>
+
+  <!-- ==================== Left Nav ==================== -->
+  <nav class="nav" aria-label="Primary">
+    <div class="nav__section-title">Workspace</div>
+    <a class="nav__item" href="#">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Overview
+    </a>
+    <a class="nav__item" href="#">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Leads
+    </a>
+    <a class="nav__item" href="#">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2 4 4 .6-3 2.9.8 4.5-3.8-2-3.8 2 .8-4.5-3-2.9 4-.6z"/></svg>
+      Agents
+    </a>
+    <a class="nav__item" href="#">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg>
+      Campaigns
+    </a>
+
+    <div class="nav__section-title">Insights</div>
+    <a class="nav__item" href="#">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Analytics
+    </a>
+    <a class="nav__item is-active" href="#">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Audit log
+    </a>
+
+    <div class="nav__section-title">Admin</div>
+    <a class="nav__item" href="#">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Team
+    </a>
+    <a class="nav__item" href="#">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      Billing
+    </a>
+    <a class="nav__item" href="#">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><path d="M14 3h7v7"/><path d="M3 14h7v7"/></svg>
+      Integrations
+    </a>
+    <a class="nav__item" href="#">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9 1.65 1.65 0 0 0 4.27 7.18l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Settings
+    </a>
+
+    <div class="nav__footer">
+      <a class="nav__item" href="#">
+        <span class="topbar__avatar" style="width:20px;height:20px;font-size:9px;">BY</span>
+        <span>BYAI's Team</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- ==================== Main ==================== -->
+  <main class="main">
+    <div class="page-header">
+      <div class="page-header__breadcrumb">
+        <a href="#">Insights</a>
+        <span>›</span>
+        <span>Audit log</span>
+      </div>
+      <div class="page-header__row">
+        <div>
+          <h1 class="page-header__title">Audit log</h1>
+          <p class="page-header__subtitle">Every action — by humans or agents — recorded with cryptographic chain integrity. Retention: 7 years.</p>
+        </div>
+        <div class="page-header__actions">
+          <button class="btn btn--secondary">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
+            SOC 2 report
+          </button>
+          <button class="btn btn--secondary">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export CSV
+          </button>
+          <button class="btn btn--primary">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Stream webhook
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      <button class="filter-chip is-active">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span class="filter-chip__label">Range:</span>
+        <span class="filter-chip__value">Last 7 days</span>
+      </button>
+      <button class="filter-chip">
+        <span class="filter-chip__label">Actor:</span>
+        <span class="filter-chip__value">Any</span>
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <button class="filter-chip">
+        <span class="filter-chip__label">Action:</span>
+        <span class="filter-chip__value">Any</span>
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <button class="filter-chip">
+        <span class="filter-chip__label">Resource:</span>
+        <span class="filter-chip__value">Any</span>
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <button class="filter-chip is-active">
+        <span class="filter-chip__label">Status:</span>
+        <span class="filter-chip__value">Success · Failed</span>
+      </button>
+      <button class="filter-chip">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add filter
+      </button>
+      <div class="filter-bar__spacer"></div>
+      <div class="topbar__search" style="height:28px;max-width:260px;font-size:var(--font-size-caption);">
+        <svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <span>Search events…</span>
+      </div>
+    </div>
+
+    <!-- Result summary -->
+    <div class="result-bar">
+      <div>
+        <span class="num">2,418</span> events · <span class="num">1,962</span> agent actions ·
+        <span class="num">456</span> human actions ·
+        <span class="status-dot status-dot--fail" style="display:inline-flex;">3 failed</span>
+      </div>
+      <div>Last refreshed <span class="num">2s ago</span> · <a href="#" style="color:var(--intent-info-text);text-decoration:none;">Live tail</a></div>
+    </div>
+
+    <!-- Log table -->
+    <table class="log-table">
+      <thead>
+        <tr>
+          <th style="width:24px;"></th>
+          <th style="width:180px;">Timestamp</th>
+          <th style="width:220px;">Actor</th>
+          <th>Action</th>
+          <th style="width:240px;">Resource</th>
+          <th style="width:100px;">Status</th>
+          <th style="width:140px;">IP · Region</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="is-expanded">
+          <td><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></td>
+          <td class="ts">2026-04-21 19:42:08.221</td>
+          <td>
+            <div class="actor">
+              <span class="actor__avatar actor__avatar--agent">✨</span>
+              <div>
+                <div class="actor__name">Stellar-Insurance-PH</div>
+                <div class="actor__sub">agent · v3.2.1</div>
+              </div>
+            </div>
+          </td>
+          <td class="action-cell"><span class="verb">lead.status.update</span></td>
+          <td class="resource-cell"><a href="#">lead_9a7f1b</a> <span class="text-subtle">Maria Santos</span></td>
+          <td><span class="status-dot status-dot--ok">Success</span></td>
+          <td class="text-muted" style="font-family:var(--font-mono);font-size:11px;">agent-ph-01 · PH</td>
+        </tr>
+        <tr class="is-expanded">
+          <td colspan="7" class="log-detail">
+            <dl class="log-detail__grid">
+              <dt>Event ID</dt><dd>evt_01HWX8J9K2M4F3P7Q0R8S2T5V9</dd>
+              <dt>Trace ID</dt><dd>trace_3f8a2c9d</dd>
+              <dt>Session</dt><dd>sess_call_482177</dd>
+              <dt>Signed by</dt><dd>workspace_key_2026Q1 · ed25519</dd>
+            </dl>
+            <div class="diff">
+              <span class="rm">- status: "contacted"</span>
+              <span class="rm">- qualification_score: null</span>
+              <span class="add">+ status: "qualified"</span>
+              <span class="add">+ qualification_score: 87</span>
+              <span class="add">+ qualified_by: "agent:stellar-insurance-ph"</span>
+              <span class="add">+ qualified_at: "2026-04-21T19:42:08.221Z"</span>
+            </div>
+          </td>
+        </tr>
+
+        <tr>
+          <td><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></td>
+          <td class="ts">2026-04-21 19:45:32.104</td>
+          <td>
+            <div class="actor">
+              <span class="actor__avatar actor__avatar--user">WL</span>
+              <div>
+                <div class="actor__name">Wang Lei</div>
+                <div class="actor__sub">owner · SSO</div>
+              </div>
+            </div>
+          </td>
+          <td class="action-cell"><span class="verb">lead.status.update</span> <span class="text-subtle">manual override</span></td>
+          <td class="resource-cell"><a href="#">lead_9a7f1b</a></td>
+          <td><span class="status-dot status-dot--ok">Success</span></td>
+          <td class="text-muted" style="font-family:var(--font-mono);font-size:11px;">58.247.x.x · CN-ZJ</td>
+        </tr>
+
+        <tr>
+          <td><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></td>
+          <td class="ts">2026-04-21 19:38:11.009</td>
+          <td>
+            <div class="actor">
+              <span class="actor__avatar actor__avatar--agent">✨</span>
+              <div>
+                <div class="actor__name">Orion-4</div>
+                <div class="actor__sub">agent · v4.1.0</div>
+              </div>
+            </div>
+          </td>
+          <td class="action-cell"><span class="verb">tool.call</span> <span class="text-subtle">crm.create_opportunity</span></td>
+          <td class="resource-cell"><a href="#">opp_2c4f9e</a> <span class="text-subtle">$312/y TL</span></td>
+          <td><span class="status-dot status-dot--ok">Success</span></td>
+          <td class="text-muted" style="font-family:var(--font-mono);font-size:11px;">agent-sg-02 · SG</td>
+        </tr>
+
+        <tr>
+          <td><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></td>
+          <td class="ts">2026-04-21 19:36:54.782</td>
+          <td>
+            <div class="actor">
+              <span class="actor__avatar actor__avatar--agent">✨</span>
+              <div>
+                <div class="actor__name">TidePull-EN</div>
+                <div class="actor__sub">agent · v2.8.4</div>
+              </div>
+            </div>
+          </td>
+          <td class="action-cell"><span class="verb">tool.call</span> <span class="text-subtle">twilio.send_sms</span></td>
+          <td class="resource-cell"><a href="#">msg_8e1a04</a></td>
+          <td><span class="status-dot status-dot--fail">Failed</span></td>
+          <td class="text-muted" style="font-family:var(--font-mono);font-size:11px;">agent-sg-02 · SG</td>
+        </tr>
+
+        <tr>
+          <td><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></td>
+          <td class="ts">2026-04-21 19:22:01.558</td>
+          <td>
+            <div class="actor">
+              <span class="actor__avatar actor__avatar--user">CM</span>
+              <div>
+                <div class="actor__name">陈美玲</div>
+                <div class="actor__sub">editor · SSO</div>
+              </div>
+            </div>
+          </td>
+          <td class="action-cell"><span class="verb">agent.prompt.update</span></td>
+          <td class="resource-cell"><a href="#">agent_orion_4</a> <span class="text-subtle">+18 −6 lines</span></td>
+          <td><span class="status-dot status-dot--ok">Success</span></td>
+          <td class="text-muted" style="font-family:var(--font-mono);font-size:11px;">210.12.x.x · CN-BJ</td>
+        </tr>
+
+        <tr>
+          <td><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></td>
+          <td class="ts">2026-04-21 18:55:47.003</td>
+          <td>
+            <div class="actor">
+              <span class="actor__avatar actor__avatar--system">⚙</span>
+              <div>
+                <div class="actor__name">System</div>
+                <div class="actor__sub">billing cron</div>
+              </div>
+            </div>
+          </td>
+          <td class="action-cell"><span class="verb">billing.usage.commit</span> <span class="text-subtle">hourly rollup</span></td>
+          <td class="resource-cell"><a href="#">usage_apr_21_18</a> <span class="text-subtle">4,184 min</span></td>
+          <td><span class="status-dot status-dot--ok">Success</span></td>
+          <td class="text-muted" style="font-family:var(--font-mono);font-size:11px;">internal</td>
+        </tr>
+
+        <tr>
+          <td><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></td>
+          <td class="ts">2026-04-21 18:47:22.991</td>
+          <td>
+            <div class="actor">
+              <span class="actor__avatar actor__avatar--agent">✨</span>
+              <div>
+                <div class="actor__name">Stellar-Insurance-PH</div>
+                <div class="actor__sub">agent · v3.2.1</div>
+              </div>
+            </div>
+          </td>
+          <td class="action-cell"><span class="verb">hitl.request</span> <span class="text-subtle">discount approval ≥ 15%</span></td>
+          <td class="resource-cell"><a href="#">approval_7d3a</a></td>
+          <td><span class="status-dot status-dot--info">Pending</span></td>
+          <td class="text-muted" style="font-family:var(--font-mono);font-size:11px;">agent-ph-01 · PH</td>
+        </tr>
+
+        <tr>
+          <td><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></td>
+          <td class="ts">2026-04-21 18:42:05.111</td>
+          <td>
+            <div class="actor">
+              <span class="actor__avatar actor__avatar--user">WL</span>
+              <div>
+                <div class="actor__name">Wang Lei</div>
+                <div class="actor__sub">owner · SSO</div>
+              </div>
+            </div>
+          </td>
+          <td class="action-cell"><span class="verb">team.member.invite</span></td>
+          <td class="resource-cell"><a href="#">user_new</a> <span class="text-subtle">k.tanaka@telos.ai · Analyst</span></td>
+          <td><span class="status-dot status-dot--ok">Success</span></td>
+          <td class="text-muted" style="font-family:var(--font-mono);font-size:11px;">58.247.x.x · CN-ZJ</td>
+        </tr>
+
+        <tr>
+          <td><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></td>
+          <td class="ts">2026-04-21 18:31:58.224</td>
+          <td>
+            <div class="actor">
+              <span class="actor__avatar actor__avatar--system">⚙</span>
+              <div>
+                <div class="actor__name">Webhook</div>
+                <div class="actor__sub">Stripe</div>
+              </div>
+            </div>
+          </td>
+          <td class="action-cell"><span class="verb">invoice.paid</span></td>
+          <td class="resource-cell"><a href="#">inv_mar_2026</a> <span class="text-subtle">$18,420.00</span></td>
+          <td><span class="status-dot status-dot--ok">Success</span></td>
+          <td class="text-muted" style="font-family:var(--font-mono);font-size:11px;">stripe webhook</td>
+        </tr>
+
+        <tr>
+          <td><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></td>
+          <td class="ts">2026-04-21 18:14:03.672</td>
+          <td>
+            <div class="actor">
+              <span class="actor__avatar actor__avatar--agent">✨</span>
+              <div>
+                <div class="actor__name">BYAI Copilot</div>
+                <div class="actor__sub">workspace assistant</div>
+              </div>
+            </div>
+          </td>
+          <td class="action-cell"><span class="verb">tool.call</span> <span class="text-subtle">database.query</span> <span class="text-muted">(read-only)</span></td>
+          <td class="resource-cell"><a href="#">query_1a2b3c</a> <span class="text-subtle">leads WHERE score &gt; 80</span></td>
+          <td><span class="status-dot status-dot--ok">Success</span></td>
+          <td class="text-muted" style="font-family:var(--font-mono);font-size:11px;">agent-cn-03 · CN</td>
+        </tr>
+
+        <tr>
+          <td><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></td>
+          <td class="ts">2026-04-21 17:59:41.003</td>
+          <td>
+            <div class="actor">
+              <span class="actor__avatar actor__avatar--user">WL</span>
+              <div>
+                <div class="actor__name">Wang Lei</div>
+                <div class="actor__sub">owner · SSO</div>
+              </div>
+            </div>
+          </td>
+          <td class="action-cell"><span class="verb">auth.login</span> <span class="text-subtle">Google SSO · TOTP verified</span></td>
+          <td class="resource-cell"><a href="#">session_4f9a8e</a></td>
+          <td><span class="status-dot status-dot--ok">Success</span></td>
+          <td class="text-muted" style="font-family:var(--font-mono);font-size:11px;">58.247.x.x · CN-ZJ</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div class="pagination">
+      <div>Showing <span class="num" style="color:var(--fg-strong);">1–11</span> of <span class="num" style="color:var(--fg-strong);">2,418</span> events</div>
+      <div class="pagination__pages">
+        <button class="page-btn" aria-label="Previous" disabled style="opacity:0.4;cursor:not-allowed;">‹</button>
+        <button class="page-btn is-active">1</button>
+        <button class="page-btn">2</button>
+        <button class="page-btn">3</button>
+        <button class="page-btn">…</button>
+        <button class="page-btn">220</button>
+        <button class="page-btn" aria-label="Next">›</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

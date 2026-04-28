@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BYAI Copilot · Chat</title>
+<link rel="stylesheet" href="../assets/fonts.css" />
+<link rel="stylesheet" href="../tokens/tokens.css" />
+<link rel="stylesheet" href="../assets/shell.css" />
+<style>
+  /* ---------- Thread nav ---------- */
+  .threads-head {
+    padding: var(--space-3) var(--space-3) var(--space-2);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .threads-head h2 {
+    font-family: var(--font-display);
+    font-size: var(--font-size-h3);
+    font-weight: var(--font-weight-semibold);
+    margin: 0;
+    color: var(--fg-strong);
+  }
+  .thread {
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .thread:hover { background: var(--bg-hover); }
+  .thread.is-active { background: var(--bg-selected); }
+  .thread.is-active .thread__title { color: var(--intent-primary-text-on-surface); font-weight: var(--font-weight-medium); }
+  .thread__title {
+    font-size: var(--font-size-small);
+    color: var(--fg-default);
+    line-height: 18px;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .thread__meta {
+    font-size: 11px;
+    color: var(--fg-subtle);
+    display: flex; justify-content: space-between;
+  }
+
+  /* ---------- Chat surface ---------- */
+  .chat {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    height: 100%;
+    background: var(--bg-canvas);
+  }
+  .chat__head {
+    padding: var(--space-3) var(--space-6);
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex; align-items: center; gap: var(--space-3);
+  }
+  .chat__head .agent-mark {
+    width: 28px; height: 28px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(135deg, var(--color-violet-400), var(--color-violet-700));
+    display: inline-flex; align-items: center; justify-content: center;
+    color: #fff;
+  }
+  .chat__head .agent-mark .icon { width: 14px; height: 14px; }
+  .chat__title {
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: var(--font-weight-semibold);
+    color: var(--fg-strong);
+    margin: 0;
+  }
+  .chat__subtitle {
+    font-size: var(--font-size-caption);
+    color: var(--fg-muted);
+    margin-top: 2px;
+    display: flex; align-items: center; gap: var(--space-2);
+  }
+  .chat__subtitle .live-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--color-teal-500);
+    box-shadow: 0 0 0 3px rgba(42,162,166,0.18);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 0.8; }
+    50% { opacity: 1; box-shadow: 0 0 0 5px rgba(42,162,166,0.06); }
+  }
+
+  .stream {
+    overflow-y: auto;
+    padding: var(--space-6) 0 var(--space-8);
+    scroll-behavior: smooth;
+  }
+  .stream__inner {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 var(--space-6);
+    display: flex; flex-direction: column; gap: var(--space-6);
+  }
+
+  /* ---------- Message ---------- */
+  .m { display: flex; gap: var(--space-3); max-width: 100%; }
+  .m__avatar {
+    width: 28px; height: 28px;
+    border-radius: var(--radius-full);
+    flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: var(--font-weight-semibold);
+  }
+  .m__avatar--user {
+    background: var(--color-warm-grey-700);
+    color: #fff;
+  }
+  .m__avatar--agent {
+    background: linear-gradient(135deg, var(--color-violet-400), var(--color-violet-700));
+    color: #fff;
+  }
+  .m__avatar--agent svg { width: 14px; height: 14px; }
+  .m__body { flex: 1; min-width: 0; }
+  .m__meta {
+    font-size: 11px;
+    color: var(--fg-muted);
+    margin-bottom: 4px;
+    display: flex; align-items: center; gap: var(--space-2);
+  }
+  .m__meta .name { font-weight: var(--font-weight-semibold); color: var(--fg-strong); }
+  .m__meta .name--agent { color: var(--fg-agent); }
+  .m__text {
+    font-size: 15px;
+    line-height: 24px;
+    color: var(--fg-default);
+  }
+  .m__text p { margin: 0 0 var(--space-3); }
+  .m__text p:last-child { margin: 0; }
+  .m__text strong { color: var(--fg-strong); font-weight: var(--font-weight-semibold); }
+
+  .m--user .m__text {
+    background: var(--bg-active);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md) var(--radius-md) 2px var(--radius-md);
+    display: inline-block;
+    max-width: 620px;
+    color: var(--fg-strong);
+    font-size: var(--font-size-body-large);
+    line-height: 22px;
+  }
+
+  /* ---------- Reasoning trace ---------- */
+  .trace {
+    margin-bottom: var(--space-3);
+    font-size: var(--font-size-caption);
+  }
+  .trace__toggle {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 2px 6px;
+    background: var(--agent-bg-trace);
+    color: var(--color-violet-700);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-weight: var(--font-weight-medium);
+    user-select: none;
+  }
+  .trace__toggle .icon { width: 11px; height: 11px; }
+  .trace__body {
+    margin-top: var(--space-2);
+    padding: var(--space-3);
+    background: var(--bg-surface-subtle);
+    border-left: 2px solid var(--color-violet-300);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 18px;
+    color: var(--fg-muted);
+    white-space: pre-line;
+  }
+
+  /* ---------- Tool call card ---------- */
+  .tool {
+    margin: var(--space-2) 0;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background: var(--bg-surface-subtle);
+    overflow: hidden;
+    font-size: var(--font-size-caption);
+  }
+  .tool__head {
+    padding: var(--space-2) var(--space-3);
+    display: flex; align-items: center; gap: var(--space-2);
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--fg-default);
+    background: var(--bg-surface);
+  }
+  .tool__head .icon { width: 13px; height: 13px; color: var(--intent-info-icon); }
+  .tool__head .name { font-family: var(--font-mono); color: var(--fg-strong); font-weight: var(--font-weight-medium); }
+  .tool__head .dur { margin-left: auto; color: var(--fg-muted); font-family: var(--font-mono); font-size: 11px; }
+  .tool__head .status {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 1px 6px;
+    background: var(--intent-positive-surface);
+    color: var(--intent-positive-text);
+    font-size: 10px;
+    font-weight: var(--font-weight-medium);
+    border-radius: var(--radius-xs);
+  }
+  .tool__body {
+    padding: var(--space-3);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 18px;
+    color: var(--fg-default);
+  }
+  .tool__body .k { color: var(--fg-muted); }
+  .tool__body .v { color: var(--color-blue-700); }
+  .tool__body .n { color: var(--color-amber-700); }
+
+  /* ---------- HITL approval ---------- */
+  .approval {
+    margin: var(--space-3) 0;
+    border: 1px solid var(--color-amber-300);
+    background: var(--color-amber-50);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+  }
+  .approval__head {
+    display: flex; align-items: center; gap: var(--space-2);
+    margin-bottom: var(--space-2);
+  }
+  .approval__head .icon { width: 14px; height: 14px; color: var(--color-amber-700); }
+  .approval__title {
+    font-size: var(--font-size-small);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-amber-900);
+  }
+  .approval__body {
+    font-size: var(--font-size-small);
+    line-height: 20px;
+    color: var(--color-amber-900);
+    margin-bottom: var(--space-3);
+  }
+  .approval__diff {
+    margin: var(--space-2) 0;
+    padding: var(--space-2) var(--space-3);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 20px;
+  }
+  .approval__diff .old { color: var(--color-red-600); text-decoration: line-through; text-decoration-color: var(--color-red-300); }
+  .approval__diff .new { color: var(--color-amber-700); font-weight: var(--font-weight-medium); }
+  .approval__actions {
+    display: flex; gap: var(--space-2);
+  }
+
+  /* ---------- Citation ---------- */
+  .cite {
+    display: inline-flex;
+    align-items: center;
+    height: 18px;
+    padding: 0 6px;
+    margin: 0 2px;
+    background: var(--agent-citation-bg);
+    border: 1px solid var(--agent-citation-border);
+    color: var(--fg-muted);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: var(--font-weight-medium);
+    border-radius: var(--radius-xs);
+    cursor: help;
+    vertical-align: 2px;
+    text-decoration: none;
+  }
+  .cite:hover { background: var(--bg-active); color: var(--fg-default); }
+
+  /* ---------- Streaming ---------- */
+  .streaming {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px;
+    color: var(--fg-muted);
+    padding: 2px 8px;
+    background: var(--color-amber-50);
+    border: 1px solid var(--color-amber-200);
+    border-radius: var(--radius-full);
+  }
+  .streaming .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--color-amber-500);
+    animation: pulse-dot 1.2s ease-in-out infinite;
+  }
+  @keyframes pulse-dot {
+    0%,100% { opacity: 0.4; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1.1); }
+  }
+  .stop-btn {
+    margin-left: var(--space-2);
+    height: 22px;
+    padding: 0 var(--space-2);
+    border: 1px solid var(--border-default);
+    background: var(--bg-surface);
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    font-family: inherit;
+    color: var(--fg-default);
+    cursor: pointer;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .stop-btn svg { width: 9px; height: 9px; }
+
+  .typing-cursor {
+    display: inline-block;
+    width: 2px; height: 1em;
+    background: var(--fg-agent);
+    vertical-align: -2px;
+    margin-left: 2px;
+    animation: blink 1s steps(2) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* ---------- Composer ---------- */
+  .composer {
+    padding: var(--space-4) var(--space-6) var(--space-5);
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border-subtle);
+  }
+  .composer__inner {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  .composer__box {
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    background: var(--bg-surface);
+    padding: var(--space-3) var(--space-4);
+    transition: border-color var(--motion-duration-fast), box-shadow var(--motion-duration-fast);
+    box-shadow: var(--shadow-xs);
+  }
+  .composer__box:focus-within {
+    border-color: var(--border-focus);
+    box-shadow: var(--shadow-focus-ring);
+  }
+  .composer__textarea {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    font-family: inherit;
+    font-size: var(--font-size-body-large);
+    line-height: 24px;
+    resize: none;
+    outline: none;
+    color: var(--fg-strong);
+    min-height: 56px;
+  }
+  .composer__row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: var(--space-2);
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--border-subtle);
+  }
+  .composer__left { display: flex; gap: var(--space-1); align-items: center; }
+  .composer__hints {
+    display: flex; gap: var(--space-3);
+    font-size: 11px;
+    color: var(--fg-subtle);
+  }
+  .composer__hints .kbd {
+    padding: 1px 5px;
+    font-family: var(--font-mono);
+    background: var(--bg-surface-subtle);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-xs);
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ==================== Topbar ==================== -->
+  <header class="topbar">
+    <a href="../index.html" class="topbar__brand" title="Back to index"><span class="dot"></span><span>BYAI</span></a>
+    <div class="topbar__search" role="search">
+      <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <span>Search leads, campaigns, or docs…</span>
+      <span class="kbd">⌘K</span>
+    </div>
+    <div class="topbar__actions">
+      <button class="icon-btn" aria-label="Notifications"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
+      <span class="topbar__avatar">WL</span>
+    </div>
+  </header>
+
+  <!-- ==================== Threads Nav ==================== -->
+  <nav class="nav" aria-label="Conversations" style="padding: 0;">
+    <div class="threads-head">
+      <h2>Copilot</h2>
+      <button class="icon-btn" aria-label="New chat">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </div>
+    <div style="padding: 0 var(--space-2);">
+      <div class="nav__section-title">Today</div>
+      <div class="thread is-active">
+        <div class="thread__title">PH insurance pipeline deep dive</div>
+        <div class="thread__meta"><span>Orion-4</span><span>14:03</span></div>
+      </div>
+      <div class="thread">
+        <div class="thread__title">Review pricing rules for Q2 campaigns</div>
+        <div class="thread__meta"><span>Orion-4</span><span>10:41</span></div>
+      </div>
+      <div class="thread">
+        <div class="thread__title">翻译 Stellar-Insurance 的 onboarding 文档</div>
+        <div class="thread__meta"><span>Stellar-I</span><span>09:18</span></div>
+      </div>
+
+      <div class="nav__section-title">Yesterday</div>
+      <div class="thread">
+        <div class="thread__title">Draft weekly leadership update</div>
+        <div class="thread__meta"><span>Orion-4</span><span>Tue</span></div>
+      </div>
+      <div class="thread">
+        <div class="thread__title">Investigate TH conversion drop W42</div>
+        <div class="thread__meta"><span>Orion-4</span><span>Tue</span></div>
+      </div>
+
+      <div class="nav__section-title">This week</div>
+      <div class="thread">
+        <div class="thread__title">Benchmark UAE real-estate CPL</div>
+        <div class="thread__meta"><span>Orion-4</span><span>Mon</span></div>
+      </div>
+      <div class="thread">
+        <div class="thread__title">Script A/B for motorcycle insurance ID</div>
+        <div class="thread__meta"><span>Stellar-I</span><span>Sun</span></div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ==================== Chat ==================== -->
+  <main class="main" style="padding: 0; overflow: hidden;">
+    <div class="chat">
+
+      <!-- Head -->
+      <div class="chat__head">
+        <div class="agent-mark">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/></svg>
+        </div>
+        <div>
+          <h2 class="chat__title">PH insurance pipeline deep dive</h2>
+          <div class="chat__subtitle">
+            <span class="live-dot"></span>
+            <span class="text-agent">Orion-4</span>
+            <span>·</span>
+            <span>3 tools available</span>
+            <span>·</span>
+            <span>context: workspace + last 12w metrics</span>
+          </div>
+        </div>
+        <div style="margin-left: auto; display: flex; gap: var(--space-1);">
+          <button class="icon-btn" aria-label="Share"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+          <button class="icon-btn" aria-label="More"><svg class="icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button>
+        </div>
+      </div>
+
+      <!-- Stream -->
+      <div class="stream">
+        <div class="stream__inner">
+
+          <!-- User message 1 -->
+          <div class="m m--user">
+            <div class="m__avatar m__avatar--user">WL</div>
+            <div class="m__body">
+              <div class="m__meta"><span class="name">You</span><span>·</span><span>14:03</span></div>
+              <div class="m__text">
+                Orion，菲律宾保险线索本周的 CPL 怎么样？和去年同期比？另外帮我找出 CPL 最高的三个渠道，看看能不能调整投放预算。
+              </div>
+            </div>
+          </div>
+
+          <!-- Assistant message 1 with reasoning + tool + answer -->
+          <div class="m m--agent">
+            <div class="m__avatar m__avatar--agent">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><line x1="12" y1="22" x2="12" y2="15.5"/></svg>
+            </div>
+            <div class="m__body">
+              <div class="m__meta"><span class="name name--agent">Orion-4</span><span>·</span><span>14:03</span></div>
+
+              <!-- Reasoning trace (collapsed look — always visible here to demo) -->
+              <div class="trace">
+                <span class="trace__toggle">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                  Thought for 3.2s
+                </span>
+                <div class="trace__body">Planning:
+1. Fetch weekly PH × insurance CPL (7-day window)
+2. Fetch matching window from last year (52w offset) for delta
+3. Group by channel, sort descending, take top 3
+4. Compare against budget allocation to surface reallocation candidates</div>
+              </div>
+
+              <!-- Tool call card -->
+              <div class="tool">
+                <div class="tool__head">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                  <span class="name">query_metrics</span>
+                  <span class="status">
+                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><polyline points="20 6 9 17 4 12"/></svg>
+                    ok
+                  </span>
+                  <span class="dur">47ms · 312 rows</span>
+                </div>
+                <div class="tool__body"><span class="k">market</span> = <span class="v">"PH"</span>
+<span class="k">vertical</span> = <span class="v">"insurance"</span>
+<span class="k">metric</span> = <span class="v">"cpl"</span>
+<span class="k">window</span> = <span class="v">"7d"</span>, <span class="k">compare_to</span> = <span class="v">"52w"</span>
+<span class="k">group_by</span> = <span class="v">["channel"]</span></div>
+              </div>
+
+              <div class="m__text">
+                <p>本周菲律宾保险线索平均 CPL 为 <strong>$4.82</strong><a href="#" class="cite">1</a>，较去年同期 $6.15 <strong>下降 21.6%</strong><a href="#" class="cite">2</a>。改善主要来自 Meta 投放效率提升与脚本 v2.1 的转化率贡献。</p>
+                <p>CPL 最高的三个渠道如下：</p>
+                <p>
+                  ① <strong>Google Search Brand</strong> — $8.90（较去年 −12%，仍显著高于组合均值，建议保留但控制预算占比）<br/>
+                  ② <strong>TikTok UGC</strong> — $7.20（较去年 +34%，<strong>质量快速下滑</strong>，建议本周下调 30% 预算并重测素材）<br/>
+                  ③ <strong>Facebook Lookalike 1%</strong> — $6.15（稳定，转化率高，保留）
+                </p>
+                <p>如果把 TikTok 释放出的预算重配到 Meta Lookalike，基于过去 4 周的边际 CPL 弹性估算，周 CPL 还可再降约 <strong>$0.20–0.30</strong>。要不要我生成一份预算调整提案？</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- User message 2 -->
+          <div class="m m--user">
+            <div class="m__avatar m__avatar--user">WL</div>
+            <div class="m__body">
+              <div class="m__meta"><span class="name">You</span><span>·</span><span>14:07</span></div>
+              <div class="m__text">好，直接把 TikTok UGC 的周预算从 $4,200 调到 $2,940，然后同比例加到 Meta Lookalike。</div>
+            </div>
+          </div>
+
+          <!-- Assistant — HITL approval -->
+          <div class="m m--agent">
+            <div class="m__avatar m__avatar--agent">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><line x1="12" y1="22" x2="12" y2="15.5"/></svg>
+            </div>
+            <div class="m__body">
+              <div class="m__meta"><span class="name name--agent">Orion-4</span><span>·</span><span>14:07</span></div>
+
+              <div class="m__text">
+                <p>Budget change requires approval — this touches live spend allocation. Review the delta below:</p>
+              </div>
+
+              <div class="approval">
+                <div class="approval__head">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  <div class="approval__title">Approve budget reallocation · PH-Insurance-W17</div>
+                </div>
+                <div class="approval__body">
+                  You're moving <strong>$1,260 / week</strong> between two active channels. Takes effect immediately on save. Reversible within 24h.
+                </div>
+                <div class="approval__diff">
+                  <div><span class="k" style="display:inline-block;width:180px;">tiktok_ugc.weekly_budget</span> <span class="old">$4,200.00</span> → <span class="new">$2,940.00</span></div>
+                  <div><span class="k" style="display:inline-block;width:180px;">meta_lookalike.weekly_budget</span> <span class="old">$6,800.00</span> → <span class="new">$8,060.00</span></div>
+                </div>
+                <div class="approval__actions">
+                  <button class="btn btn--primary">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    Approve
+                  </button>
+                  <button class="btn btn--secondary">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    Edit values
+                  </button>
+                  <button class="btn btn--ghost">
+                    Decline
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Assistant — streaming follow-up -->
+          <div class="m m--agent">
+            <div class="m__avatar m__avatar--agent">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><line x1="12" y1="22" x2="12" y2="15.5"/></svg>
+            </div>
+            <div class="m__body">
+              <div class="m__meta">
+                <span class="name name--agent">Orion-4</span>
+                <span>·</span>
+                <span>14:08</span>
+                <span class="streaming">
+                  <span class="dot"></span>
+                  Drafting follow-up plan
+                  <button class="stop-btn">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
+                    Stop
+                  </button>
+                </span>
+              </div>
+              <div class="m__text">
+                <p>While you review: once approved, I'll schedule a 24h checkpoint. If Meta Lookalike CPL rises above $6.40 or conversion drops below 7.5%, I'll flag it in this thread and propose a rollback. I'll also pull TikTok UGC's creative performance so we can identify which assets are driving the quality drop<span class="typing-cursor"></span></p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Composer -->
+      <div class="composer">
+        <div class="composer__inner">
+          <div class="composer__box">
+            <textarea class="composer__textarea" placeholder="Reply to Orion-4…  (try  /  for commands or  @  to mention)"></textarea>
+            <div class="composer__row">
+              <div class="composer__left">
+                <button class="icon-btn" aria-label="Attach">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                </button>
+                <button class="icon-btn" aria-label="Tools">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                </button>
+                <button class="icon-btn" aria-label="Context">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                </button>
+              </div>
+              <div style="display:flex; align-items:center; gap: var(--space-3);">
+                <div class="composer__hints">
+                  <span><span class="kbd">/</span> commands</span>
+                  <span><span class="kbd">@</span> mentions</span>
+                  <span><span class="kbd">⌘</span><span class="kbd">↵</span> send</span>
+                </div>
+                <button class="btn btn--primary">
+                  Send
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

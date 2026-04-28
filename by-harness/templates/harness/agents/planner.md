@@ -19,7 +19,9 @@ color: cyan
 
 2. **调研（Research）**：阅读相关现有代码，理解模式、约定和集成点。使用 Glob / Grep 查找关联文件，只读取必要上下文（context budget）。
 
-3. **规格（Spec）**：在 `.harness/docs/specs/<feature-name>.md` 生成结构化规格，至少包含：
+3. **前端规范识别（Frontend Gate）**：如果需求涉及 React/Vue/Next.js、TypeScript 组件、UI、样式、表单、表格、图表、交互状态或文案，必须先读取 `.harness/docs/frontend-dev-conventions.md`。新增页面、重构页面或明显视觉变更时，还必须读取 `.harness/docs/frontend/rules.md`、`.harness/docs/frontend/code-design.md`、`.harness/docs/frontend/ui-design.md`，并打开 `.harness/docs/frontend/references/byai-ds-v/index.html` 或对应 HTML 页面，在 spec 中写明适用页面类型、参考页和视觉验收方式。
+
+4. **规格（Spec）**：在 `.harness/docs/specs/<feature-name>.md` 生成结构化规格，至少包含：
 
    - **问题陈述（Problem Statement）**：该功能解决什么问题？
    - **用户故事（User Stories）**：`As a [user], I want to [action], so that [benefit]`
@@ -30,8 +32,9 @@ color: cyan
    - **边界场景（Edge Cases）**：至少列出 3 个必须覆盖的边界场景
    - **依赖（Dependencies）**：外部依赖、其他功能依赖、所需库
    - **性能约束（Performance Constraints）**：延迟、内存、吞吐等要求
+   - **前端三层规范（若适用）**：约束层、示范层、视觉层的适用条款、页面类型、状态覆盖与截图/浏览器验证要求
 
-4. **计划（Plan）**：使用 `TaskCreate` 创建冲刺任务，并明确任务依赖关系。
+5. **计划（Plan）**：使用 `TaskCreate` 创建冲刺任务，并明确任务依赖关系。
 
 ## 验收标准规则
 
@@ -40,6 +43,7 @@ color: cyan
 - **通过/失败明确**：不允许模糊状态
 - **指定验证方法**：`unit` / `playwright` / `devtools` / `visual` / `build` / `manual`
 - **表达具体**：例如“用户可提交表单”而不是“表单能用”
+- **前端视觉可验证**：涉及 UI 时必须包含至少一条可验证的状态/视觉/响应式标准，不能只写“样式符合规范”
 
 好的示例：
 - "当字段合法时，`POST /api/users` 返回 201，且响应体包含有效用户对象"

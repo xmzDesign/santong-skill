@@ -1,174 +1,233 @@
-# 前端工程级编码规范（Harness 版）
+# 前端工程与视觉规范（Harness 版）
 
-本规范用于约束本仓库内前端开发任务的 AI 代理行为，目标是：最小改动、可维护、可回归、风格统一。
+本规范用于约束 AI 代码代理在前端任务中的实现行为。它不是泛泛的“写好看一点”，而是一套三层约束：先定禁止项和硬规则，再给标准代码结构，最后给视觉还原规则。
 
 版本信息：
-- Version: `1.0`
-- Last Updated: `2026-04-22`
+- Version: `2.0`
+- Last Updated: `2026-04-28`
+- 来源思想：BYAI Design System v1、三层代码规范结构、现有中后台工程约束
+
+## 0. 使用方式
+
+前端任务开始前，必须先完成以下动作：
+
+1. 判断本次任务是否涉及 UI、样式、React/Vue/Next、TypeScript 组件、表单、表格、图表、布局、交互状态或文案。
+2. 若涉及，先阅读本文，再按需阅读：
+   - `.harness/docs/frontend/rules.md`：约束层，回答“禁止什么、必须怎样”。
+   - `.harness/docs/frontend/code-design.md`：示范层，回答“标准代码长什么样”。
+   - `.harness/docs/frontend/ui-design.md`：视觉层，回答“页面应该呈现什么气质”。
+3. 在 plan/spec 中写明将使用哪类视觉参考：Dashboard、Table、Form、Settings、Agent、Data-viz、Login、Onboarding。
+   - 若需要视觉还原或页面级参考，打开 `.harness/docs/frontend/references/byai-ds-v/index.html` 或对应 HTML 页面。
+4. 在 build 前列出本次适用的前端硬约束。
+5. 在交付前执行前端自检；若存在 `.codex/hooks/convention-check.py` 或 `.claude/hooks/convention-check.py`，运行 `--changed-only`。
 
 ## 1. 适用范围
 
-- 作用范围：仓库根目录及其所有子目录（除非子目录存在 `AGENTS.override.md` 覆盖）。
-- 适用对象：React/TypeScript 前端项目及相关中后台、运营后台、管理台页面开发任务。
-- 执行主体：人类开发者与 AI 代码代理（Codex/Claude 等）协同开发场景。
+适用于以下任务：
+- React / Vue / Next.js / TypeScript 前端编码。
+- 中后台、运营后台、SaaS 控制台、Agent 产品界面。
+- 页面布局、组件实现、样式修复、视觉还原、表单/表格/图表/弹层/状态视图。
+- 任何涉及 HTML、CSS、Less、SCSS、CSS Modules、styled-components、Antd 主题或组件覆盖的改动。
 
-## 2. 通用执行原则（必须遵守）
+不适用于纯后端逻辑。若同一任务同时涉及前后端，前端部分必须遵守本文。
 
-1. 全程使用简体中文进行沟通、注释说明与任务总结。
-2. 在满足需求前提下，优先采用最小改动，避免无谓重构。
-3. 不改变既定交互与信息架构；仅允许小幅体验统一（文案、对齐、留白、loading/empty/error）。
-4. 除用户明确要求外，不做破坏性操作（删除大段代码、重置历史、大规模迁移）。
-5. 优先复用已有模块、组件、hooks、utils、service 与第三方依赖，不重复造轮子。
+## 2. 三层规范模型
 
-## 3. 工程结构约束（必须遵守）
+### 第一层：约束层
 
-- 页面组件放在：`pages/**`
-- 通用/业务组件放在：`components/**`
-- 配置放在：`config/**`
-- 工具函数放在：`utils/**`
-- 常量/枚举放在：`constants/**`
-- hooks 放在：`hooks/**`
-- 接口请求封装放在：`service/**`
-- 类型定义放在：`types/**`
+约束层是硬规则，优先级最高。它告诉模型“哪些行为绝对不能发生”。
 
-页面与组件目录采用“文件夹 + index 入口”结构：
+核心要求：
+- 不硬编码视觉体系。
+- 不随意 invent 颜色、间距、圆角、字号。
+- 不绕过项目已有组件库和样式体系。
+- 不把 UI 做成 landing page、装饰页或低密度宣传页。
+- 不牺牲 loading / empty / error / disabled / focus-visible 等状态。
 
-- `pages/<domain>/<feature>/index.tsx`
-- `components/<domain>/<feature>/index.tsx`
+详见 `.harness/docs/frontend/rules.md`。
 
-可按需配套私有资源目录：
+### 第二层：示范层
 
-- `components/<...>/components/`
-- `components/<...>/hooks/`
-- `components/<...>/utils/`
-- `components/<...>/types/`
-- `components/<...>/config/`
-- `components/<...>/index.less`
+示范层是标准代码模式。它告诉模型“生成新页面或组件时照哪种结构写”。
 
-## 4. 命名规范（必须遵守）
+核心要求：
+- 页面负责组合，复杂状态放进 controller hook。
+- view 层只展示，不直接请求接口。
+- 表格、筛选、分页、弹层、表单、状态视图必须按模板组织。
+- 使用 Antd 时优先复用 Antd4/Antd5 项目现有能力；自定义组件必须说明原因。
+- CSS Modules / Less / SCSS 必须局部化，避免裸全局污染。
 
-- 文件/目录名：`kebab-case`
-- 变量/函数名：`camelCase`
-- 类型/接口/枚举类型名：`PascalCase`
-- 常量名：`UPPER_SNAKE_CASE`
-- 自定义 Hook：文件名与导出函数均以 `use` 开头（如 `useXxx`）
-- 对外回调命名：`onXxx`
-- 内部处理函数命名：`handleXxx`
+详见 `.harness/docs/frontend/code-design.md`。
 
-禁止在业务代码中散落魔法字符串/魔法数字，统一抽常量。
+### 第三层：视觉层
 
-## 5. TS / React / TSX 规范（必须遵守）
+视觉层是页面气质和视觉还原规则。它告诉模型“UI 最终应该像什么”。
 
-### 5.1 TypeScript
+默认方向：
+- B2B SaaS / AI-native cockpit，而不是营销落地页。
+- 信息密度优先，专业用户一屏内看到关键数据。
+- 暖调、克制、清晰；避免紫色渐变、玻璃拟态、空洞大 banner。
+- Agent 行为必须可见、可解释、可中断、可追溯。
 
-1. 禁止使用 `any`（必要时用 `unknown` + 类型守卫）。
+详见 `.harness/docs/frontend/ui-design.md`。页面级 HTML 参考位于 `.harness/docs/frontend/references/byai-ds-v/`，用于理解布局、层级、密度、状态和 token 使用方式；不要把 demo HTML 直接复制为业务实现。
+
+## 3. 优先级
+
+当规则冲突时，按以下顺序执行：
+
+1. 用户当前明确要求。
+2. 当前仓库更近范围的 `AGENTS.md / CLAUDE.md / AGENTS.override.md`。
+3. 本文与 `.harness/docs/frontend/*.md`。
+4. 项目已有代码模式、组件库、主题系统。
+5. 通用审美偏好。
+
+若项目已有成熟设计系统，优先对齐项目系统；若项目没有成熟系统，使用本文内置的 BYAI 风格约束作为默认设计系统。
+
+## 4. 前端硬门禁
+
+以下规则默认强制执行：
+
+1. 颜色、字号、间距、圆角、阴影、动效必须来源于 token 或项目已有主题变量。
+2. 业务样式中禁止新增裸 hex 色值；token 文件、第三方品牌 logo、图表库配置例外，但必须集中管理。
+3. 禁止新增无必要的 `style={{ ... }}`；动态尺寸可例外，但必须解释原因。
+4. 禁止用红/绿作为唯一状态编码；必须配合图标、文字或符号。
+5. 禁止默认使用紫色渐变、磨玻璃、大面积 bokeh/orb 装饰。
+6. 所有交互控件必须覆盖 default / hover / active / focus-visible / disabled。
+7. 所有请求必须有 loading；空数据必须有 empty；失败必须有 error 和关键链路 retry。
+8. 表单必须有可见 label；placeholder 只能作为示例，不能替代 label。
+9. 破坏性操作必须二次确认，按钮文案必须复述动作和对象。
+10. 表格列宽不能平均分；名称列宽、数字列窄、操作列自适应。
+11. Agent 或 AI 行为必须展示工具调用、进度、来源、可中断入口。
+12. 移动端和窄屏不得出现非预期横向滚动；表格横滚必须显式容器化。
+
+## 5. 工程结构约束
+
+保持项目已有结构优先。若项目没有明确规范，采用以下默认约定：
+
+- 页面组件：`pages/**`
+- 通用/业务组件：`components/**`
+- 配置：`config/**`
+- 工具函数：`utils/**`
+- 常量/枚举：`constants/**`
+- hooks：`hooks/**`
+- 接口请求封装：`service/**` 或 `services/**`
+- 类型定义：`types/**`
+
+页面与组件目录采用“文件夹 + index 入口”：
+
+```text
+pages/<domain>/<feature>/index.tsx
+components/<domain>/<feature>/index.tsx
+```
+
+复杂页面建议：
+
+```text
+pages/<feature>/
+  index.tsx
+  view.tsx
+  hooks/use-<feature>-controller.ts
+  components/
+  utils.ts
+  types.ts
+  style.module.scss
+```
+
+## 6. TypeScript / React 约束
+
+1. 禁止使用 `any`；必要时用 `unknown` 加类型守卫。
 2. 公共函数建议显式返回类型。
-3. 启用并遵守严格空值检查与严格类型约束。
-4. 共享类型放入 `types/**`，局部类型就近定义。
+3. 使用函数组件和 Hooks。
+4. 组件保持小而专注；复杂逻辑抽到 hooks / utils / service。
+5. `useEffect` 依赖必须完整，订阅类副作用必须 cleanup。
+6. 列表 key 必须稳定，不使用数组 index 作为可变列表 key。
+7. 单个组件文件推荐 `<= 300` 行，超过 `350` 行必须拆分。
+8. 所有新增/修改函数、方法必须补充中文注释，说明用途、关键参数、返回值、副作用。
 
-### 5.2 React 组件
+## 7. 数据请求与状态管理
 
-1. 使用函数组件 + Hooks。
-2. 组件保持小而专注，复杂逻辑抽到 hooks/utils/service。
-3. 使用组合优先于继承。
-4. `useEffect` 必须有正确依赖，涉及订阅必须 cleanup。
-5. 列表渲染使用稳定且正确的 `key`。
+1. 页面/组件不得直接调用裸请求库；必须走项目已有 service 层。
+2. 高频输入触发请求必须防抖/节流。
+3. 并发请求必须考虑竞态，至少保留最后一次请求结果。
+4. 保存、删除、切换、批量操作必须有提交中状态，防止重复提交。
+5. 可回滚交互失败时必须恢复原值，保证 UI 与数据一致。
+6. 批量操作后必须刷新列表，并清理或明确保留选中态。
 
-### 5.3 TSX 分层（control / view）
+## 8. 样式与设计系统
 
-- control 层负责：请求调用、状态管理、派生数据、事件处理、副作用、流程编排。
-- view 层负责：纯展示渲染（依据 props/state 展示）。
-- 禁止在 view 层直接发请求或维护复杂业务状态。
+若项目已有 token，使用项目 token。若没有，按以下内置语义建立最小 token：
 
-推荐结构：
+```text
+bg.canvas / bg.surface / bg.surface-sunken
+fg.default / fg.strong / fg.muted / fg.subtle / fg.disabled
+border.subtle / border.default / border.strong / border.focus
+intent.primary / intent.info / intent.warning / intent.danger / intent.neutral
+space.1/2/3/4/5/6/8/10/12/16
+radius.sm/md/lg/xl/full
+shadow.xs/sm/focus-ring
+motion.duration.fast/base/slow
+```
 
-- 简单场景：`index.tsx` 内使用 `useXxxController()` + `XxxView`
-- 复杂场景：`index.tsx` + `view.tsx` + `hooks/useXxxController.ts`
+视觉默认值：
+- 页面背景：暖调 off-white，而不是纯白。
+- 主强调色：amber/orange 方向；信息色用 blue。
+- Danger 色仅用于危险操作，必须伴随图标和明确文案。
+- 字号阶梯：`11 / 12 / 13 / 14 / 16 / 18 / 22 / 28 / 36` 或项目已有阶梯。
+- 间距：4px grid，优先 `4 / 8 / 12 / 16 / 20 / 24 / 32 / 40 / 48`。
+- 圆角：默认 6-8px，卡片不超过 8px，弹层可 12px。
+- 阴影：轻量，优先边框分隔，避免重 shadow。
 
-### 5.4 长度控制（强约束）
+## 9. Antd 兼容
 
-- 单个组件文件推荐 `<= 300` 行，禁止超过 `350` 行（超过必须拆分）。
-- 单函数尽量单一职责，核心逻辑推荐不超过 `20` 行。
+1. Antd 项目优先复用 Antd 组件，不重复造基础控件。
+2. Antd4 通过 Less 变量或项目现有主题层映射 token。
+3. Antd5 通过 `ConfigProvider theme.token` 映射 token。
+4. 覆盖 Antd 样式必须局部化，CSS Modules 中使用 `:global` 包在模块根类下。
+5. 禁止多层裸 `.ant-*` 全局覆盖和滥用 `!important`。
+6. 如果自定义替代 Antd 基础组件，必须说明：Antd 不能满足的交互、可访问性或视觉原因。
 
-## 6. 数据请求与状态管理（必须遵守）
+## 10. 状态、无障碍与动效
 
-1. 页面/组件不得直接调用裸请求库（如直接 `fetch/axios`）。
-2. 所有请求统一经由 `service/**` 或既有全局状态层。
-3. 请求工具必须使用公司封装：`@indata/ajax`。
-4. 跨组件通信优先复用：`@indata/lego-bridge` 的 `eventBus`。
-5. 可复用状态逻辑（分页/搜索/轮询/弹窗控制）优先抽成自定义 Hooks。
-6. 共享状态优先使用现有全局方案，避免重复引入新库。
-7. 对并发请求需考虑竞态与取消（AbortController/序号保护/仅保留最后一次）。
+必须覆盖：
+- Loading：请求中、提交中、长耗时进度。
+- Empty：初次无数据、筛选无结果、已完成无更多。
+- Error：字段级、块级、页面级、网络/权限错误。
+- Disabled：说明不可用原因，关键操作配 tooltip/help。
+- Success：轻量反馈，避免过度庆祝。
 
-## 7. 交互体验基线（必须遵守）
+无障碍要求：
+- 文本对比度达到 WCAG 2.2 AA。
+- 所有交互元素可键盘访问。
+- Focus visible 清晰，不使用浏览器默认虚线作为唯一焦点样式。
+- Icon-only button 必须有 `aria-label`。
+- 不仅靠颜色传达状态。
+- Modal / Drawer 打开后管理焦点，Esc 可关闭，关闭前处理未保存内容。
 
-### 7.1 loading / empty / error
+动效要求：
+- 优先使用 `transform` 和 `opacity`。
+- 支持 `prefers-reduced-motion`。
+- 微交互建议 120-200ms，复杂过渡不超过 400ms。
 
-1. 所有请求必须有 loading 状态。
-2. 空数据必须有 empty 视图与可理解文案。
-3. 失败必须有可见错误反馈（`message.error` / `notification.error` / 错误态视图）。
-4. 关键链路失败必须提供重试入口（如 `handleRetry`）。
+## 11. 交付前自检
 
-### 7.2 提交与反馈
+前端任务完成前必须逐条检查：
 
-1. 保存/更新/删除/切换等操作：成功给 `message.success`，失败给 `message.error`。
-2. 破坏性操作（删除、覆盖、批量删除等）必须二次确认。
-3. 提交过程中按钮需 loading 且禁用，防止重复提交。
-4. 可回滚交互（如开关切换）在失败时恢复原值，保证 UI 与数据一致。
+- 是否读取并遵守了 `.harness/docs/frontend/rules.md`。
+- 是否选择了对应视觉类型并参考 `.harness/docs/frontend/ui-design.md`。
+- 是否没有新增硬编码颜色、裸全局样式、无解释 inline style。
+- 是否覆盖 loading / empty / error / disabled / focus-visible。
+- 是否所有新增/修改函数、方法都有中文注释。
+- 是否执行构建、测试或至少说明无法执行的原因。
+- 若 UI 变化明显，是否完成桌面与窄屏截图或浏览器验证。
+- 若有 hook，是否运行 `python3 .codex/hooks/convention-check.py --changed-only` 或 `python3 .claude/hooks/convention-check.py --changed-only`。
 
-### 7.3 搜索筛选与列表
+## 12. 例外流程
 
-1. 高频输入触发请求必须防抖/节流（优先复用现有方案，如 `ahooks`）。
-2. 筛选/排序变更需更新查询条件并避免重复请求。
-3. 批量操作后必须刷新列表，并清理或明确保留选中态。
+允许例外，但必须在最终回复说明：
 
-## 8. 样式规范（必须遵守）
+- 违反了哪条规则。
+- 为什么当前业务或技术条件需要例外。
+- 风险是什么。
+- 后续如何回收。
 
-1. 禁止行内样式（禁止 `style={{...}}`）。
-2. 新增样式放在同级 `.less`（或项目既有样式体系，如 sass/scss）。
-3. 推荐使用 BEM 命名，模块内命名风格保持一致。
-4. 禁止无约束覆盖全局样式；使用父级作用域限制影响范围。
-5. 同一模块注意间距与对齐统一（遵循既有 `4/8/12/16/24` 节奏）。
-
-## 9. 可维护性与复用（必须遵守）
-
-1. 页面层只负责路由与组件组合，不承载复杂业务逻辑。
-2. 新增页面/模块前先评估可复用抽象，禁止简单复制粘贴实现。
-3. 相似结构优先抽取复用组件/逻辑。
-4. 工具函数应保持纯函数特性，不依赖组件状态或全局可变状态。
-5. 环境相关配置通过环境变量或集中配置注入，禁止业务代码硬编码。
-6. 公共组件、公共 hooks、复杂 service 函数补充简要注释/JSDoc（入参、返回、核心行为）。
-
-## 10. 性能与质量（建议遵守）
-
-1. 对昂贵计算使用 `useMemo`，对传递给子组件的回调优先 `useCallback`。
-2. 减少不必要重渲染，按需拆分组件。
-3. 对复杂流程补充必要测试（至少覆盖关键成功/失败路径）。
-4. 完成需求后顺手清理明显死代码、未使用变量、重复逻辑。
-
-## 11. 任务结束输出要求（必须遵守）
-
-1. 总结精简，突出：改了什么、为什么、影响面、验证方式。
-2. 禁止粘贴大段代码；如需说明，给文件路径与关键片段定位即可。
-
-## 12. 条件规则（按场景启用）
-
-### 12.1 Next.js 规则（仅当项目实际使用 Next.js 时启用）
-
-1. 优先遵循 App Router 约定与目录结构。
-2. 默认优先服务器组件；客户端组件显式 `use client`。
-3. 合理使用动态加载、`Suspense`、缓存策略与错误边界。
-4. 表单验证优先既有方案（如项目已使用 Zod 则沿用）。
-
-### 12.2 非 Next.js 项目
-
-忽略 12.1，按本仓库现有技术栈与脚手架规范执行。
-
-## 13. 冲突处理
-
-当多条规则冲突时，按优先级执行：
-
-1. 用户当前任务明确要求。
-2. 更小影响范围目录下的 `AGENTS.md / AGENTS.override.md`。
-3. 本文件（仓库根 `AGENTS.md`）。
-4. 项目既有代码风格与基础设施约定。
+没有说明的例外视为未完成。

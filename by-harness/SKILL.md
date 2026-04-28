@@ -1,6 +1,6 @@
 ---
 name: by-harness
-description: Harness skill。可初始化主闭环脚手架，并持续拆解与执行任务，默认采用分片任务存储（index + buckets）；feature_list 仅在 legacy 项目存在时兼容沿用。
+description: Harness skill。可初始化主闭环脚手架，并持续拆解与执行任务，默认采用分片任务存储（index + buckets）；同时下发前端三层编码与视觉规范，用于约束 AI 在 React/Vue/TypeScript/UI/样式任务中的实现质量；feature_list 仅在 legacy 项目存在时兼容沿用。
 argument-hint: "[项目名称] [项目描述]"
 disable-model-invocation: false
 user-invocable: true
@@ -12,6 +12,15 @@ user-invocable: true
 
 目标是让你在 Codex 里稳定执行这个闭环：
 `拆分任务 -> read task -> plan -> build -> qa -> fix -> mark_pass -> session_close`
+
+同时，`by-harness` 会向目标仓库下发前端三层规范：
+
+- 约束层：`.harness/docs/frontend/rules.md`
+- 示范层：`.harness/docs/frontend/code-design.md`
+- 视觉层：`.harness/docs/frontend/ui-design.md`
+- 视觉参考：`.harness/docs/frontend/references/byai-ds-v/index.html`
+
+当任务涉及 React/Vue/Next.js、TypeScript 组件、UI、样式、表格、表单、图表、Agent 界面或交互状态时，模型必须先读取 `.harness/docs/frontend-dev-conventions.md`，再按任务类型读取三层规范；新增页面、重构页面或明显视觉变更时，还必须打开 BYAI HTML 参考页。
 
 ## 手动意图（你期望的三种入口）
 
@@ -82,6 +91,8 @@ python3 {{SKILL_PATH}}/scripts/scaffold.py \
 - 根目录最小集：`AGENTS.md`、`CLAUDE.md` + `.codex/` + `.claude/`
 - `.harness/`：`config/`、`docs/`、`scripts/`、`task-harness/`
 - 规范文档：`.harness/docs/java-dev-conventions.md`（后端）与 `.harness/docs/frontend-dev-conventions.md`（前端）
+- 前端三层规范：`.harness/docs/frontend/README.md`、`rules.md`、`code-design.md`、`ui-design.md`
+- BYAI HTML 参考：`.harness/docs/frontend/references/byai-ds-v/`，包含 gallery、12 个页面设计稿、组件 showcase、tokens 与设计说明快照
 - 收口工具：`.harness/scripts/session_close.py`
 
 ## 持续拆任务（可重复执行）
@@ -157,6 +168,7 @@ python3 .harness/scripts/update_runtime.py --target-dir . --check-remote
 - 单元测试通过即可 `passes=false -> true`；QA 默认非阻塞。
 - 所有新增/修改函数、方法必须补齐中文注释（用途、参数、返回值、副作用）。
 - 常规执行只改 `passes`，不改任务结构字段。
+- 前端/UI/样式任务必须遵守 `.harness/docs/frontend-dev-conventions.md` 和 `.harness/docs/frontend/` 三层规范；新增页面、重构页面或明显视觉变更时必须参考 `.harness/docs/frontend/references/byai-ds-v/`；完成前需自检 token、状态覆盖、响应式、可访问性和反例规避。
 
 ## 典型提示词
 

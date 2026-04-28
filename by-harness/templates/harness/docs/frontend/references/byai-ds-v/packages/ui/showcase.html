@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>@byai/ui · Component Showcase</title>
+<link rel="stylesheet" href="../../assets/fonts.css" />
+<link rel="stylesheet" href="../../tokens/tokens.css" />
+<link rel="stylesheet" href="./src/styles.css" />
+<style>
+  body {
+    font-family: var(--font-body);
+    font-size: var(--font-size-body);
+    line-height: var(--font-line-body);
+    color: var(--fg-default);
+    background: var(--bg-canvas);
+    margin: 0;
+    padding: 0;
+    font-feature-settings: "ss01", "ss02", "cv02", "cv11";
+  }
+  .showcase { max-width: 1100px; margin: 0 auto; padding: var(--space-8); }
+
+  .showcase-head {
+    padding-bottom: var(--space-6);
+    border-bottom: 1px solid var(--border-subtle);
+    margin-bottom: var(--space-8);
+  }
+  .showcase-head__eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--fg-brand);
+    margin-bottom: var(--space-2);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .showcase-head__title {
+    font-family: var(--font-display);
+    font-size: 40px;
+    line-height: 46px;
+    letter-spacing: -0.025em;
+    font-weight: var(--font-weight-semibold);
+    color: var(--fg-strong);
+    margin: 0 0 var(--space-3);
+  }
+  .showcase-head__lede {
+    font-size: 17px;
+    color: var(--fg-muted);
+    line-height: 26px;
+    max-width: 640px;
+    margin: 0;
+  }
+
+  .toc {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    padding: var(--space-3) 0;
+    margin-bottom: var(--space-8);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .toc a {
+    padding: 4px 10px;
+    font-size: var(--font-size-caption);
+    color: var(--fg-muted);
+    text-decoration: none;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-full);
+    transition: border-color var(--motion-duration-fast);
+  }
+  .toc a:hover { border-color: var(--border-default); color: var(--fg-default); }
+
+  .sec { margin-bottom: var(--space-10); }
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--border-subtle);
+    margin-bottom: var(--space-5);
+  }
+  .sec-head h2 {
+    font-family: var(--font-display);
+    font-size: 24px;
+    letter-spacing: -0.015em;
+    font-weight: var(--font-weight-semibold);
+    color: var(--fg-strong);
+    margin: 0;
+  }
+  .sec-head__count { font-size: var(--font-size-caption); color: var(--fg-muted); font-family: var(--font-mono); }
+
+  .ex { margin-bottom: var(--space-6); }
+  .ex__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-3);
+  }
+  .ex__name {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: var(--font-weight-semibold);
+    color: var(--fg-strong);
+  }
+  .ex__props {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--fg-subtle);
+  }
+  .ex__demo {
+    padding: var(--space-5);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    align-items: center;
+    min-height: 72px;
+  }
+  .ex__demo--stack { flex-direction: column; align-items: stretch; }
+
+  .label {
+    font-size: 10px;
+    font-weight: var(--font-weight-medium);
+    letter-spacing: var(--font-tracking-wider);
+    text-transform: uppercase;
+    color: var(--fg-subtle);
+    width: 64px;
+    flex-shrink: 0;
+  }
+  .row { display: flex; gap: var(--space-3); align-items: center; width: 100%; flex-wrap: wrap; }
+  .row + .row { margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px dashed var(--border-subtle); }
+
+  code.chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 6px;
+    background: var(--bg-surface-subtle);
+    color: var(--fg-default);
+    border-radius: var(--radius-xs);
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+
+  /* icon for SVG in buttons */
+  .byai-icon { stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  .backlink {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--font-size-caption);
+    color: var(--fg-muted);
+    text-decoration: none;
+    margin-bottom: var(--space-4);
+  }
+  .backlink:hover { color: var(--fg-default); }
+</style>
+</head>
+<body>
+<div class="showcase">
+
+  <a href="../../index.html" class="backlink">← BYAI Design System · Index</a>
+
+  <header class="showcase-head">
+    <div class="showcase-head__eyebrow">
+      <code class="chip">@byai/ui</code>
+      <span>v1.0.0 · 25 components</span>
+    </div>
+    <h1 class="showcase-head__title">Component Showcase</h1>
+    <p class="showcase-head__lede">
+      Static gallery of every component shipped in <code class="chip">@byai/ui</code>, rendered with the real package CSS.
+      The classes in the DOM below (<code class="chip">byai-button</code>, <code class="chip">byai-tag</code>, etc.) are exactly what the React components emit.
+    </p>
+  </header>
+
+  <nav class="toc">
+    <a href="#primitives">Primitives · 11</a>
+    <a href="#navigation">Navigation · 4</a>
+    <a href="#feedback">Feedback · 2</a>
+    <a href="#shell">Shell · 3</a>
+    <a href="#agent">Agent · 5</a>
+  </nav>
+
+  <!-- ============ PRIMITIVES ============ -->
+  <section class="sec" id="primitives">
+    <div class="sec-head"><h2>Primitives</h2><span class="sec-head__count">11 components</span></div>
+
+    <!-- Button -->
+    <div class="ex">
+      <div class="ex__head">
+        <span class="ex__name">&lt;Button /&gt;</span>
+        <span class="ex__props">variant · size · fullWidth · leadingIcon · trailingIcon · disabled</span>
+      </div>
+      <div class="ex__demo ex__demo--stack">
+        <div class="row">
+          <span class="label">Variants</span>
+          <button class="byai-button byai-button--primary">Primary</button>
+          <button class="byai-button byai-button--secondary">Secondary</button>
+          <button class="byai-button byai-button--ghost">Ghost</button>
+          <button class="byai-button byai-button--danger">Danger</button>
+        </div>
+        <div class="row">
+          <span class="label">Sizes</span>
+          <button class="byai-button byai-button--primary byai-button--sm">Small</button>
+          <button class="byai-button byai-button--primary">Medium</button>
+          <button class="byai-button byai-button--primary byai-button--lg">Large</button>
+        </div>
+        <div class="row">
+          <span class="label">With icon</span>
+          <button class="byai-button byai-button--primary">
+            <svg class="byai-icon" width="14" height="14" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            New lead
+          </button>
+          <button class="byai-button byai-button--secondary">
+            Export
+            <svg class="byai-icon" width="14" height="14" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </button>
+        </div>
+        <div class="row">
+          <span class="label">States</span>
+          <button class="byai-button byai-button--primary" disabled>Disabled</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- IconButton -->
+    <div class="ex">
+      <div class="ex__head">
+        <span class="ex__name">&lt;IconButton /&gt;</span>
+        <span class="ex__props">aria-label (required) · size</span>
+      </div>
+      <div class="ex__demo">
+        <button class="byai-icon-button byai-icon-button--sm" aria-label="Close"><svg class="byai-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        <button class="byai-icon-button" aria-label="Notifications"><svg class="byai-icon" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
+        <button class="byai-icon-button byai-icon-button--lg" aria-label="Settings"><svg class="byai-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9 1.65 1.65 0 0 0 4.27 7.18l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+      </div>
+    </div>
+
+    <!-- Input / Select -->
+    <div class="ex">
+      <div class="ex__head">
+        <span class="ex__name">&lt;Input /&gt; &lt;Select /&gt;</span>
+        <span class="ex__props">size · invalid · disabled · placeholder</span>
+      </div>
+      <div class="ex__demo ex__demo--stack">
+        <div class="row"><span class="label">Input</span><input class="byai-input" placeholder="m.santos@gmail.com" style="max-width:260px"/></div>
+        <div class="row"><span class="label">Invalid</span><input class="byai-input" placeholder="Invalid email" aria-invalid="true" value="not-an-email" style="max-width:260px"/></div>
+        <div class="row"><span class="label">Small</span><input class="byai-input byai-input--sm" placeholder="Search…" style="max-width:200px"/></div>
+        <div class="row"><span class="label">Select</span>
+          <select class="byai-select" style="max-width:200px"><option>Tier 1</option><option>Tier 2</option><option>Tier 3</option></select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Switch -->
+    <div class="ex">
+      <div class="ex__head">
+        <span class="ex__name">&lt;Switch /&gt;</span>
+        <span class="ex__props">checked · defaultChecked · onCheckedChange · aria-label</span>
+      </div>
+      <div class="ex__demo">
+        <button class="byai-switch" role="switch" aria-checked="false" aria-label="Demo off"></button>
+        <button class="byai-switch" role="switch" aria-checked="true" aria-label="Demo on"></button>
+        <button class="byai-switch" role="switch" aria-checked="true" aria-label="Demo disabled" disabled style="opacity:0.4"></button>
+      </div>
+    </div>
+
+    <!-- Field -->
+    <div class="ex">
+      <div class="ex__head">
+        <span class="ex__name">&lt;Field /&gt;</span>
+        <span class="ex__props">label · hint · error · required · htmlFor</span>
+      </div>
+      <div class="ex__demo ex__demo--stack" style="max-width:400px">
+        <div class="byai-field">
+          <label class="byai-field__label">Full name<span class="byai-field__required">*</span></label>
+          <input class="byai-input" placeholder="Maria Santos" />
+          <span class="byai-field__hint">Legal name as on the government ID.</span>
+        </div>
+        <div class="byai-field">
+          <label class="byai-field__label">Phone number</label>
+          <input class="byai-input" aria-invalid="true" value="63-invalid" />
+          <span class="byai-field__error">
+            <svg class="byai-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Must start with a country code (e.g. +63).
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card -->
+    <div class="ex">
+      <div class="ex__head">
+        <span class="ex__name">&lt;Card /&gt;</span>
+        <span class="ex__props">elevation · interactive · flush</span>
+      </div>
+      <div class="ex__demo" style="align-items:stretch">
+        <div class="byai-card byai-card--flat" style="flex:1">
+          <div style="font-size:11px;color:var(--fg-subtle);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">Flat</div>
+          <div style="font-family:var(--font-display);font-size:20px;font-weight:600">Quarterly revenue</div>
+          <div style="color:var(--fg-muted);font-size:13px;margin-top:4px">$482,600 · up 12%</div>
+        </div>
+        <div class="byai-card byai-card--raised" style="flex:1">
+          <div style="font-size:11px;color:var(--fg-subtle);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">Raised</div>
+          <div style="font-family:var(--font-display);font-size:20px;font-weight:600">Active agents</div>
+          <div style="color:var(--fg-muted);font-size:13px;margin-top:4px">14 running · 2 idle</div>
+        </div>
+        <div class="byai-card byai-card--interactive" style="flex:1">
+          <div style="font-size:11px;color:var(--fg-subtle);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">Interactive (hover)</div>
+          <div style="font-family:var(--font-display);font-size:20px;font-weight:600">Billing</div>
+          <div style="color:var(--fg-muted);font-size:13px;margin-top:4px">Next invoice May 1</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tag -->
+    <div class="ex">
+      <div class="ex__head">
+        <span class="ex__name">&lt;Tag /&gt;</span>
+        <span class="ex__props">tone · dot</span>
+      </div>
+      <div class="ex__demo">
+        <span class="byai-tag">Neutral</span>
+        <span class="byai-tag byai-tag--primary"><span class="byai-tag__dot"></span>Qualified</span>
+        <span class="byai-tag byai-tag--info">Info</span>
+        <span class="byai-tag byai-tag--warning">Warning</span>
+        <span class="byai-tag byai-tag--danger">Danger</span>
+        <span class="byai-tag byai-tag--agent">✨ Agent</span>
+        <span class="byai-tag byai-tag--outline">Outline</span>
+      </div>
+    </div>
+
+    <!-- Avatar -->
+    <div class="ex">
+      <div class="ex__head">
+        <span class="ex__name">&lt;Avatar /&gt;</span>
+        <span class="ex__props">size · kind · src · initials</span>
+      </div>
+      <div class="ex__demo">
+        <span class="byai-avatar byai-avatar--xs byai-avatar--user">WL</span>
+        <span class="byai-avatar byai-avatar--sm byai-avatar--user">WL</span>
+        <span class="byai-avatar byai-avatar--md byai-avatar--user">WL</span>
+        <span class="byai-avatar byai-avatar--lg byai-avatar--user">WL</span>
+        <span class="byai-avatar byai-avatar--xl byai-avatar--user">WL</span>
+        <span class="byai-avatar byai-avatar--md byai-avatar--agent">✨</span>
+        <span class="byai-avatar byai-avatar--md byai-avatar--system">⚙</span>
+      </div>
+    </div>
+
+    <!-- Kbd / Divider -->
+    <div class="ex">
+      <div class="ex__head">
+        <span class="ex__name">&lt;Kbd /&gt;, &lt;Divider /&gt;</span>
+      </div>
+      <div class="ex__demo" style="flex-direction:column;align-items:stretch">
+        <div class="row">
+          Press <kbd class="byai-kbd">⌘</kbd> <kbd class="byai-kbd">K</kbd> to open, <kbd class="byai-kbd">Esc</kbd> to close
+        </div>
+        <hr class="byai-divider" style="margin:12px 0"/>
+        <div class="row">Above and below a horizontal divider.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ NAVIGATION ============ -->
+  <section class="sec" id="navigation">
+    <div class="sec-head"><h2>Navigation</h2><span class="sec-head__count">4 components</span></div>
+
+    <div class="ex">
+      <div class="ex__head">
+        <span class="ex__name">&lt;Tabs /&gt;</span>
+        <span class="ex__props">items · value · onChange</span>
+      </div>
+      <div class="ex__demo" style="flex-direction:column;align-items:stretch">
+        <div class="byai-tabs" role="tablist">
+          <button class="byai-tabs__item" role="tab" aria-selected="true">Overview</button>
+          <button class="byai-tabs__item" role="tab" aria-selected="false">Activity <span class="byai-tabs__count">24</span></button>
+          <button class="byai-tabs__item" role="tab" aria-selected="false">Notes <span class="byai-tabs__count">3</span></button>
+          <button class="byai-tabs__item" role="tab" aria-selected="false" disabled>Files <span class="byai-tabs__count">0</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="ex">
+      <div class="ex__head">
+        <span class="ex__name">&lt;Breadcrumb /&gt;</span>
+        <span class="ex__props">items · separator</span>
+      </div>
+      <div class="ex__demo">
+        <nav class="byai-breadcrumb" aria-label="Breadcrumb">
+          <a href="#">Leads</a>
+          <span class="byai-breadcrumb__sep">›</span>
+          <a href="#">Inbox</a>
+          <span class="byai-breadcrumb__sep">›</span>
+          <span class="byai-breadcrumb__current">Maria Santos</span>
+        </nav>
+      </div>
+    </div>
+
+    <div class="ex">
+      <div class="ex__head">
+        <span class="ex__name">&lt;Segmented /&gt;</span>
+        <span class="ex__props">items · value · onChange</span>
+      </div>
+      <div class="ex__demo">
+        <div class="byai-segmented" role="tablist">
+          <button class="byai-segmented__item" role="tab" aria-selected="true">Day</button>
+          <button class="byai-segmented__item" role="tab" aria-selected="false">Week</button>
+          <button class="byai-segmented__item" role="tab" aria-selected="false">Month</button>
+          <button class="byai-segmented__item" role="tab" aria-selected="false">Quarter</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="ex">
+      <div class="ex__head">
+        <span class="ex__name">&lt;Pagination /&gt;</span>
+        <span class="ex__props">page · totalPages · onPageChange · siblingCount</span>
+      </div>
+      <div class="ex__demo">
+        <nav class="byai-pagination" aria-label="Pagination">
+          <button class="byai-pagination__btn" disabled aria-label="Previous page">‹</button>
+          <button class="byai-pagination__btn">1</button>
+          <button class="byai-pagination__btn" aria-current="page">2</button>
+          <button class="byai-pagination__btn">3</button>
+          <span class="byai-pagination__ellipsis">…</span>
+          <button class="byai-pagination__btn">220</button>
+          <button class="byai-pagination__btn" aria-label="Next page">›</button>
+        </nav>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FEEDBACK ============ -->
+  <section class="sec" id="feedback">
+    <div class="sec-head"><h2>Feedback</h2><span class="sec-head__count">2 components</span></div>
+
+    <div class="ex">
+      <div class="ex__head">
+        <span class="ex__name">&lt;Skeleton /&gt;</span>
+        <span class="ex__props">variant · width · height</span>
+      </div>
+      <div class="ex__demo" style="flex-direction:column;align-items:stretch;gap:12px">
+        <div style="display:flex;gap:12px;align-items:center">
+          <span class="byai-skeleton byai-skeleton--circle" style="width:40px;height:40px;flex-shrink:0"></span>
+          <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+            <span class="byai-skeleton byai-skeleton--title" style="width:60%"></span>
+            <span class="byai-skeleton byai-skeleton--text" style="width:80%"></span>
+            <span class="byai-skeleton byai-skeleton--text" style="width:40%"></span>
+          </div>
+        </div>
+        <span class="byai-skeleton byai-skeleton--rect" style="width:100%;height:120px"></span>
+      </div>
+    </div>
+
+    <div class="ex">
+      <div class="ex__head">
+        <span class="ex__name">&lt;Progress /&gt;</span>
+        <span class="ex__props">value · max · size · aria-label</span>
+      </div>
+      <div class="ex__demo" style="flex-direction:column;align-items:stretch;gap:16px">
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:12px"><span>Setup progress</span><span style="font-family:var(--font-mono)">2 of 5 · 40%</span></div>
+          <div class="byai-progress" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" aria-label="Setup progress"><div class="byai-progress__bar" style="width:40%"></div></div>
+        </div>
+        <div class="byai-progress byai-progress--sm" role="progressbar" aria-valuenow="72" aria-valuemin="0" aria-valuemax="100"><div class="byai-progress__bar" style="width:72%"></div></div>
+        <div class="byai-progress byai-progress--lg" role="progressbar" aria-valuenow="92" aria-valuemin="0" aria-valuemax="100"><div class="byai-progress__bar" style="width:92%"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SHELL ============ -->
+  <section class="sec" id="shell">
+    <div class="sec-head"><h2>Shell</h2><span class="sec-head__count">3 components</span></div>
+
+    <div class="ex">
+      <div class="ex__head">
+        <span class="ex__name">&lt;Topbar /&gt;, &lt;Nav /&gt;, &lt;AppShell /&gt;</span>
+        <span class="ex__props">composition primitives — see <code class="chip">pages/02-dashboard.html</code></span>
+      </div>
+      <div class="ex__demo" style="padding:0;overflow:hidden">
+        <header class="byai-topbar" style="width:100%">
+          <a href="../../index.html" class="byai-topbar__brand">
+            <span class="byai-topbar__brand-dot"></span>
+            <span>BYAI</span>
+          </a>
+          <div style="flex:1"></div>
+          <div class="byai-topbar__actions">
+            <button class="byai-icon-button" aria-label="Notifications"><svg class="byai-icon" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
+            <span class="byai-avatar byai-avatar--md byai-avatar--user">WL</span>
+          </div>
+        </header>
+        <div style="display:flex">
+          <nav class="byai-nav" style="width:240px;height:260px;position:static">
+            <div class="byai-nav__section-title">Workspace</div>
+            <a class="byai-nav__item" aria-current="page" href="#">
+              <svg class="byai-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              <span style="flex:1">Overview</span>
+            </a>
+            <a class="byai-nav__item" href="#">
+              <svg class="byai-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span style="flex:1">Leads</span>
+              <span class="byai-nav__item-badge">2.8k</span>
+            </a>
+            <a class="byai-nav__item" href="#">
+              <svg class="byai-icon" viewBox="0 0 24 24"><path d="M12 2l2 4 4 .6-3 2.9.8 4.5-3.8-2-3.8 2 .8-4.5-3-2.9 4-.6z"/></svg>
+              <span style="flex:1">Agents</span>
+            </a>
+          </nav>
+          <div style="flex:1;padding:24px;background:var(--bg-canvas);color:var(--fg-muted);font-size:13px">
+            Main region — pages compose their own content here.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ AGENT ============ -->
+  <section class="sec" id="agent">
+    <div class="sec-head"><h2>Agent</h2><span class="sec-head__count">5 components · BYAI's differentiator</span></div>
+
+    <div class="ex">
+      <div class="ex__head">
+        <span class="ex__name">&lt;Message /&gt;, &lt;Citation /&gt;, &lt;StreamingDot /&gt;</span>
+        <span class="ex__props">role · meta · marker · source</span>
+      </div>
+      <div class="ex__demo" style="flex-direction:column;align-items:stretch;gap:16px;background:var(--bg-canvas)">
+        <div class="byai-msg byai-msg--user">
+          <span class="byai-msg__meta">Wang Lei · 19:42</span>
+          <div class="byai-msg__bubble">Summarize yesterday's qualified leads in Metro Manila.</div>
+        </div>
+        <div class="byai-msg byai-msg--assistant">
+          <span class="byai-msg__meta">✨ BYAI Copilot · 19:42</span>
+          <div class="byai-msg__bubble">
+            <span class="byai-streaming-dot"></span>
+            Yesterday you qualified 42 leads in Metro Manila, up 18% week-over-week<span class="byai-citation" title="BYAI Analytics · 2026-04-20">1</span>. The top-converting source was Facebook Lead Ads with a 64% qualification rate<span class="byai-citation" title="Campaign FB-23 · week of Apr 14">2</span>.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ex">
+      <div class="ex__head">
+        <span class="ex__name">&lt;ToolCard /&gt;</span>
+        <span class="ex__props">tool · icon · status · statusText · body</span>
+      </div>
+      <div class="ex__demo" style="flex-direction:column;align-items:stretch;gap:12px">
+        <div class="byai-tool">
+          <div class="byai-tool__head">
+            <svg class="byai-icon" viewBox="0 0 24 24" style="width:12px;height:12px;color:var(--intent-info-icon)"><path d="M4 17l6-6-6-6"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+            <span style="font-family:var(--font-mono);font-size:11px">twilio.send_sms</span>
+            <span class="byai-tool__status byai-tool__status--ok">204 · 312ms</span>
+          </div>
+          <div class="byai-tool__body">to: +63 917 ••• 4421<br/>template: followup_qualified_tl</div>
+        </div>
+        <div class="byai-tool">
+          <div class="byai-tool__head">
+            <svg class="byai-icon" viewBox="0 0 24 24" style="width:12px;height:12px;color:var(--intent-info-icon)"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span style="font-family:var(--font-mono);font-size:11px">hubspot.update_deal</span>
+            <span class="byai-tool__status byai-tool__status--err">429 · retrying in 4s</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ex">
+      <div class="ex__head">
+        <span class="ex__name">&lt;Composer /&gt;</span>
+        <span class="ex__props">hints · action · onSubmit · placeholder</span>
+      </div>
+      <div class="ex__demo" style="padding:0;overflow:hidden">
+        <div class="byai-composer" style="width:100%;border-top:0">
+          <div class="byai-composer__box">
+            <textarea class="byai-composer__textarea" placeholder="Ask BYAI anything or / for commands…"></textarea>
+            <div class="byai-composer__row">
+              <div style="display:flex;gap:8px;align-items:center">
+                <kbd class="byai-kbd">/</kbd>
+                <span>commands</span>
+                <kbd class="byai-kbd">@</kbd>
+                <span>mention</span>
+              </div>
+              <button class="byai-button byai-button--primary byai-button--sm">
+                Send
+                <svg class="byai-icon" width="12" height="12" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer style="margin-top:var(--space-10);padding-top:var(--space-6);border-top:1px solid var(--border-subtle);font-size:var(--font-size-caption);color:var(--fg-subtle);display:flex;justify-content:space-between">
+    <span>© 2026 BYAI · 浙江百应科技有限公司</span>
+    <span>@byai/ui v1.0.0 · 25 components</span>
+  </footer>
+</div>
+</body>
+</html>

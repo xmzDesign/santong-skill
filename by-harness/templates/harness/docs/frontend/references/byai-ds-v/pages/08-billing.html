@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Billing · BYAI</title>
+<link rel="stylesheet" href="../assets/fonts.css" />
+<link rel="stylesheet" href="../tokens/tokens.css" />
+<link rel="stylesheet" href="../assets/shell.css" />
+<style>
+  /* ---------- Settings sub-nav ---------- */
+  .subnav {
+    display: flex;
+    gap: 2px;
+    padding: 0 var(--space-8);
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-surface);
+  }
+  .subnav a {
+    height: 40px;
+    padding: 0 var(--space-3);
+    display: inline-flex;
+    align-items: center;
+    font-size: var(--font-size-small);
+    font-weight: var(--font-weight-medium);
+    color: var(--fg-muted);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+  .subnav a:hover { color: var(--fg-default); }
+  .subnav a.is-active {
+    color: var(--fg-brand);
+    border-bottom-color: var(--fg-brand);
+  }
+
+  /* ---------- Plan card ---------- */
+  .plan-card {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr auto;
+    gap: var(--space-6);
+    padding: var(--space-6);
+    background: linear-gradient(135deg, var(--color-warm-grey-50), var(--bg-surface));
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-6);
+  }
+  .plan-card__eyebrow {
+    font-size: 11px;
+    font-weight: var(--font-weight-medium);
+    color: var(--fg-brand);
+    text-transform: uppercase;
+    letter-spacing: var(--font-tracking-wider);
+    margin-bottom: var(--space-2);
+  }
+  .plan-card__title {
+    font-family: var(--font-display);
+    font-size: 28px;
+    line-height: 32px;
+    letter-spacing: var(--font-tracking-tight);
+    font-weight: var(--font-weight-semibold);
+    color: var(--fg-strong);
+    margin: 0 0 var(--space-2);
+  }
+  .plan-card__desc {
+    font-size: var(--font-size-small);
+    color: var(--fg-muted);
+    line-height: var(--font-line-body);
+  }
+  .plan-card__price {
+    font-family: var(--font-display);
+    font-variant-numeric: tabular-nums;
+  }
+  .plan-card__price strong {
+    font-size: 36px;
+    line-height: 40px;
+    letter-spacing: var(--font-tracking-tight);
+    font-weight: var(--font-weight-semibold);
+    color: var(--fg-strong);
+  }
+  .plan-card__price small {
+    display: inline-block;
+    margin-left: 4px;
+    font-family: var(--font-body);
+    font-size: 13px;
+    color: var(--fg-muted);
+    font-weight: var(--font-weight-regular);
+  }
+  .plan-card__meta {
+    margin-top: var(--space-3);
+    font-size: var(--font-size-small);
+    color: var(--fg-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .plan-card__actions { display: flex; flex-direction: column; gap: var(--space-2); }
+
+  /* ---------- Usage section ---------- */
+  .usage-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+  }
+  .meter {
+    padding: var(--space-5);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    background: var(--bg-surface);
+  }
+  .meter__label {
+    font-size: var(--font-size-caption);
+    color: var(--fg-muted);
+    margin-bottom: var(--space-2);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .meter__label .icon { width: 12px; height: 12px; }
+  .meter__value {
+    font-family: var(--font-display);
+    font-size: 22px;
+    line-height: 26px;
+    font-weight: var(--font-weight-semibold);
+    font-variant-numeric: tabular-nums;
+    color: var(--fg-strong);
+    margin: 0 0 var(--space-1);
+  }
+  .meter__value .denom {
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: var(--font-weight-regular);
+    color: var(--fg-muted);
+  }
+  .meter__bar {
+    height: 6px;
+    background: var(--bg-surface-subtle);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    margin: var(--space-3) 0 var(--space-2);
+  }
+  .meter__bar > span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--color-amber-500);
+  }
+  .meter__bar > span.warn { background: var(--color-amber-600); }
+  .meter__bar > span.hot { background: var(--intent-danger-text); }
+  .meter__foot {
+    display: flex; justify-content: space-between;
+    font-size: var(--font-size-caption);
+    color: var(--fg-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- Chart card ---------- */
+  .chart-card-b { padding: var(--space-5); margin-bottom: var(--space-6); }
+  .chart-card-b__head {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: var(--space-4);
+  }
+  .chart-card-b__title {
+    font-family: var(--font-display);
+    font-size: var(--font-size-h3);
+    font-weight: var(--font-weight-semibold);
+    color: var(--fg-strong);
+    margin: 0 0 var(--space-1);
+  }
+  .legend { display: flex; gap: var(--space-3); font-size: var(--font-size-caption); color: var(--fg-muted); }
+  .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+  .legend-swatch { width: 10px; height: 10px; border-radius: 2px; }
+
+  /* ---------- Invoice table ---------- */
+  .inv-table { width: 100%; border-collapse: collapse; }
+  .inv-table th, .inv-table td {
+    text-align: left;
+    padding: var(--cell-py) var(--space-4);
+    font-size: var(--font-size-small);
+    line-height: 18px;
+  }
+  .inv-table thead th {
+    font-size: var(--font-size-caption);
+    font-weight: var(--font-weight-medium);
+    color: var(--fg-muted);
+    text-transform: uppercase;
+    letter-spacing: var(--font-tracking-wider);
+    border-bottom: 1px solid var(--border-subtle);
+    padding-top: var(--space-3);
+    padding-bottom: var(--space-3);
+    background: var(--bg-surface-subtle);
+  }
+  .inv-table tbody td { border-bottom: 1px solid var(--border-subtle); color: var(--fg-default); }
+  .inv-table tbody tr:hover td { background: var(--bg-hover); }
+  .inv-table tbody tr:last-child td { border-bottom: 0; }
+  .inv-table .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--fg-strong); }
+  .inv-table th.right, .inv-table td.right { text-align: right; }
+  .inv-card { padding: 0; overflow: hidden; }
+  .inv-card__head {
+    padding: var(--space-5) var(--space-5) var(--space-3);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .inv-card__title {
+    font-family: var(--font-display);
+    font-size: var(--font-size-h3);
+    font-weight: var(--font-weight-semibold);
+    color: var(--fg-strong);
+    margin: 0;
+  }
+
+  /* ---------- Payment method ---------- */
+  .pm-row {
+    display: flex; align-items: center; gap: var(--space-3);
+    padding: var(--space-4);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background: var(--bg-surface);
+  }
+  .pm-brand {
+    width: 40px; height: 28px;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: var(--font-weight-semibold);
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <a href="../index.html" class="topbar__brand" title="Back to index"><span class="dot"></span><span>BYAI</span></a>
+    <div class="topbar__search" role="search">
+      <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <span>Search leads, campaigns, or docs…</span>
+      <span class="kbd">⌘K</span>
+    </div>
+    <div class="topbar__actions">
+      <button class="icon-btn" aria-label="Notifications"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
+      <span class="topbar__avatar">WL</span>
+    </div>
+  </header>
+
+  <!-- Left Nav -->
+  <nav class="nav" aria-label="Primary">
+    <div class="nav__section-title">Workspace</div>
+    <a class="nav__item" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Overview</a>
+    <a class="nav__item" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Campaigns<span class="badge">12</span></a>
+    <a class="nav__item" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Leads<span class="badge">2,847</span></a>
+    <a class="nav__item" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>Agents</a>
+    <a class="nav__item" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>Analytics</a>
+    <div class="nav__section-title">Library</div>
+    <a class="nav__item" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Playbooks</a>
+    <a class="nav__item" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Templates</a>
+    <a class="nav__item" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 7.3 12 12 3.5 7.3"/><path d="M3 7v10a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.7V7a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 7"/><path d="M12 22V12"/></svg>Integrations</a>
+    <div class="nav__section-title">Admin</div>
+    <a class="nav__item" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11h-6"/></svg>Team</a>
+    <a class="nav__item is-active" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Billing</a>
+    <a class="nav__item" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Audit log</a>
+    <div class="nav__footer">
+      <a class="nav__item" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</a>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="page-header" style="padding-bottom: 0;">
+      <div class="page-header__row">
+        <div>
+          <h1 class="page-header__title">Billing</h1>
+          <p class="page-header__subtitle">Manage your plan, consumption, and invoices · Stellar Insurance PH workspace</p>
+        </div>
+        <div class="page-header__actions">
+          <button class="btn btn--secondary">Download statement</button>
+          <button class="btn btn--primary">Upgrade plan</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sub-nav -->
+    <nav class="subnav" aria-label="Settings sections">
+      <a href="#">Overview</a>
+      <a class="is-active" href="#">Billing</a>
+      <a href="#">Usage</a>
+      <a href="#">Invoices</a>
+      <a href="#">Tax & legal</a>
+    </nav>
+
+    <div class="page-body">
+
+      <!-- PLAN CARD -->
+      <div class="plan-card">
+        <div>
+          <div class="plan-card__eyebrow">Current plan · renews Jun 1, 2026</div>
+          <h2 class="plan-card__title">Scale <span class="tag tag--primary" style="vertical-align: middle; margin-left: var(--space-2);">Annual</span></h2>
+          <p class="plan-card__desc">
+            Up to 25 seats, 50,000 call-minutes / month, 10 production agents, dedicated CSM.
+            Overage billed at <strong class="text-brand">$0.08 / minute</strong>.
+          </p>
+        </div>
+        <div>
+          <div class="plan-card__price">
+            <strong>$2,400</strong><small>/ mo, billed annually</small>
+          </div>
+          <div class="plan-card__meta">
+            Next invoice <strong class="text-strong">May 1, 2026</strong><br/>
+            Method · Visa •••• 4242
+          </div>
+        </div>
+        <div class="plan-card__actions">
+          <button class="btn btn--secondary btn--sm">Change plan</button>
+          <button class="btn btn--ghost btn--sm">Cancel</button>
+        </div>
+      </div>
+
+      <!-- USAGE METERS -->
+      <div class="usage-grid">
+        <div class="meter">
+          <div class="meter__label">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            Call minutes
+          </div>
+          <div class="meter__value">38,420 <span class="denom">/ 50,000</span></div>
+          <div class="meter__bar"><span class="warn" style="width: 76.8%;"></span></div>
+          <div class="meter__foot"><span>76.8% used</span><span>20 days left</span></div>
+        </div>
+        <div class="meter">
+          <div class="meter__label">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            Seats
+          </div>
+          <div class="meter__value">18 <span class="denom">/ 25</span></div>
+          <div class="meter__bar"><span style="width: 72%;"></span></div>
+          <div class="meter__foot"><span>7 seats available</span><span>Add teammate →</span></div>
+        </div>
+        <div class="meter">
+          <div class="meter__label">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+            Production agents
+          </div>
+          <div class="meter__value">8 <span class="denom">/ 10</span></div>
+          <div class="meter__bar"><span style="width: 80%;"></span></div>
+          <div class="meter__foot"><span>2 slots remaining</span><span>Includes 3 drafts</span></div>
+        </div>
+      </div>
+
+      <!-- CONSUMPTION CHART -->
+      <div class="card chart-card-b">
+        <div class="chart-card-b__head">
+          <div>
+            <h2 class="chart-card-b__title">Consumption · last 12 weeks</h2>
+            <p style="font-size: var(--font-size-caption); color: var(--fg-muted); margin: 0;">Stacked by service · amber is voice minutes, blue is quota seat usage</p>
+          </div>
+          <div class="legend">
+            <span class="legend-item"><span class="legend-swatch" style="background: var(--color-amber-600);"></span>Voice minutes</span>
+            <span class="legend-item"><span class="legend-swatch" style="background: var(--color-blue-500);"></span>SMS / WhatsApp</span>
+            <span class="legend-item"><span class="legend-swatch" style="background: var(--color-warm-grey-300);"></span>API calls</span>
+          </div>
+        </div>
+        <!-- SVG stacked bar -->
+        <svg viewBox="0 0 880 260" width="100%" height="260" role="img" aria-label="Consumption chart by week">
+          <!-- grid -->
+          <g stroke="var(--border-subtle)" stroke-width="1">
+            <line x1="40" y1="40" x2="860" y2="40"/>
+            <line x1="40" y1="100" x2="860" y2="100"/>
+            <line x1="40" y1="160" x2="860" y2="160"/>
+            <line x1="40" y1="220" x2="860" y2="220"/>
+          </g>
+          <!-- y labels -->
+          <g font-size="10" fill="var(--fg-subtle)" font-family="var(--font-mono)">
+            <text x="32" y="44" text-anchor="end">60k</text>
+            <text x="32" y="104" text-anchor="end">40k</text>
+            <text x="32" y="164" text-anchor="end">20k</text>
+            <text x="32" y="224" text-anchor="end">0</text>
+          </g>
+          <!-- bars: 12 weeks, x from 60 to 840 -->
+          <g>
+            <!-- Each bar: amber bottom + blue middle + grey top -->
+            <g transform="translate(70, 0)"><rect x="0" y="170" width="40" height="50" fill="var(--color-amber-600)" rx="2"/><rect x="0" y="155" width="40" height="15" fill="var(--color-blue-500)"/><rect x="0" y="145" width="40" height="10" fill="var(--color-warm-grey-300)" rx="2" ry="2"/></g>
+            <g transform="translate(130, 0)"><rect x="0" y="165" width="40" height="55" fill="var(--color-amber-600)" rx="2"/><rect x="0" y="148" width="40" height="17" fill="var(--color-blue-500)"/><rect x="0" y="138" width="40" height="10" fill="var(--color-warm-grey-300)" rx="2" ry="2"/></g>
+            <g transform="translate(190, 0)"><rect x="0" y="158" width="40" height="62" fill="var(--color-amber-600)" rx="2"/><rect x="0" y="140" width="40" height="18" fill="var(--color-blue-500)"/><rect x="0" y="128" width="40" height="12" fill="var(--color-warm-grey-300)" rx="2" ry="2"/></g>
+            <g transform="translate(250, 0)"><rect x="0" y="150" width="40" height="70" fill="var(--color-amber-600)" rx="2"/><rect x="0" y="130" width="40" height="20" fill="var(--color-blue-500)"/><rect x="0" y="118" width="40" height="12" fill="var(--color-warm-grey-300)" rx="2" ry="2"/></g>
+            <g transform="translate(310, 0)"><rect x="0" y="140" width="40" height="80" fill="var(--color-amber-600)" rx="2"/><rect x="0" y="118" width="40" height="22" fill="var(--color-blue-500)"/><rect x="0" y="104" width="40" height="14" fill="var(--color-warm-grey-300)" rx="2" ry="2"/></g>
+            <g transform="translate(370, 0)"><rect x="0" y="130" width="40" height="90" fill="var(--color-amber-600)" rx="2"/><rect x="0" y="108" width="40" height="22" fill="var(--color-blue-500)"/><rect x="0" y="94" width="40" height="14" fill="var(--color-warm-grey-300)" rx="2" ry="2"/></g>
+            <g transform="translate(430, 0)"><rect x="0" y="120" width="40" height="100" fill="var(--color-amber-600)" rx="2"/><rect x="0" y="98" width="40" height="22" fill="var(--color-blue-500)"/><rect x="0" y="82" width="40" height="16" fill="var(--color-warm-grey-300)" rx="2" ry="2"/></g>
+            <g transform="translate(490, 0)"><rect x="0" y="110" width="40" height="110" fill="var(--color-amber-600)" rx="2"/><rect x="0" y="86" width="40" height="24" fill="var(--color-blue-500)"/><rect x="0" y="72" width="40" height="14" fill="var(--color-warm-grey-300)" rx="2" ry="2"/></g>
+            <g transform="translate(550, 0)"><rect x="0" y="98" width="40" height="122" fill="var(--color-amber-600)" rx="2"/><rect x="0" y="74" width="40" height="24" fill="var(--color-blue-500)"/><rect x="0" y="60" width="40" height="14" fill="var(--color-warm-grey-300)" rx="2" ry="2"/></g>
+            <g transform="translate(610, 0)"><rect x="0" y="90" width="40" height="130" fill="var(--color-amber-600)" rx="2"/><rect x="0" y="66" width="40" height="24" fill="var(--color-blue-500)"/><rect x="0" y="52" width="40" height="14" fill="var(--color-warm-grey-300)" rx="2" ry="2"/></g>
+            <g transform="translate(670, 0)"><rect x="0" y="82" width="40" height="138" fill="var(--color-amber-600)" rx="2"/><rect x="0" y="58" width="40" height="24" fill="var(--color-blue-500)"/><rect x="0" y="42" width="40" height="16" fill="var(--color-warm-grey-300)" rx="2" ry="2"/></g>
+            <g transform="translate(730, 0)"><rect x="0" y="70" width="40" height="150" fill="var(--color-amber-500)" rx="2" stroke="var(--color-amber-700)" stroke-width="1"/><rect x="0" y="44" width="40" height="26" fill="var(--color-blue-500)"/><rect x="0" y="28" width="40" height="16" fill="var(--color-warm-grey-300)" rx="2" ry="2"/></g>
+          </g>
+          <!-- x labels -->
+          <g font-size="10" fill="var(--fg-subtle)" font-family="var(--font-mono)" text-anchor="middle">
+            <text x="90" y="244">W8</text><text x="150" y="244">W9</text><text x="210" y="244">W10</text><text x="270" y="244">W11</text><text x="330" y="244">W12</text><text x="390" y="244">W13</text><text x="450" y="244">W14</text><text x="510" y="244">W15</text><text x="570" y="244">W16</text><text x="630" y="244">W17</text><text x="690" y="244">W18</text><text x="750" y="244">W19</text>
+          </g>
+        </svg>
+      </div>
+
+      <!-- INVOICES -->
+      <div class="card inv-card">
+        <div class="inv-card__head">
+          <h2 class="inv-card__title">Invoices</h2>
+          <div style="display: flex; gap: var(--space-2);">
+            <button class="btn btn--ghost btn--sm">Export CSV</button>
+          </div>
+        </div>
+        <table class="inv-table">
+          <thead>
+            <tr>
+              <th>Invoice</th><th>Date</th><th>Plan</th><th class="right">Amount</th><th>Status</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="num">INV-2026-0413</td><td class="num">Apr 1, 2026</td><td>Scale · Monthly overage 2,340 min</td><td class="num right">$2,587.20</td><td><span class="tag tag--primary"><span class="dot"></span>Paid</span></td><td><a href="#" style="color: var(--fg-brand); text-decoration: none; font-size: var(--font-size-small);">PDF ↓</a></td></tr>
+            <tr><td class="num">INV-2026-0312</td><td class="num">Mar 1, 2026</td><td>Scale · Monthly</td><td class="num right">$2,400.00</td><td><span class="tag tag--primary"><span class="dot"></span>Paid</span></td><td><a href="#" style="color: var(--fg-brand); text-decoration: none; font-size: var(--font-size-small);">PDF ↓</a></td></tr>
+            <tr><td class="num">INV-2026-0210</td><td class="num">Feb 1, 2026</td><td>Scale · Monthly</td><td class="num right">$2,400.00</td><td><span class="tag tag--primary"><span class="dot"></span>Paid</span></td><td><a href="#" style="color: var(--fg-brand); text-decoration: none; font-size: var(--font-size-small);">PDF ↓</a></td></tr>
+            <tr><td class="num">INV-2026-0108</td><td class="num">Jan 1, 2026</td><td>Growth → Scale upgrade</td><td class="num right">$3,800.00</td><td><span class="tag tag--primary"><span class="dot"></span>Paid</span></td><td><a href="#" style="color: var(--fg-brand); text-decoration: none; font-size: var(--font-size-small);">PDF ↓</a></td></tr>
+            <tr><td class="num">INV-2025-1207</td><td class="num">Dec 1, 2025</td><td>Growth · Monthly</td><td class="num right">$1,400.00</td><td><span class="tag tag--warning"><span class="dot"></span>Refunded</span></td><td><a href="#" style="color: var(--fg-brand); text-decoration: none; font-size: var(--font-size-small);">PDF ↓</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- PAYMENT METHOD -->
+      <div style="margin-top: var(--space-6);">
+        <h2 style="font-family: var(--font-display); font-size: var(--font-size-h3); font-weight: var(--font-weight-semibold); color: var(--fg-strong); margin: 0 0 var(--space-4);">Payment method</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
+          <div class="pm-row">
+            <span class="pm-brand">VISA</span>
+            <div style="flex: 1;">
+              <div style="font-size: var(--font-size-small); font-weight: var(--font-weight-medium); color: var(--fg-strong); font-family: var(--font-mono);">•••• •••• •••• 4242</div>
+              <div style="font-size: var(--font-size-caption); color: var(--fg-muted);">Expires 08/28 · 王磊</div>
+            </div>
+            <span class="tag tag--primary">Default</span>
+            <button class="btn btn--ghost btn--sm">Edit</button>
+          </div>
+          <div class="pm-row">
+            <span class="pm-brand" style="background: linear-gradient(135deg, #005eb8, #003087);">CITI</span>
+            <div style="flex: 1;">
+              <div style="font-size: var(--font-size-small); font-weight: var(--font-weight-medium); color: var(--fg-strong); font-family: var(--font-mono);">Wire · •••8821 (USD)</div>
+              <div style="font-size: var(--font-size-caption); color: var(--fg-muted);">Telos AI Pte. Ltd. · Singapore</div>
+            </div>
+            <button class="btn btn--ghost btn--sm">Edit</button>
+          </div>
+        </div>
+        <button class="btn btn--secondary btn--sm" style="margin-top: var(--space-3);">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add payment method
+        </button>
+      </div>
+
+    </div>
+  </main>
+
+</div>
+
+</body>
+</html>

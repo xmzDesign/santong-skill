@@ -1,7 +1,7 @@
 {
   "skill": "by-harness",
   "channel": "beta",
-  "version": "2.2.2",
+  "version": "2.3.0",
   "min_compatible_version": "1.0.0",
   "files": [
     {
@@ -22,7 +22,7 @@
     {
       "path": "scripts/update_runtime.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/scripts/update_runtime.py",
-      "sha256": "c3dc9be317ca4be77e80a2660e9118eae281437678b12f74a8afc0858fb8a0aa"
+      "sha256": "8f15a392f5b360682a3c3d1acd1fc16afccda1c9ad0a1afe1ca3030e193aa144"
     },
     {
       "path": "scripts/init.sh",
@@ -62,23 +62,218 @@
     {
       "path": "docs/contracts/TEMPLATE.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/contracts/TEMPLATE.md",
-      "sha256": "b9251f2856f20208c961d10c7947a230100739f300635365e5229f12776b0410"
+      "sha256": "2173597cb80793a33125529117f2f9e981e741d16a8cb1145761ba8db3dbe2b1"
     },
     {
       "path": "docs/frontend-dev-conventions.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend-dev-conventions.md",
-      "sha256": "2f590f73e79532b7ba9ee786f547dfab182ecd753b79de14aa9041f4249f8ee6"
+      "sha256": "b70cd3e8d449192a455057b3cfb4a0cae477b9ffd419042b0d23dc98a8dbfb8c"
+    },
+    {
+      "path": "docs/frontend/README.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/README.md",
+      "sha256": "736352070e821ebddc421ca7e58f27029f8ef4691d582170c8395d0468a4ab67"
+    },
+    {
+      "path": "docs/frontend/rules.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/rules.md",
+      "sha256": "ca5a826efb88482623cb66efbda0fbb77bd9a7a937cd8cd64a1700f7ad860d0a"
+    },
+    {
+      "path": "docs/frontend/code-design.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/code-design.md",
+      "sha256": "c5651bb7995df3bed449bb5a4379071a9d27ada07cdee10867f10cdc25973d45"
+    },
+    {
+      "path": "docs/frontend/ui-design.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/ui-design.md",
+      "sha256": "98cf593a8bb639e16ed70a7035e11149cc73c45a990d3e3f4151f72935c43962"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/assets/fonts.css",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/assets/fonts.css",
+      "sha256": "f24041b4b32c7170db9c9bbb35066958167a2764208ac7b7b710613b6413bf79"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/assets/shell.css",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/assets/shell.css",
+      "sha256": "8817ac463f43c0f6d29e8ff5ec84ca5f1acd5f80c264bd6031eb8d6a060fa1b4"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/index.html",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/index.html",
+      "sha256": "0fdfa64cfb4f2187bef80c7cecadce331a219441e2b68e45636f34d928ef740e"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/packages/ui/showcase.html",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/packages/ui/showcase.html",
+      "sha256": "831a89ffdb9b7840a42e1f2c5573950bb431509066f66f4beaaed56c8f311ea0"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/packages/ui/src/styles.css",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/packages/ui/src/styles.css",
+      "sha256": "0e39512138eef10a5a01adfd735b404b83088e3749b57efbdfd54fc79526a12d"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/pages/01-login.html",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/pages/01-login.html",
+      "sha256": "f20625623efce2a7b5b788c10c68abae5354e147341c5541104ec32b78d9a15b"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/pages/02-dashboard.html",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/pages/02-dashboard.html",
+      "sha256": "9bcc06d4d216893d40789ef0777a37e7009d2ae74cca1a4750fc82c419f30c0e"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/pages/03-table.html",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/pages/03-table.html",
+      "sha256": "d67f6eeeddb8f5e2919bf0864d956c778528c9896020e48cffea293f69581a44"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/pages/04-chat.html",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/pages/04-chat.html",
+      "sha256": "fd36c7095fe1168b0abc2c64301cfd2696a23938cda59681a8ffc72f689ae633"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/pages/05-settings.html",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/pages/05-settings.html",
+      "sha256": "933a41e6b62b24a21f1c08acf615a74da2545957b91666f9b417c25de3dce660"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/pages/06-lead-detail.html",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/pages/06-lead-detail.html",
+      "sha256": "3ddce47406f6746a570f309f8386f766257b6c2e4926f1b03b11d6c665b9ea07"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/pages/07-agent-studio.html",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/pages/07-agent-studio.html",
+      "sha256": "c2f3d2354d361facc65f127186d5bdd4dbefc3bead0a89a0fa7de4b310c55072"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/pages/08-billing.html",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/pages/08-billing.html",
+      "sha256": "3f9668bc306a58d53613aca0d0cfb48638cce41014f770603a4fd633bd0446cc"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/pages/09-team.html",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/pages/09-team.html",
+      "sha256": "dae143f06d095ef273e4ea841b203d2111777224733ff74ba3c2150c018d4c56"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/pages/10-audit-log.html",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/pages/10-audit-log.html",
+      "sha256": "eeb51fe45f11e05d25478ec5088ac7c0a29518b81cc410fc590d09f1fb4842e7"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/pages/11-integrations.html",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/pages/11-integrations.html",
+      "sha256": "3623d520af92c087cbdb44d4482a091b736b020fa5cf25f09e1e6d06c1a85388"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/pages/12-onboarding.html",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/pages/12-onboarding.html",
+      "sha256": "0e02ec0cd34904a426d729024bd9f911f374743b6b2adcabb0c1a67a38d1e6ab"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/readme.html",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/readme.html",
+      "sha256": "cb15d7bb55d3de0c2731d7ac30fe55b37d42bf74fc9228bf94fd15be496394a9"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/spec/01-philosophy.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/spec/01-philosophy.md",
+      "sha256": "aff47cf1486b0643a826fc2e932704efc90105ca47a8f8cd6cacd1ccbe19d000"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/spec/02-tokens-primitives.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/spec/02-tokens-primitives.md",
+      "sha256": "50a70f620522f22da7e81e0fb9fd6c6b558b24630a3d352fd55dd652f7bc01a3"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/spec/03-tokens-semantic.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/spec/03-tokens-semantic.md",
+      "sha256": "2346716bc7813c9529b20c482453cdc80274cd0bacdbec4ce445f960fbcf394f"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/spec/04-typography.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/spec/04-typography.md",
+      "sha256": "4961f37d5a78900b7d8bcee3e5f10e9fa10139e3741ce36ff7398f78c3f524eb"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/spec/05-layout-grid.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/spec/05-layout-grid.md",
+      "sha256": "eb53023157e69690a14ee88458cc0330b044b6aff47b6a3b9620abbee952e544"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/spec/06-components.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/spec/06-components.md",
+      "sha256": "5b69c7036378b3f5fd8b00e9c69b32dba3e3ad0d5a706db9c718e7d63c432ab9"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/spec/07-agent-patterns.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/spec/07-agent-patterns.md",
+      "sha256": "7d5ec41c9db5edaa110dae7222725bfb80a8200783bc1ed141825f8fc5196d9c"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/spec/08-states.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/spec/08-states.md",
+      "sha256": "3da5b5915af3253c9aa01060fc917456dc707f48fb5773621af5012456ed3914"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/spec/09-data-viz.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/spec/09-data-viz.md",
+      "sha256": "d523e6a4b1e2f2b9f6eb19aef46e26a9b051fe93a19d83a6129c2fc49f707df6"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/spec/10-voice-microcopy.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/spec/10-voice-microcopy.md",
+      "sha256": "564e729971b68df7623e027bb03e14c4d6173b9f3e8ed1d7f46f6d3a33d5d7f1"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/spec/appendix-a-accessibility.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/spec/appendix-a-accessibility.md",
+      "sha256": "d00098d23f9118181c3c56e70adcfc27581985a219d0e37a9452953458a50797"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/spec/appendix-b-motion.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/spec/appendix-b-motion.md",
+      "sha256": "b1ac3e9f8575d728b9ed486fbf603fca4a887ce489b19a6c1be3e93891133596"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/spec/appendix-c-ai-consumption.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/spec/appendix-c-ai-consumption.md",
+      "sha256": "31e7171bb5a178910d087023240818e08d3bbb2b382c1f1384f3faa638cd1b53"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/spec/appendix-d-antipatterns.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/spec/appendix-d-antipatterns.md",
+      "sha256": "d4055f6b53904e5a6aae5c021c99be659ac20b987844aff371fd619183eec02c"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/tokens/tailwind.config.js",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/tokens/tailwind.config.js",
+      "sha256": "07479433e5573e955f050af42798d0c35c9dc4fd7935f46e6844470bcd2b6273"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/tokens/tokens.css",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/tokens/tokens.css",
+      "sha256": "99681d8b927d1ebc589b668af3feab6a4e0686d58e5dfb6a5f8dce3362701fd3"
+    },
+    {
+      "path": "docs/frontend/references/byai-ds-v/tokens/tokens.json",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/frontend/references/byai-ds-v/tokens/tokens.json",
+      "sha256": "1b3f1b401b0da4b18c324ff9e46cced7d0e8a80a01a25cb432b0856121cd79a1"
     },
     {
       "path": "root/AGENTS.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/AGENTS.md",
-      "sha256": "1924764e66c2c408c221c71ef52bf582729b6be8ccfb41edd328424d25bf3d6d",
+      "sha256": "657ae5c2bf996d2aed0426ff5f77c8db6f4d7b125aa026e1dce75e26488ca34c",
       "render_project_context": true
     },
     {
       "path": "root/CLAUDE.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/CLAUDE.md",
-      "sha256": "7f2d3ccef64b4ece3d416367a696c603925db89a2c3504e401828ed9fe45afa2",
+      "sha256": "d1a2bf9b8bf396ddc902e332ea2219e30508dbd76a949beacc43022826171590",
       "render_project_context": true
     },
     {
@@ -105,12 +300,12 @@
     {
       "path": "root/.codex/hooks/pre-completion-check.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/codex/hooks/pre-completion-check.py",
-      "sha256": "9fdb1390f23860ce4b780a627b9ead9784e146b158da3dcf17fd842def230ee2"
+      "sha256": "263a90bc2db81131051f55e9b8192b6e25411bfcb722abe9e4ecb636b214d912"
     },
     {
       "path": "root/.codex/hooks/convention-check.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/codex/hooks/convention-check.py",
-      "sha256": "65d9afe7b2bb4293fa9aefb7a087f7ac773b0a0c0398368fd2aad57ed9d11a35"
+      "sha256": "cfb2ace1e89c35ab1d75f2d1b418d5e9c99dbcf00e8c5a562b521b2076d9ef6b"
     },
     {
       "path": "root/.claude/settings.json",
@@ -131,12 +326,52 @@
     {
       "path": "root/.claude/hooks/pre-completion-check.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/hooks/pre-completion-check.py",
-      "sha256": "bbddeaee6ecc595f80250f3ff82a32fcc01748f9045eb1372b37250ec8607ad7"
+      "sha256": "f516bd8f3dddaaac18c46e16aa63efa5d507d2a2b4ab2db9966b85164e6aa1cd"
     },
     {
       "path": "root/.claude/hooks/convention-check.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/hooks/convention-check.py",
-      "sha256": "b589b4539cf0ed2f7c7827314c66ed8930a8ff48a708a38be58fa092b9c216a6"
+      "sha256": "6f260ff24f017cdb111bbf0e9224864a23f176545988ac656ff62c2ed1ae9eee"
+    },
+    {
+      "path": "root/.claude/agents/planner.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/agents/planner.md",
+      "sha256": "c65fbdf9bc014fde8f9c7c1416d49f71dbb5a01061f0327ac5fb635774e48191"
+    },
+    {
+      "path": "root/.claude/agents/generator.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/agents/generator.md",
+      "sha256": "0605583143da00a4aba66e399f6013829bf7b1c2035fe8e75ee666fe03336536"
+    },
+    {
+      "path": "root/.claude/agents/evaluator.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/agents/evaluator.md",
+      "sha256": "52731bf648492d27a02dcf29120136b044f0c46ed144c6131dade9ca9aeef259"
+    },
+    {
+      "path": "root/.claude/agents/doc-gardener.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/agents/doc-gardener.md",
+      "sha256": "32496d9fc06d2eed247211af768eb3270082963e68eaa742ecb72ea2de4df999"
+    },
+    {
+      "path": "root/.claude/commands/plan.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/commands/plan.md",
+      "sha256": "dae266a6463e469680aa16ebf3ae7d02e7c1eb8a964e0a276967542b35a2cdb2"
+    },
+    {
+      "path": "root/.claude/commands/build.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/commands/build.md",
+      "sha256": "21f4b9eeb2b5d9bc773f40bce4af15468de905c2a7d232f5ae442c9405c74bbc"
+    },
+    {
+      "path": "root/.claude/commands/qa.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/commands/qa.md",
+      "sha256": "1c77d7b7cc5c75394cf30070ea819252d3ee8755169faa0abb8ad101eeaee45f"
+    },
+    {
+      "path": "root/.claude/commands/sprint.md",
+      "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/commands/sprint.md",
+      "sha256": "5136e4e6dfb21f9ef3c21cc8af9294773f407d2230a8747c8d1be26044e2aa9b"
     }
   ]
 }

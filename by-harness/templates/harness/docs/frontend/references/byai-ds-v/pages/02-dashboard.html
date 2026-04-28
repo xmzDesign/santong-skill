@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Overview · BYAI</title>
+<link rel="stylesheet" href="../assets/fonts.css" />
+<link rel="stylesheet" href="../tokens/tokens.css" />
+<link rel="stylesheet" href="../assets/shell.css" />
+<style>
+  /* ---------- Page-specific ---------- */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+  }
+  .kpi {
+    padding: var(--space-5);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    transition: border-color var(--motion-duration-base), transform var(--motion-duration-base);
+  }
+  .kpi:hover { border-color: var(--border-default); }
+  .kpi__label {
+    font-size: var(--font-size-caption);
+    color: var(--fg-muted);
+    margin: 0 0 var(--space-2);
+    display: flex; align-items: center; gap: var(--space-1);
+  }
+  .kpi__value {
+    font-family: var(--font-display);
+    font-size: 32px;
+    line-height: 38px;
+    letter-spacing: var(--font-tracking-tight);
+    font-weight: var(--font-weight-semibold);
+    font-variant-numeric: tabular-nums;
+    color: var(--fg-strong);
+    margin: 0 0 var(--space-2);
+  }
+  .kpi__unit {
+    font-family: var(--font-body);
+    font-size: 13px;
+    color: var(--fg-muted);
+    font-weight: var(--font-weight-regular);
+    margin-left: 2px;
+  }
+  .kpi__delta {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--font-size-caption);
+    font-weight: var(--font-weight-medium);
+    font-variant-numeric: tabular-nums;
+  }
+  .kpi__delta--up   { color: var(--intent-positive-text); }
+  .kpi__delta--down { color: var(--intent-danger-text); }
+  .kpi__delta--flat { color: var(--fg-muted); }
+  .kpi__delta .icon { width: 12px; height: 12px; }
+  .kpi__footnote {
+    font-size: var(--font-size-caption);
+    color: var(--fg-subtle);
+    margin-left: var(--space-2);
+  }
+
+  /* ---------- Chart card ---------- */
+  .row-2 {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+  }
+  .chart-card__head {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: var(--space-4);
+  }
+  .chart-card__title {
+    font-family: var(--font-display);
+    font-size: var(--font-size-h3);
+    font-weight: var(--font-weight-semibold);
+    color: var(--fg-strong);
+    margin: 0 0 var(--space-1);
+  }
+  .chart-card__meta {
+    font-size: var(--font-size-caption);
+    color: var(--fg-muted);
+  }
+  .legend { display: flex; gap: var(--space-3); font-size: var(--font-size-caption); color: var(--fg-muted); }
+  .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+  .legend-swatch { width: 10px; height: 10px; border-radius: 2px; }
+  .segmented {
+    display: inline-flex;
+    padding: 2px;
+    background: var(--bg-surface-subtle);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+  }
+  .segmented button {
+    height: 24px;
+    padding: 0 var(--space-2);
+    font-family: inherit;
+    font-size: var(--font-size-caption);
+    font-weight: var(--font-weight-medium);
+    color: var(--fg-muted);
+    background: transparent;
+    border: 0;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+  .segmented button.is-on {
+    background: var(--bg-surface);
+    color: var(--fg-strong);
+    box-shadow: var(--shadow-xs);
+  }
+
+  /* ---------- Sparkline / rank list ---------- */
+  .rank-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .rank-row:last-child { border-bottom: 0; }
+  .rank-row__name { font-size: var(--font-size-small); color: var(--fg-default); font-weight: var(--font-weight-medium); }
+  .rank-row__bar {
+    width: 80px; height: 4px; border-radius: var(--radius-full);
+    background: var(--bg-surface-subtle);
+    overflow: hidden;
+  }
+  .rank-row__bar > span {
+    display: block; height: 100%;
+    background: linear-gradient(90deg, var(--color-amber-500), var(--color-amber-700));
+    border-radius: inherit;
+  }
+  .rank-row__value {
+    font-variant-numeric: tabular-nums;
+    font-size: var(--font-size-small);
+    color: var(--fg-strong);
+    font-weight: var(--font-weight-semibold);
+    font-family: var(--font-mono);
+    min-width: 56px;
+    text-align: right;
+  }
+
+  /* ---------- Activity table ---------- */
+  .activity-card { padding: 0; overflow: hidden; }
+  .activity-card__head {
+    padding: var(--space-5) var(--space-5) var(--space-3);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .tbl { width: 100%; border-collapse: collapse; }
+  .tbl th, .tbl td {
+    text-align: left;
+    padding: var(--cell-py) var(--space-5);
+    font-size: var(--font-size-small);
+    line-height: 18px;
+    white-space: nowrap;
+  }
+  .tbl thead th {
+    font-size: var(--font-size-caption);
+    font-weight: var(--font-weight-medium);
+    color: var(--fg-muted);
+    text-transform: uppercase;
+    letter-spacing: var(--font-tracking-wider);
+    border-bottom: 1px solid var(--border-subtle);
+    padding-top: var(--space-2);
+    padding-bottom: var(--space-2);
+    background: var(--bg-surface-subtle);
+  }
+  .tbl tbody td {
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--fg-default);
+  }
+  .tbl tbody tr:hover td { background: var(--bg-hover); }
+  .tbl tbody tr:last-child td { border-bottom: 0; }
+  .tbl .num { font-family: var(--font-mono); font-weight: var(--font-weight-medium); color: var(--fg-strong); }
+  .avatar {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 24px; height: 24px;
+    border-radius: var(--radius-full);
+    background: var(--color-warm-grey-200);
+    color: var(--color-warm-grey-700);
+    font-size: 10px;
+    font-weight: var(--font-weight-semibold);
+    margin-right: var(--space-2);
+    vertical-align: -7px;
+  }
+  .avatar--amber { background: var(--color-amber-100); color: var(--color-amber-800); }
+  .avatar--blue  { background: var(--color-blue-100);  color: var(--color-blue-800); }
+  .avatar--teal  { background: var(--color-teal-100);  color: var(--color-teal-800); }
+  .avatar--violet{ background: var(--color-violet-100);color: var(--color-violet-700); }
+
+  /* ---------- Agent Panel (right) ---------- */
+  .agent {
+    grid-area: agent;
+    background: var(--bg-surface);
+    border-left: 1px solid var(--border-subtle);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .agent__head {
+    padding: var(--space-4);
+    display: flex; align-items: center; gap: var(--space-2);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .agent__mark {
+    width: 24px; height: 24px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(135deg, var(--color-violet-400), var(--color-violet-700));
+    display: inline-flex; align-items: center; justify-content: center;
+    color: #fff;
+  }
+  .agent__mark .icon { width: 14px; height: 14px; }
+  .agent__title {
+    font-size: var(--font-size-small);
+    font-weight: var(--font-weight-semibold);
+    color: var(--fg-strong);
+  }
+  .agent__sub {
+    font-size: 11px;
+    color: var(--fg-muted);
+  }
+  .agent__body {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-4);
+    display: flex; flex-direction: column; gap: var(--space-4);
+  }
+  .msg {
+    font-size: var(--font-size-small);
+    line-height: 20px;
+  }
+  .msg__meta {
+    font-size: 11px;
+    color: var(--fg-muted);
+    margin-bottom: 4px;
+    font-weight: var(--font-weight-medium);
+  }
+  .msg--user { align-self: flex-end; max-width: 80%; }
+  .msg--user .msg__bubble {
+    background: var(--bg-active);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md) var(--radius-md) 2px var(--radius-md);
+    color: var(--fg-strong);
+  }
+  .msg--assistant .msg__bubble {
+    background: var(--agent-bg-message);
+    border-left: 2px solid var(--agent-border-default);
+    padding: var(--space-2) var(--space-3);
+    border-radius: 2px var(--radius-md) var(--radius-md) 2px;
+    color: var(--fg-default);
+  }
+  .tool-card {
+    margin-top: var(--space-2);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background: var(--bg-surface-subtle);
+    overflow: hidden;
+    font-size: var(--font-size-caption);
+  }
+  .tool-card__head {
+    padding: var(--space-2) var(--space-3);
+    display: flex; align-items: center; gap: var(--space-2);
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--fg-muted);
+  }
+  .tool-card__head .icon { width: 12px; height: 12px; color: var(--intent-info-icon); }
+  .tool-card__body {
+    padding: var(--space-2) var(--space-3);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 16px;
+    color: var(--fg-default);
+  }
+  .citation {
+    display: inline-flex;
+    align-items: center;
+    height: 16px;
+    padding: 0 5px;
+    margin: 0 2px;
+    background: var(--agent-citation-bg);
+    border: 1px solid var(--agent-citation-border);
+    color: var(--fg-muted);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: var(--font-weight-medium);
+    border-radius: var(--radius-xs);
+    cursor: help;
+    vertical-align: 1px;
+  }
+  .agent__composer {
+    padding: var(--space-3);
+    border-top: 1px solid var(--border-subtle);
+  }
+  .agent__composer-box {
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    background: var(--bg-surface);
+    padding: var(--space-2) var(--space-3) var(--space-1);
+    transition: border-color var(--motion-duration-fast), box-shadow var(--motion-duration-fast);
+  }
+  .agent__composer-box:focus-within {
+    border-color: var(--border-focus);
+    box-shadow: var(--shadow-focus-ring);
+  }
+  .agent__composer textarea {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    font-family: inherit;
+    font-size: var(--font-size-small);
+    line-height: 20px;
+    resize: none;
+    outline: none;
+    color: var(--fg-strong);
+    min-height: 40px;
+  }
+  .agent__composer-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: var(--space-1);
+  }
+  .agent__composer-hints {
+    display: flex; gap: var(--space-2); font-size: 10px; color: var(--fg-subtle);
+  }
+  .agent__composer-hints .kbd {
+    padding: 1px 5px;
+    font-family: var(--font-mono);
+    background: var(--bg-surface-subtle);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-xs);
+  }
+  .streaming-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--agent-indicator-streaming);
+    margin-right: 6px;
+    animation: pulse 1.2s ease-in-out infinite;
+    vertical-align: 1px;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 0.4; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1.1); }
+  }
+</style>
+</head>
+<body>
+
+<div class="app with-agent">
+
+  <!-- ==================== Topbar ==================== -->
+  <header class="topbar">
+    <a href="../index.html" class="topbar__brand" title="Back to index">
+      <span class="dot"></span>
+      <span>BYAI</span>
+    </a>
+    <div class="topbar__search" role="search">
+      <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <span>Search leads, campaigns, or docs…</span>
+      <span class="kbd">⌘K</span>
+    </div>
+    <div class="topbar__actions">
+      <button class="icon-btn" aria-label="Notifications">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </button>
+      <button class="icon-btn" aria-label="Help">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </button>
+      <span class="topbar__avatar">WL</span>
+    </div>
+  </header>
+
+  <!-- ==================== Left Nav ==================== -->
+  <nav class="nav" aria-label="Primary">
+    <div class="nav__section-title">Workspace</div>
+    <a class="nav__item is-active" href="#">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Overview
+    </a>
+    <a class="nav__item" href="#">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      Campaigns
+      <span class="badge">12</span>
+    </a>
+    <a class="nav__item" href="#">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Leads
+      <span class="badge">2,847</span>
+    </a>
+    <a class="nav__item" href="#">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+      Agents
+    </a>
+    <a class="nav__item" href="#">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+      Analytics
+    </a>
+
+    <div class="nav__section-title">Library</div>
+    <a class="nav__item" href="#">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      Playbooks
+    </a>
+    <a class="nav__item" href="#">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Templates
+    </a>
+
+    <div class="nav__footer">
+      <a class="nav__item" href="#">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </a>
+    </div>
+  </nav>
+
+  <!-- ==================== Main ==================== -->
+  <main class="main">
+    <div class="page-header">
+      <div class="page-header__breadcrumb">
+        <a href="#">Workspace</a>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        <span>Overview</span>
+      </div>
+      <div class="page-header__row">
+        <div>
+          <h1 class="page-header__title">Good morning, 王磊</h1>
+          <p class="page-header__subtitle">Here's what moved while you were away · Last synced 2 minutes ago</p>
+        </div>
+        <div class="page-header__actions">
+          <button class="btn btn--secondary">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export
+          </button>
+          <button class="btn btn--primary">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            New campaign
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-body">
+
+      <!-- =========== KPI Grid =========== -->
+      <div class="kpi-grid">
+        <div class="kpi">
+          <p class="kpi__label">Qualified leads</p>
+          <p class="kpi__value">2,847<span class="kpi__unit">leads</span></p>
+          <div>
+            <span class="kpi__delta kpi__delta--up">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+              +12.4%
+            </span>
+            <span class="kpi__footnote">vs last week</span>
+          </div>
+        </div>
+        <div class="kpi">
+          <p class="kpi__label">Conversion rate</p>
+          <p class="kpi__value">8.32<span class="kpi__unit">%</span></p>
+          <div>
+            <span class="kpi__delta kpi__delta--up">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+              +0.6pp
+            </span>
+            <span class="kpi__footnote">vs last week</span>
+          </div>
+        </div>
+        <div class="kpi">
+          <p class="kpi__label">Avg. deal size</p>
+          <p class="kpi__value">$14,220</p>
+          <div>
+            <span class="kpi__delta kpi__delta--flat">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              0.1%
+            </span>
+            <span class="kpi__footnote">vs last week</span>
+          </div>
+        </div>
+        <div class="kpi">
+          <p class="kpi__label">Agent hours saved</p>
+          <p class="kpi__value">418<span class="kpi__unit">h</span></p>
+          <div>
+            <span class="kpi__delta kpi__delta--up">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+              +23.8%
+            </span>
+            <span class="kpi__footnote">this month</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- =========== Chart row =========== -->
+      <div class="row-2">
+        <section class="card card--flat">
+          <div class="chart-card__head">
+            <div>
+              <h2 class="chart-card__title">Pipeline velocity</h2>
+              <p class="chart-card__meta">Qualified leads by stage · 最近 12 周</p>
+            </div>
+            <div style="display:flex;gap:var(--space-3);align-items:center;">
+              <div class="legend">
+                <span class="legend-item"><span class="legend-swatch" style="background: var(--color-amber-600)"></span> Closed</span>
+                <span class="legend-item"><span class="legend-swatch" style="background: var(--color-blue-600)"></span> In progress</span>
+                <span class="legend-item"><span class="legend-swatch" style="background: var(--color-warm-grey-400)"></span> New</span>
+              </div>
+              <div class="segmented" role="tablist">
+                <button class="is-on">12w</button>
+                <button>4w</button>
+                <button>7d</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- SVG stacked bar chart -->
+          <svg viewBox="0 0 720 240" style="width: 100%; height: 240px;" role="img" aria-label="Pipeline velocity chart">
+            <!-- Grid lines -->
+            <g stroke="var(--dataviz-grid)" stroke-width="1">
+              <line x1="40" y1="40"  x2="720" y2="40" />
+              <line x1="40" y1="90"  x2="720" y2="90" />
+              <line x1="40" y1="140" x2="720" y2="140" />
+              <line x1="40" y1="190" x2="720" y2="190" />
+            </g>
+            <!-- Y labels -->
+            <g font-family="var(--font-mono)" font-size="10" fill="var(--dataviz-label)" text-anchor="end">
+              <text x="32" y="44">400</text>
+              <text x="32" y="94">300</text>
+              <text x="32" y="144">200</text>
+              <text x="32" y="194">100</text>
+              <text x="32" y="214">0</text>
+            </g>
+            <!-- Bars: 12 weeks -->
+            <!-- each x-slot = 52 wide including gap -->
+            <g>
+              <!-- w1 -->
+              <rect x="50"  y="150" width="36" height="40" fill="var(--color-warm-grey-300)" rx="2"/>
+              <rect x="50"  y="110" width="36" height="40" fill="var(--color-blue-500)"/>
+              <rect x="50"  y="85"  width="36" height="25" fill="var(--color-amber-600)" rx="2"/>
+              <!-- w2 -->
+              <rect x="102" y="160" width="36" height="30" fill="var(--color-warm-grey-300)" rx="2"/>
+              <rect x="102" y="115" width="36" height="45" fill="var(--color-blue-500)"/>
+              <rect x="102" y="85"  width="36" height="30" fill="var(--color-amber-600)" rx="2"/>
+              <!-- w3 -->
+              <rect x="154" y="140" width="36" height="50" fill="var(--color-warm-grey-300)" rx="2"/>
+              <rect x="154" y="100" width="36" height="40" fill="var(--color-blue-500)"/>
+              <rect x="154" y="75"  width="36" height="25" fill="var(--color-amber-600)" rx="2"/>
+              <!-- w4 -->
+              <rect x="206" y="130" width="36" height="60" fill="var(--color-warm-grey-300)" rx="2"/>
+              <rect x="206" y="85"  width="36" height="45" fill="var(--color-blue-500)"/>
+              <rect x="206" y="60"  width="36" height="25" fill="var(--color-amber-600)" rx="2"/>
+              <!-- w5 -->
+              <rect x="258" y="145" width="36" height="45" fill="var(--color-warm-grey-300)" rx="2"/>
+              <rect x="258" y="100" width="36" height="45" fill="var(--color-blue-500)"/>
+              <rect x="258" y="70"  width="36" height="30" fill="var(--color-amber-600)" rx="2"/>
+              <!-- w6 -->
+              <rect x="310" y="130" width="36" height="60" fill="var(--color-warm-grey-300)" rx="2"/>
+              <rect x="310" y="80"  width="36" height="50" fill="var(--color-blue-500)"/>
+              <rect x="310" y="50"  width="36" height="30" fill="var(--color-amber-600)" rx="2"/>
+              <!-- w7 -->
+              <rect x="362" y="120" width="36" height="70" fill="var(--color-warm-grey-300)" rx="2"/>
+              <rect x="362" y="70"  width="36" height="50" fill="var(--color-blue-500)"/>
+              <rect x="362" y="38"  width="36" height="32" fill="var(--color-amber-600)" rx="2"/>
+              <!-- w8 -->
+              <rect x="414" y="140" width="36" height="50" fill="var(--color-warm-grey-300)" rx="2"/>
+              <rect x="414" y="80"  width="36" height="60" fill="var(--color-blue-500)"/>
+              <rect x="414" y="48"  width="36" height="32" fill="var(--color-amber-600)" rx="2"/>
+              <!-- w9 -->
+              <rect x="466" y="125" width="36" height="65" fill="var(--color-warm-grey-300)" rx="2"/>
+              <rect x="466" y="65"  width="36" height="60" fill="var(--color-blue-500)"/>
+              <rect x="466" y="30"  width="36" height="35" fill="var(--color-amber-600)" rx="2"/>
+              <!-- w10 -->
+              <rect x="518" y="115" width="36" height="75" fill="var(--color-warm-grey-300)" rx="2"/>
+              <rect x="518" y="55"  width="36" height="60" fill="var(--color-blue-500)"/>
+              <rect x="518" y="20"  width="36" height="35" fill="var(--color-amber-600)" rx="2"/>
+              <!-- w11 -->
+              <rect x="570" y="105" width="36" height="85" fill="var(--color-warm-grey-300)" rx="2"/>
+              <rect x="570" y="50"  width="36" height="55" fill="var(--color-blue-500)"/>
+              <rect x="570" y="18"  width="36" height="32" fill="var(--color-amber-600)" rx="2"/>
+              <!-- w12 (current, faded) -->
+              <rect x="622" y="125" width="36" height="65" fill="var(--color-warm-grey-300)" opacity="0.6" rx="2"/>
+              <rect x="622" y="70"  width="36" height="55" fill="var(--color-blue-500)" opacity="0.6"/>
+              <rect x="622" y="38"  width="36" height="32" fill="var(--color-amber-600)" opacity="0.6" rx="2"/>
+            </g>
+            <!-- x labels -->
+            <g font-family="var(--font-mono)" font-size="10" fill="var(--dataviz-label)" text-anchor="middle">
+              <text x="68"  y="210">W1</text>
+              <text x="120" y="210">W2</text>
+              <text x="172" y="210">W3</text>
+              <text x="224" y="210">W4</text>
+              <text x="276" y="210">W5</text>
+              <text x="328" y="210">W6</text>
+              <text x="380" y="210">W7</text>
+              <text x="432" y="210">W8</text>
+              <text x="484" y="210">W9</text>
+              <text x="536" y="210">W10</text>
+              <text x="588" y="210">W11</text>
+              <text x="640" y="210" fill="var(--fg-subtle)">W12</text>
+            </g>
+            <!-- current week annotation -->
+            <line x1="640" y1="20" x2="640" y2="190" stroke="var(--color-warm-grey-400)" stroke-width="1" stroke-dasharray="2 3"/>
+          </svg>
+        </section>
+
+        <section class="card card--flat">
+          <div class="chart-card__head">
+            <div>
+              <h2 class="chart-card__title">Top agents this week</h2>
+              <p class="chart-card__meta">Ranked by qualified leads</p>
+            </div>
+          </div>
+          <div>
+            <div class="rank-row">
+              <span class="rank-row__name"><span class="avatar avatar--violet">Ω</span>Orion-4</span>
+              <span class="rank-row__bar"><span style="width: 92%"></span></span>
+              <span class="rank-row__value">842</span>
+            </div>
+            <div class="rank-row">
+              <span class="rank-row__name"><span class="avatar avatar--amber">星</span>Stellar-Insurance</span>
+              <span class="rank-row__bar"><span style="width: 78%"></span></span>
+              <span class="rank-row__value">716</span>
+            </div>
+            <div class="rank-row">
+              <span class="rank-row__name"><span class="avatar avatar--blue">潮</span>TidePull-EN</span>
+              <span class="rank-row__bar"><span style="width: 64%"></span></span>
+              <span class="rank-row__value">591</span>
+            </div>
+            <div class="rank-row">
+              <span class="rank-row__name"><span class="avatar avatar--teal">潼</span>Tongue-Cantonese</span>
+              <span class="rank-row__bar"><span style="width: 48%"></span></span>
+              <span class="rank-row__value">443</span>
+            </div>
+            <div class="rank-row">
+              <span class="rank-row__name"><span class="avatar">新</span>New-LeadGen v2</span>
+              <span class="rank-row__bar"><span style="width: 28%"></span></span>
+              <span class="rank-row__value">255</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- =========== Activity table =========== -->
+      <section class="card activity-card">
+        <div class="activity-card__head">
+          <div>
+            <h2 class="chart-card__title">Recent activity</h2>
+            <p class="chart-card__meta">Across campaigns, agents and approvals</p>
+          </div>
+          <a href="#" class="form__link" style="font-size: var(--font-size-caption)">View all →</a>
+        </div>
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Event</th>
+              <th>Actor</th>
+              <th>Campaign</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Approved bid adjustment · <span class="text-muted">Lead #LS-48219</span></td>
+              <td><span class="avatar avatar--amber">WL</span>Wang Lei</td>
+              <td>PH × Insurance</td>
+              <td class="num">$18.40</td>
+              <td><span class="tag tag--primary"><span class="dot"></span>Approved</span></td>
+              <td class="text-muted num">2 min ago</td>
+            </tr>
+            <tr>
+              <td>Agent paused · rate limit reached</td>
+              <td><span class="avatar avatar--violet">Ω</span>Orion-4</td>
+              <td>UAE × Real estate</td>
+              <td class="num">—</td>
+              <td><span class="tag tag--warning"><span class="dot"></span>Paused</span></td>
+              <td class="text-muted num">14 min ago</td>
+            </tr>
+            <tr>
+              <td>New qualified lead · batch of 128</td>
+              <td><span class="avatar avatar--blue">潮</span>TidePull-EN</td>
+              <td>US × Medicare</td>
+              <td class="num">—</td>
+              <td><span class="tag tag--info"><span class="dot"></span>In review</span></td>
+              <td class="text-muted num">1 h ago</td>
+            </tr>
+            <tr>
+              <td>Needs approval · auto-refund requested</td>
+              <td><span class="avatar">系</span>System</td>
+              <td>TH × Insurance</td>
+              <td class="num">$240.00</td>
+              <td><span class="tag tag--agent"><span class="dot"></span>Awaiting you</span></td>
+              <td class="text-muted num">3 h ago</td>
+            </tr>
+            <tr>
+              <td>Playbook published · v2.1</td>
+              <td><span class="avatar avatar--amber">LH</span>Liu Hao</td>
+              <td>—</td>
+              <td class="num">—</td>
+              <td><span class="tag"><span class="dot"></span>Published</span></td>
+              <td class="text-muted num">Yesterday</td>
+            </tr>
+            <tr>
+              <td>Bid rule rejected · policy violation</td>
+              <td><span class="avatar avatar--violet">Ω</span>Orion-4</td>
+              <td>ID × Motorcycle</td>
+              <td class="num">$4.20</td>
+              <td><span class="tag tag--danger">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                Rejected</span></td>
+              <td class="text-muted num">Yesterday</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ==================== Agent Panel ==================== -->
+  <aside class="agent" aria-label="BYAI Copilot">
+    <div class="agent__head">
+      <span class="agent__mark">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/></svg>
+      </span>
+      <div>
+        <div class="agent__title">BYAI Copilot</div>
+        <div class="agent__sub">Orion-4 · workspace context</div>
+      </div>
+      <div style="margin-left:auto; display:flex; gap: 4px;">
+        <button class="icon-btn" aria-label="History">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="12 6 12 12 16 14"/><circle cx="12" cy="12" r="10"/></svg>
+        </button>
+        <button class="icon-btn" aria-label="Close">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="agent__body">
+      <div class="msg msg--user">
+        <div class="msg__meta">You · 14:03</div>
+        <div class="msg__bubble">本周菲律宾保险线索的平均成本和去年同期比怎么样？</div>
+      </div>
+
+      <div class="msg msg--assistant">
+        <div class="msg__meta text-agent">Orion-4 · 14:03</div>
+        <div class="msg__bubble">
+          菲律宾保险线索本周平均 CPL 为 <strong>$4.82</strong>
+          <span class="citation">1</span>,
+          较去年同期 $6.15 下降 21.6%
+          <span class="citation">2</span>。转化率同步改善，合格线索占比从 6.8% 升至 8.3%。
+          <div class="tool-card">
+            <div class="tool-card__head">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+              query_metrics · 47ms
+            </div>
+            <div class="tool-card__body">market=PH · vertical=insurance · window=7d vs 52w</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="msg msg--assistant">
+        <div class="msg__meta text-agent"><span class="streaming-dot"></span>Drafting follow-up…</div>
+      </div>
+    </div>
+
+    <div class="agent__composer">
+      <div class="agent__composer-box">
+        <textarea placeholder="Ask about leads, campaigns, or approvals…  (try  /  for commands)"></textarea>
+        <div class="agent__composer-row">
+          <div class="agent__composer-hints">
+            <span><span class="kbd">/</span> commands</span>
+            <span><span class="kbd">@</span> mentions</span>
+          </div>
+          <button class="btn btn--primary btn--sm">
+            Send
+            <span class="kbd" style="background:rgba(255,255,255,0.2);border-color:rgba(255,255,255,0.3);color:inherit;padding:1px 5px;font-size:10px;border-radius:2px;">⌘↵</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,358 @@
+/* ============================================================
+   BYAI Design System v1 — CSS Custom Properties
+   ============================================================
+   Usage: import or inline in :root, then reference via var(--token).
+   Primitive tokens (--color-*) should NOT be referenced directly
+   in component styles — always use the semantic layer.
+   ============================================================ */
+
+:root {
+
+  /* ======== 1. PRIMITIVE · Warm Grey ======== */
+  --color-warm-grey-50:  #FAFAF7;
+  --color-warm-grey-100: #F4F2ED;
+  --color-warm-grey-200: #E8E4DB;
+  --color-warm-grey-300: #D4CEC1;
+  --color-warm-grey-400: #A8A093;
+  --color-warm-grey-500: #7A7366;
+  --color-warm-grey-600: #5C564B;
+  --color-warm-grey-700: #3F3A32;
+  --color-warm-grey-800: #2A2620;
+  --color-warm-grey-900: #1A1814;
+  --color-warm-grey-950: #0D0C0A;
+
+  /* ======== 1. PRIMITIVE · Amber ======== */
+  --color-amber-50:  #FDF8EE;
+  --color-amber-100: #FAEBCA;
+  --color-amber-200: #F5D88F;
+  --color-amber-300: #EFC257;
+  --color-amber-400: #E4A72E;
+  --color-amber-500: #C88A1A;
+  --color-amber-600: #A36E10;
+  --color-amber-700: #7E560D;
+  --color-amber-800: #5E400B;
+  --color-amber-900: #402C08;
+
+  /* ======== 1. PRIMITIVE · Blue ======== */
+  --color-blue-50:  #EEF4FA;
+  --color-blue-100: #D6E4F3;
+  --color-blue-200: #A9C6E6;
+  --color-blue-300: #78A5D5;
+  --color-blue-400: #4784C1;
+  --color-blue-500: #2A69A8;
+  --color-blue-600: #1E5189;
+  --color-blue-700: #153E6B;
+  --color-blue-800: #0F2D4E;
+  --color-blue-900: #0A1E34;
+
+  /* ======== 1. PRIMITIVE · Red ======== */
+  --color-red-50:  #FCF1ED;
+  --color-red-100: #F8DACF;
+  --color-red-200: #EDB39F;
+  --color-red-300: #DD8469;
+  --color-red-400: #CC5A3A;
+  --color-red-500: #B03E1E;
+  --color-red-600: #8F2E14;
+  --color-red-700: #6F220E;
+  --color-red-800: #4F1809;
+  --color-red-900: #321005;
+
+  /* ======== 1. PRIMITIVE · Yellow ======== */
+  --color-yellow-50:  #FEF9E4;
+  --color-yellow-100: #FDEDA9;
+  --color-yellow-300: #F7CE2B;
+  --color-yellow-500: #D69E08;
+  --color-yellow-700: #8A6402;
+  --color-yellow-900: #3D2C00;
+
+  /* ======== 1. PRIMITIVE · Teal ======== */
+  --color-teal-100: #D4EDE8;
+  --color-teal-400: #2E9C8A;
+  --color-teal-600: #1B6F62;
+  --color-teal-800: #0E3D36;
+
+  /* ======== 1. PRIMITIVE · Violet (Agent) ======== */
+  --color-violet-50:  #F5F2FA;
+  --color-violet-100: #E4DDF2;
+  --color-violet-400: #7A5DB0;
+  --color-violet-600: #5A3F94;
+  --color-violet-800: #32215A;
+
+  /* ======== 2. SEMANTIC · Background ======== */
+  --bg-canvas:          var(--color-warm-grey-50);
+  --bg-surface:         #FFFFFF;
+  --bg-surface-sunken:  var(--color-warm-grey-100);
+  --bg-surface-subtle:  var(--color-warm-grey-50);
+  --bg-hover:           var(--color-warm-grey-100);
+  --bg-active:          var(--color-warm-grey-200);
+  --bg-selected:        var(--color-amber-50);
+  --bg-selected-strong: var(--color-amber-100);
+  --bg-disabled:        var(--color-warm-grey-100);
+  --bg-overlay:         rgba(26, 24, 20, 0.48);
+  --bg-scrim:           rgba(26, 24, 20, 0.08);
+  --bg-inverse:         var(--color-warm-grey-900);
+  --bg-agent-surface:   var(--color-violet-50);
+  --bg-agent-trace:     var(--color-violet-100);
+
+  /* ======== 2. SEMANTIC · Foreground ======== */
+  --fg-default:    var(--color-warm-grey-800);
+  --fg-strong:     var(--color-warm-grey-900);
+  --fg-muted:      var(--color-warm-grey-600);
+  --fg-subtle:     var(--color-warm-grey-500);
+  --fg-disabled:   var(--color-warm-grey-400);
+  --fg-on-primary: #FFFFFF;
+  --fg-on-danger:  #FFFFFF;
+  --fg-on-inverse: var(--color-warm-grey-50);
+  --fg-link:       var(--color-blue-600);
+  --fg-link-hover: var(--color-blue-700);
+  --fg-brand:      var(--color-amber-600);
+  --fg-agent:      var(--color-violet-600);
+
+  /* ======== 2. SEMANTIC · Border ======== */
+  --border-subtle:   var(--color-warm-grey-200);
+  --border-default:  var(--color-warm-grey-300);
+  --border-strong:   var(--color-warm-grey-400);
+  --border-inverse:  var(--color-warm-grey-900);
+  --border-focus:    var(--color-amber-600);
+  --border-selected: var(--color-amber-600);
+  --border-danger:   var(--color-red-600);
+  --border-agent:    var(--color-violet-400);
+
+  /* ======== 2. SEMANTIC · Intent · Primary ======== */
+  --intent-primary-bg:              var(--color-amber-600);
+  --intent-primary-bg-hover:        var(--color-amber-700);
+  --intent-primary-bg-active:       var(--color-amber-800);
+  --intent-primary-fg:              #FFFFFF;
+  --intent-primary-border:          var(--color-amber-700);
+  --intent-primary-surface:         var(--color-amber-50);
+  --intent-primary-surface-hover:   var(--color-amber-100);
+  --intent-primary-text-on-surface: var(--color-amber-800);
+
+  /* ======== 2. SEMANTIC · Intent · Positive ======== */
+  --intent-positive-bg:      var(--color-amber-600);
+  --intent-positive-fg:      #FFFFFF;
+  --intent-positive-surface: var(--color-amber-50);
+  --intent-positive-text:    var(--color-amber-800);
+  --intent-positive-icon:    var(--color-amber-600);
+
+  /* ======== 2. SEMANTIC · Intent · Info ======== */
+  --intent-info-bg:      var(--color-blue-600);
+  --intent-info-fg:      #FFFFFF;
+  --intent-info-surface: var(--color-blue-50);
+  --intent-info-text:    var(--color-blue-800);
+  --intent-info-icon:    var(--color-blue-600);
+  --intent-info-border:  var(--color-blue-200);
+
+  /* ======== 2. SEMANTIC · Intent · Warning ======== */
+  --intent-warning-bg:      var(--color-yellow-500);
+  --intent-warning-fg:      var(--color-warm-grey-900);
+  --intent-warning-surface: var(--color-yellow-50);
+  --intent-warning-text:    var(--color-yellow-700);
+  --intent-warning-icon:    var(--color-yellow-500);
+
+  /* ======== 2. SEMANTIC · Intent · Danger ======== */
+  --intent-danger-bg:       var(--color-red-600);
+  --intent-danger-bg-hover: var(--color-red-700);
+  --intent-danger-fg:       #FFFFFF;
+  --intent-danger-surface:  var(--color-red-50);
+  --intent-danger-text:     var(--color-red-800);
+  --intent-danger-icon:     var(--color-red-600);
+  --intent-danger-border:   var(--color-red-200);
+
+  /* ======== 2. SEMANTIC · Intent · Neutral ======== */
+  --intent-neutral-bg:     var(--color-warm-grey-100);
+  --intent-neutral-fg:     var(--color-warm-grey-700);
+  --intent-neutral-border: var(--color-warm-grey-300);
+
+  /* ======== 2. SEMANTIC · Agent ======== */
+  --agent-bg-message:         var(--color-violet-50);
+  --agent-bg-trace:           var(--color-violet-100);
+  --agent-fg-primary:         var(--color-violet-600);
+  --agent-fg-secondary:       var(--color-violet-400);
+  --agent-border-default:     var(--color-violet-400);
+  --agent-indicator-streaming: var(--color-amber-500);
+  --agent-indicator-thinking: var(--color-violet-400);
+  --agent-indicator-tool:     var(--color-blue-500);
+  --agent-indicator-error:    var(--color-red-500);
+  --agent-citation-bg:        var(--color-warm-grey-100);
+  --agent-citation-border:    var(--color-warm-grey-300);
+
+  /* ======== 2. SEMANTIC · Data Viz ======== */
+  --dataviz-cat-1: var(--color-amber-600);
+  --dataviz-cat-2: var(--color-blue-600);
+  --dataviz-cat-3: var(--color-teal-600);
+  --dataviz-cat-4: var(--color-violet-600);
+  --dataviz-cat-5: var(--color-warm-grey-600);
+  --dataviz-cat-6: var(--color-yellow-700);
+  --dataviz-grid:  var(--color-warm-grey-200);
+  --dataviz-axis:  var(--color-warm-grey-400);
+  --dataviz-label: var(--color-warm-grey-600);
+  --dataviz-tooltip-bg: var(--color-warm-grey-900);
+  --dataviz-tooltip-fg: var(--color-warm-grey-50);
+
+  /* ======== 3. FONT ======== */
+  --font-display: "Fraunces", "Instrument Serif", Georgia, serif;
+  --font-sans:    "Geist", "Söhne", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  --font-mono:    "JetBrains Mono", "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-cjk:     "Microsoft YaHei", "微软雅黑", "PingFang SC", "Source Han Sans CN", "Noto Sans SC", sans-serif;
+  --font-body:    "Geist", -apple-system, BlinkMacSystemFont, "Microsoft YaHei", "微软雅黑", "PingFang SC", sans-serif;
+  --font-heading: "Fraunces", "Instrument Serif", Georgia, "Microsoft YaHei", "微软雅黑", serif;
+
+  /* Font sizes */
+  --font-size-micro:      11px;
+  --font-size-caption:    12px;
+  --font-size-small:      13px;
+  --font-size-body:       14px;
+  --font-size-body-large: 16px;
+  --font-size-h3:         18px;
+  --font-size-h2:         22px;
+  --font-size-h1:         28px;
+  --font-size-display-l:  36px;
+  --font-size-display-xl: 48px;
+
+  /* Font weights */
+  --font-weight-regular:  400;
+  --font-weight-medium:   500;
+  --font-weight-semibold: 600;
+  --font-weight-bold:     700;
+
+  /* Line heights */
+  --font-line-micro:      14px;
+  --font-line-caption:    16px;
+  --font-line-small:      18px;
+  --font-line-body:       20px;
+  --font-line-body-large: 24px;
+  --font-line-h3:         24px;
+  --font-line-h2:         28px;
+  --font-line-h1:         34px;
+  --font-line-display-l:  40px;
+  --font-line-display-xl: 52px;
+
+  /* Letter spacing */
+  --font-tracking-tight:  -0.02em;
+  --font-tracking-snug:   -0.01em;
+  --font-tracking-normal:  0;
+  --font-tracking-wide:    0.02em;
+  --font-tracking-wider:   0.06em;
+
+  /* ======== 4. SPACE ======== */
+  --space-0:    0;
+  --space-0-5:  2px;
+  --space-1:    4px;
+  --space-2:    8px;
+  --space-3:    12px;
+  --space-4:    16px;
+  --space-5:    20px;
+  --space-6:    24px;
+  --space-8:    32px;
+  --space-10:   40px;
+  --space-12:   48px;
+  --space-16:   64px;
+  --space-20:   80px;
+  --space-24:   96px;
+
+  /* ======== 5. RADIUS ======== */
+  --radius-none: 0;
+  --radius-xs:   2px;
+  --radius-sm:   4px;
+  --radius-md:   6px;
+  --radius-lg:   8px;
+  --radius-xl:   12px;
+  --radius-2xl:  16px;
+  --radius-3xl:  24px;
+  --radius-full: 9999px;
+
+  /* ======== 6. BORDER WIDTH ======== */
+  --border-width-none:    0;
+  --border-width-thin:    1px;
+  --border-width-default: 1px;
+  --border-width-thick:   2px;
+  --border-width-focus:   2px;
+
+  /* ======== 7. SHADOW ======== */
+  --shadow-xs: 0 1px 2px rgba(26, 24, 20, 0.04);
+  --shadow-sm: 0 1px 3px rgba(26, 24, 20, 0.06), 0 1px 2px rgba(26, 24, 20, 0.04);
+  --shadow-md: 0 4px 8px rgba(26, 24, 20, 0.06), 0 2px 4px rgba(26, 24, 20, 0.04);
+  --shadow-lg: 0 12px 24px rgba(26, 24, 20, 0.08), 0 4px 8px rgba(26, 24, 20, 0.04);
+  --shadow-xl: 0 24px 48px rgba(26, 24, 20, 0.10), 0 8px 16px rgba(26, 24, 20, 0.06);
+  --shadow-focus-ring:        0 0 0 3px rgba(163, 110, 16, 0.25);
+  --shadow-focus-ring-danger: 0 0 0 3px rgba(143, 46, 20, 0.25);
+
+  /* ======== 8. MOTION ======== */
+  --motion-duration-instant: 0ms;
+  --motion-duration-fast:    120ms;
+  --motion-duration-base:    200ms;
+  --motion-duration-slow:    320ms;
+  --motion-duration-slower:  500ms;
+  --motion-duration-slowest: 800ms;
+
+  --motion-ease-linear:     linear;
+  --motion-ease-out:        cubic-bezier(0.25, 1, 0.5, 1);
+  --motion-ease-in-out:     cubic-bezier(0.65, 0, 0.35, 1);
+  --motion-ease-spring:     cubic-bezier(0.34, 1.56, 0.64, 1);
+  --motion-ease-anticipate: cubic-bezier(0.87, 0, 0.13, 1);
+
+  /* ======== 9. Z-INDEX ======== */
+  --z-base:            0;
+  --z-raised:          10;
+  --z-dropdown:        100;
+  --z-sticky:          200;
+  --z-drawer:          300;
+  --z-modal:           400;
+  --z-popover:         500;
+  --z-toast:           600;
+  --z-command-palette: 700;
+  --z-top:             9999;
+
+  /* ======== 10. DENSITY (default: Comfortable) ======== */
+  --row-h:        36px;
+  --cell-py:      8px;
+  --cell-px:      12px;
+  --btn-h-xs:     24px;
+  --btn-h-sm:     28px;
+  --btn-h-md:     32px;
+  --btn-h-lg:     40px;
+  --btn-h-xl:     48px;
+  --input-h-sm:   28px;
+  --input-h-md:   32px;
+  --input-h-lg:   40px;
+  --card-p:       24px;
+  --nav-item-h:   32px;
+}
+
+/* Compact density */
+.density-compact {
+  --row-h:      28px;
+  --cell-py:    6px;
+  --cell-px:    8px;
+  --btn-h-md:   28px;
+  --input-h-md: 28px;
+  --card-p:     16px;
+  --nav-item-h: 28px;
+}
+
+/* Spacious density */
+.density-spacious {
+  --row-h:      44px;
+  --cell-py:    12px;
+  --cell-px:    16px;
+  --btn-h-md:   36px;
+  --input-h-md: 36px;
+  --card-p:     32px;
+  --nav-item-h: 40px;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-duration-fast:    0.01ms;
+    --motion-duration-base:    0.01ms;
+    --motion-duration-slow:    0.01ms;
+    --motion-duration-slower:  0.01ms;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

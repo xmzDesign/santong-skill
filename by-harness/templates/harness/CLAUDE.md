@@ -36,6 +36,10 @@
   - 错误处理（Error handling）
   - 至少 3 个边界场景
   - 依赖项（Dependencies）
+- 若需求涉及前端、UI、样式、交互、React/Vue/TypeScript 组件，Plan 阶段必须先阅读 `.harness/docs/frontend-dev-conventions.md`，并在 spec 中补充：
+  - 适用页面类型（Dashboard / Table / Form / Settings / Agent / Data-viz / Login / Onboarding 等）
+  - 本次采用的三层规范文件（约束层 / 示范层 / 视觉层）
+  - 视觉与交互验收标准（可截图、可浏览器验证、可代码扫描）
 - 保存路径：`.harness/docs/specs/<feature-name>.md`
 
 ### Build 契约
@@ -45,12 +49,18 @@
 - 若 contract 缺失，先基于 `.harness/docs/contracts/TEMPLATE.md` 创建再实现。
 - 只允许实现 contract 范围内内容。
 - 若项目技术栈包含 Java/Spring Boot，编码前必须先阅读 `.harness/docs/java-dev-conventions.md` 并完成其中前置闸门确认。
-- 若项目技术栈包含 React/Vue/TypeScript/Next.js，编码前必须先阅读 `.harness/docs/frontend-dev-conventions.md` 并完成其中前置约束确认。
+- 若项目技术栈包含 React/Vue/TypeScript/Next.js，或本次任务涉及 UI/样式/交互，编码前必须先阅读 `.harness/docs/frontend-dev-conventions.md`，并按需阅读：
+  - `.harness/docs/frontend/rules.md`
+  - `.harness/docs/frontend/code-design.md`
+  - `.harness/docs/frontend/ui-design.md`
+- 若新增页面、重构页面或明显视觉变更，必须打开 `.harness/docs/frontend/references/byai-ds-v/index.html` 或对应 HTML 页面作为视觉参考。
+- 前端编码前必须明确本次适用的 token、状态、布局、Antd/组件库、视觉类型与反例规避清单。
 - 所有新增/修改的函数、方法必须补充中文注释，至少说明：用途、关键参数、返回值与副作用（如状态变更/IO）。
 - 交付前必须自检：
   - 构建/编译通过
   - 测试通过（既有 + 新增）
   - 验收标准逐条核对
+  - 若涉及前端：三层前端规范逐条核对；无新增硬编码颜色、无裸全局样式、无无解释 inline style；loading / empty / error / disabled / focus-visible 覆盖完整
   - 新增/修改函数与方法的中文注释完整
   - 无调试残留
 
@@ -103,7 +113,9 @@
 
 ### 前端附加规则（适用时强制）
 
-- 若为前端项目：必须遵守 `.harness/docs/frontend-dev-conventions.md`。
+- 若为前端项目或涉及 UI/样式/交互：必须遵守 `.harness/docs/frontend-dev-conventions.md`。
+- 新增页面、重构页面、明显视觉变更时，还必须遵守 `.harness/docs/frontend/rules.md`、`.harness/docs/frontend/code-design.md`、`.harness/docs/frontend/ui-design.md`。
+- 前端完成前必须运行可用的构建/测试/截图验证；若无法运行，必须说明阻塞原因与人工验证建议。
 
 ## 与 Task Harness 的集成（可选但推荐）
 
@@ -141,6 +153,8 @@
 - `.harness/docs/plans/`：计划产物
 - `.harness/docs/java-dev-conventions.md`：Java 后端编码规范（Java 项目必读）
 - `.harness/docs/frontend-dev-conventions.md`：前端工程级编码规范（前端项目必读）
+- `.harness/docs/frontend/`：前端三层规范（约束层、示范层、视觉层）
+- `.harness/docs/frontend/references/byai-ds-v/`：BYAI HTML 视觉参考页与 token 快照
 - `.harness/feature_list.json`：legacy 兼容镜像（仅在历史项目存在时沿用）
 - `.harness/config/runtime-version.json`：运行时版本号（用于版本化升级）
 - `.harness/config/update-policy.json`：远程更新策略（定时检查与自动应用）

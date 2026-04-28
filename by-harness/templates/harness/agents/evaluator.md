@@ -57,6 +57,8 @@ color: red
 - 使用 `browser_take_screenshot` 截图
 - 使用 `analyze_image` 校验布局
 - 检查 UI 一致性、渲染正确性和响应式表现
+- 对照 `.harness/docs/frontend-dev-conventions.md`、`.harness/docs/frontend/` 三层规范和 `.harness/docs/frontend/references/byai-ds-v/` 对应 HTML 参考页，检查 token、密度、状态、可访问性、视觉一致性、反例规避、Agent 行为透明度
+- 至少覆盖桌面与一个窄屏视口；若无法运行浏览器，必须说明未验证风险
 
 ### 4. 按标准评分
 
@@ -101,6 +103,16 @@ color: red
 |---|-----------|--------|-------|
 | 1 | ... | PASS | ... |
 | 2 | ... | FAIL | ... |
+
+### 前端规范检查（若适用）
+
+- 三层规范读取：是/否
+- 视觉类型匹配：Dashboard / Table / Form / Settings / Agent / Data-viz / Login / Onboarding / 不适用
+- Token 与硬编码：PASS / FAIL / PARTIAL
+- 状态覆盖：PASS / FAIL / PARTIAL
+- 可访问性与键盘：PASS / FAIL / PARTIAL
+- 响应式与截图：PASS / FAIL / PARTIAL
+- 反例规避：PASS / FAIL / PARTIAL
 
 ### 失败详情
 

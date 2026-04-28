@@ -37,7 +37,7 @@ LEGACY_TASK_FILE_NAME = "task.json"
 LEGACY_SESSION_CONTEXT_FILE_NAME = "session-context.json"
 LEGACY_SESSION_BOUNDARY_FILE_NAME = "session-boundary.json"
 LEGACY_TASK_CONTRACT_FILE_NAME = "TASK-HARNESS.md"
-LATEST_RUNTIME_VERSION = "2.2.2"
+LATEST_RUNTIME_VERSION = "2.3.0"
 RUNTIME_SCRIPT_NAMES = (
     "init.sh",
     "session_close.py",
@@ -45,6 +45,43 @@ RUNTIME_SCRIPT_NAMES = (
     "task_switch.py",
     "update_runtime.py",
     "upgrade_legacy_repo.py",
+)
+FRONTEND_REFERENCE_REL_PATHS = (
+    "docs/frontend/references/byai-ds-v/index.html",
+    "docs/frontend/references/byai-ds-v/readme.html",
+    "docs/frontend/references/byai-ds-v/assets/fonts.css",
+    "docs/frontend/references/byai-ds-v/assets/shell.css",
+    "docs/frontend/references/byai-ds-v/tokens/tailwind.config.js",
+    "docs/frontend/references/byai-ds-v/tokens/tokens.css",
+    "docs/frontend/references/byai-ds-v/tokens/tokens.json",
+    "docs/frontend/references/byai-ds-v/pages/01-login.html",
+    "docs/frontend/references/byai-ds-v/pages/02-dashboard.html",
+    "docs/frontend/references/byai-ds-v/pages/03-table.html",
+    "docs/frontend/references/byai-ds-v/pages/04-chat.html",
+    "docs/frontend/references/byai-ds-v/pages/05-settings.html",
+    "docs/frontend/references/byai-ds-v/pages/06-lead-detail.html",
+    "docs/frontend/references/byai-ds-v/pages/07-agent-studio.html",
+    "docs/frontend/references/byai-ds-v/pages/08-billing.html",
+    "docs/frontend/references/byai-ds-v/pages/09-team.html",
+    "docs/frontend/references/byai-ds-v/pages/10-audit-log.html",
+    "docs/frontend/references/byai-ds-v/pages/11-integrations.html",
+    "docs/frontend/references/byai-ds-v/pages/12-onboarding.html",
+    "docs/frontend/references/byai-ds-v/packages/ui/showcase.html",
+    "docs/frontend/references/byai-ds-v/packages/ui/src/styles.css",
+    "docs/frontend/references/byai-ds-v/spec/01-philosophy.md",
+    "docs/frontend/references/byai-ds-v/spec/02-tokens-primitives.md",
+    "docs/frontend/references/byai-ds-v/spec/03-tokens-semantic.md",
+    "docs/frontend/references/byai-ds-v/spec/04-typography.md",
+    "docs/frontend/references/byai-ds-v/spec/05-layout-grid.md",
+    "docs/frontend/references/byai-ds-v/spec/06-components.md",
+    "docs/frontend/references/byai-ds-v/spec/07-agent-patterns.md",
+    "docs/frontend/references/byai-ds-v/spec/08-states.md",
+    "docs/frontend/references/byai-ds-v/spec/09-data-viz.md",
+    "docs/frontend/references/byai-ds-v/spec/10-voice-microcopy.md",
+    "docs/frontend/references/byai-ds-v/spec/appendix-a-accessibility.md",
+    "docs/frontend/references/byai-ds-v/spec/appendix-b-motion.md",
+    "docs/frontend/references/byai-ds-v/spec/appendix-c-ai-consumption.md",
+    "docs/frontend/references/byai-ds-v/spec/appendix-d-antipatterns.md",
 )
 RUNTIME_DOC_REL_PATHS = (
     "root/AGENTS.md",
@@ -60,12 +97,25 @@ RUNTIME_DOC_REL_PATHS = (
     "root/.claude/hooks/loop-detector.py",
     "root/.claude/hooks/pre-completion-check.py",
     "root/.claude/hooks/convention-check.py",
+    "root/.claude/agents/planner.md",
+    "root/.claude/agents/generator.md",
+    "root/.claude/agents/evaluator.md",
+    "root/.claude/agents/doc-gardener.md",
+    "root/.claude/commands/plan.md",
+    "root/.claude/commands/build.md",
+    "root/.claude/commands/qa.md",
+    "root/.claude/commands/sprint.md",
     TASK_CONTRACT_FILE_NAME,
     "docs/architecture.md",
     "docs/golden-principles.md",
     "docs/sprint-workflow.md",
     "docs/java-dev-conventions.md",
     "docs/frontend-dev-conventions.md",
+    "docs/frontend/README.md",
+    "docs/frontend/rules.md",
+    "docs/frontend/code-design.md",
+    "docs/frontend/ui-design.md",
+    *FRONTEND_REFERENCE_REL_PATHS,
     "docs/contracts/TEMPLATE.md",
 )
 REPO_ROOT_PREFIX = "root/"
@@ -110,6 +160,7 @@ MIGRATIONS: dict[str, tuple[str, str]] = {
     "2.0.0": ("2.1.0", "migrate_runtime_versioning"),
     "2.1.0": ("2.2.1", "migrate_runtime_versioning"),
     "2.2.1": ("2.2.2", "migrate_runtime_versioning"),
+    "2.2.2": ("2.3.0", "migrate_runtime_versioning"),
 }
 
 

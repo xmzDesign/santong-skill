@@ -17,11 +17,13 @@ CHECKLIST = [
     "5. Docs updated if behavior changed?",
     "6. Do all newly added/modified functions and methods include clear Chinese comments?",
     "7. If Java/MyBatis/SQL changed, convention-check.py --changed-only has no FAIL and WARN is fixed or explained?",
+    "8. If frontend/UI changed, frontend-dev-conventions + frontend three-layer rules were read and applied?",
+    "9. If frontend/UI changed, no hardcoded colors, unexplained inline style, naked global overrides, missing loading/empty/error/disabled/focus-visible states?",
 ]
 
 TASK_HARNESS_CHECKLIST = [
-    "8. If this sprint maps to active bucket task file, unit tests passed before passes=true?",
-    "9. QA report is recorded (non-blocking), and progress logs are updated?",
+    "10. If this sprint maps to active bucket task file, unit tests passed before passes=true?",
+    "11. QA report is recorded (non-blocking), and progress logs are updated?",
 ]
 
 

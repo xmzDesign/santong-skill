@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>README · BYAI Design System v1</title>
+<link rel="stylesheet" href="assets/fonts.css" />
+<link rel="stylesheet" href="tokens/tokens.css" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 25px;
+    color: var(--fg-default);
+    background: var(--bg-canvas);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "ss01", "ss02", "cv02", "cv11";
+  }
+
+  /* ============ Page layout ============ */
+  .doc {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 720px);
+    gap: var(--space-8);
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: var(--space-6) var(--space-6) var(--space-10);
+  }
+  @media (max-width: 900px) {
+    .doc { grid-template-columns: 1fr; }
+    .doc__toc { display: none; }
+  }
+
+  /* ============ Top strip ============ */
+  .doc-top {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: var(--space-5) var(--space-6);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: var(--font-tracking-tight);
+    color: var(--fg-strong);
+    text-decoration: none;
+  }
+  .brand .dot {
+    width: 18px; height: 18px;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(135deg, var(--color-amber-500), var(--color-amber-700));
+    box-shadow: 0 1px 2px rgba(163, 110, 16, 0.25);
+  }
+  .brand__sub {
+    font-family: var(--font-body);
+    font-weight: var(--font-weight-regular);
+    font-size: 13px;
+    color: var(--fg-muted);
+    margin-left: 6px;
+  }
+  .doc-top__right {
+    display: flex;
+    gap: var(--space-4);
+    align-items: center;
+    font-size: var(--font-size-caption);
+    color: var(--fg-muted);
+  }
+  .doc-top__right a { color: var(--fg-muted); text-decoration: none; }
+  .doc-top__right a:hover { color: var(--fg-strong); }
+  .ver {
+    padding: 2px 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    background: var(--intent-primary-surface);
+    color: var(--intent-primary-text-on-surface);
+    border-radius: var(--radius-sm);
+  }
+
+  /* ============ TOC (sticky sidebar) ============ */
+  .doc__toc {
+    position: sticky;
+    top: var(--space-6);
+    align-self: start;
+    padding-top: var(--space-4);
+    font-size: 13px;
+  }
+  .toc__eyebrow {
+    font-size: 10px;
+    font-weight: var(--font-weight-medium);
+    letter-spacing: var(--font-tracking-wider);
+    text-transform: uppercase;
+    color: var(--fg-subtle);
+    margin-bottom: var(--space-2);
+  }
+  .toc__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    border-left: 1px solid var(--border-subtle);
+  }
+  .toc__list li { margin: 0; }
+  .toc__list a {
+    display: block;
+    padding: 4px var(--space-3);
+    color: var(--fg-muted);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    margin-left: -1px;
+    transition: color var(--motion-duration-fast), border-color var(--motion-duration-fast);
+  }
+  .toc__list a:hover { color: var(--fg-strong); border-left-color: var(--border-default); }
+
+  /* ============ Article ============ */
+  .doc__article { min-width: 0; }
+
+  .doc__hero {
+    padding-top: var(--space-4);
+    padding-bottom: var(--space-8);
+    border-bottom: 1px solid var(--border-subtle);
+    margin-bottom: var(--space-8);
+  }
+  .doc__eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--fg-brand);
+    margin-bottom: var(--space-3);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .doc__title {
+    font-family: var(--font-display);
+    font-size: 44px;
+    line-height: 50px;
+    letter-spacing: -0.025em;
+    font-weight: var(--font-weight-semibold);
+    color: var(--fg-strong);
+    margin: 0 0 var(--space-4);
+  }
+  .doc__tagline {
+    font-family: var(--font-display);
+    font-size: 21px;
+    line-height: 30px;
+    font-style: italic;
+    font-weight: var(--font-weight-regular);
+    color: var(--fg-brand);
+    margin: 0 0 var(--space-4);
+    max-width: 560px;
+  }
+  .doc__tagline-cn {
+    font-size: 16px;
+    color: var(--fg-muted);
+    margin: 0 0 var(--space-4);
+  }
+  .doc__lede {
+    font-size: 16px;
+    line-height: 26px;
+    color: var(--fg-default);
+    max-width: 620px;
+    margin: 0;
+  }
+
+  /* Headings */
+  h2 {
+    font-family: var(--font-display);
+    font-size: 28px;
+    line-height: 34px;
+    letter-spacing: -0.015em;
+    font-weight: var(--font-weight-semibold);
+    color: var(--fg-strong);
+    margin: var(--space-8) 0 var(--space-3);
+    scroll-margin-top: var(--space-6);
+  }
+  h2:first-of-type { margin-top: var(--space-6); }
+  h3 {
+    font-family: var(--font-display);
+    font-size: 19px;
+    line-height: 26px;
+    font-weight: var(--font-weight-semibold);
+    color: var(--fg-strong);
+    margin: var(--space-6) 0 var(--space-2);
+    scroll-margin-top: var(--space-6);
+  }
+  h2 + h3 { margin-top: var(--space-4); }
+  p { margin: 0 0 var(--space-4); }
+  strong { font-weight: var(--font-weight-semibold); color: var(--fg-strong); }
+  em { font-style: italic; }
+  code {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    background: var(--bg-surface-subtle);
+    color: var(--fg-strong);
+    padding: 1px 6px;
+    border-radius: var(--radius-xs);
+    border: 1px solid var(--border-subtle);
+  }
+  a.inline { color: var(--intent-info-text); text-decoration: none; border-bottom: 1px solid var(--border-default); }
+  a.inline:hover { border-bottom-color: var(--fg-brand); color: var(--fg-brand); }
+
+  /* Lists */
+  ul { padding-left: 20px; margin: 0 0 var(--space-4); }
+  ul li { margin-bottom: 6px; }
+  ul li::marker { color: var(--fg-subtle); }
+
+  /* File tree */
+  pre.tree {
+    background: var(--bg-surface-subtle);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 20px;
+    color: var(--fg-default);
+    overflow-x: auto;
+    margin: 0 0 var(--space-4);
+    white-space: pre;
+  }
+  pre.tree .dim { color: var(--fg-subtle); }
+  pre.tree .star { color: var(--fg-brand); font-weight: var(--font-weight-semibold); }
+  pre.tree a { color: var(--intent-info-text); text-decoration: none; }
+  pre.tree a:hover { text-decoration: underline; }
+
+  /* Callout */
+  .callout {
+    padding: var(--space-3) var(--space-4);
+    background: var(--intent-info-surface);
+    border-left: 3px solid var(--intent-info-border);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    font-size: 14px;
+    line-height: 22px;
+    color: var(--intent-info-text);
+    margin: var(--space-3) 0 var(--space-5);
+  }
+  .callout strong { color: var(--intent-info-text); }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin: 0 0 var(--space-5);
+  }
+  table th, table td {
+    padding: var(--space-2) var(--space-3);
+    text-align: left;
+    border-bottom: 1px solid var(--border-subtle);
+    vertical-align: top;
+  }
+  table thead th {
+    font-size: 11px;
+    font-weight: var(--font-weight-medium);
+    letter-spacing: var(--font-tracking-wider);
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    background: var(--bg-surface-subtle);
+    border-bottom-color: var(--border-default);
+  }
+  table tbody tr:last-child td { border-bottom: 0; }
+  table code { font-size: 12px; }
+
+  /* Definitions grid — for the core conventions */
+  .def {
+    margin-bottom: var(--space-4);
+    padding: var(--space-4);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+  }
+  .def__head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+  }
+  .def__num {
+    width: 22px; height: 22px;
+    border-radius: var(--radius-full);
+    background: var(--intent-primary-surface);
+    color: var(--intent-primary-text-on-surface);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: var(--font-weight-semibold);
+    flex-shrink: 0;
+  }
+  .def__title {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: var(--font-weight-semibold);
+    color: var(--fg-strong);
+  }
+  .def p { margin-bottom: 0; font-size: 14px; line-height: 22px; }
+
+  /* Brand arch */
+  .barch {
+    display: grid;
+    grid-template-columns: 180px 1fr 1fr;
+    gap: 0;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin: 0 0 var(--space-5);
+    font-size: 13px;
+  }
+  .barch__row { display: contents; }
+  .barch__cell { padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border-subtle); }
+  .barch__row:last-child .barch__cell { border-bottom: 0; }
+  .barch__row--head .barch__cell {
+    background: var(--bg-surface-subtle);
+    font-size: 11px;
+    font-weight: var(--font-weight-medium);
+    letter-spacing: var(--font-tracking-wider);
+    text-transform: uppercase;
+    color: var(--fg-muted);
+  }
+  .barch__brand { font-family: var(--font-display); font-weight: var(--font-weight-semibold); color: var(--fg-strong); }
+  .barch__brand-sub { font-size: 11px; color: var(--fg-muted); font-family: var(--font-body); font-weight: var(--font-weight-regular); margin-top: 2px; }
+  .barch .byai .barch__brand::before, .barch .telos .barch__brand::before, .barch .lead .barch__brand::before {
+    content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 8px; vertical-align: 2px;
+    background: var(--color-amber-600);
+  }
+  .barch .telos .barch__brand::before { background: var(--color-amber-800); }
+  .barch .lead .barch__brand::before { background: var(--color-amber-400); box-shadow: 0 0 0 2px rgba(246, 196, 85, 0.3); }
+
+  /* Version history */
+  .versions { display: flex; flex-direction: column; gap: var(--space-2); margin: 0 0 var(--space-5); }
+  .ver-row {
+    display: grid;
+    grid-template-columns: 80px 110px 1fr;
+    gap: var(--space-3);
+    padding: var(--space-2) 0;
+    font-size: 13px;
+    border-bottom: 1px dashed var(--border-subtle);
+  }
+  .ver-row__tag { font-family: var(--font-mono); font-weight: var(--font-weight-semibold); color: var(--fg-strong); }
+  .ver-row__date { font-family: var(--font-mono); color: var(--fg-muted); }
+  .ver-row__desc { color: var(--fg-default); }
+  .ver-row--current .ver-row__tag { color: var(--fg-brand); }
+
+  /* Footer */
+  .doc-foot {
+    max-width: 1040px;
+    margin: var(--space-10) auto 0;
+    padding: var(--space-5) var(--space-6) var(--space-6);
+    border-top: 1px solid var(--border-subtle);
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--font-size-caption);
+    color: var(--fg-subtle);
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ Top strip ============ -->
+<header class="doc-top">
+  <a href="index.html" class="brand">
+    <span class="dot"></span>
+    <span>BYAI</span>
+    <span class="brand__sub">Design System</span>
+  </a>
+  <div class="doc-top__right">
+    <a href="index.html">← Index</a>
+    <a href="packages/ui/showcase.html">Components</a>
+    <a href="spec/01-philosophy.md">Spec</a>
+    <span class="ver">v1.2</span>
+  </div>
+</header>
+
+<!-- ============ Doc body ============ -->
+<div class="doc">
+
+  <!-- ====== TOC sidebar ====== -->
+  <aside class="doc__toc">
+    <div class="toc__eyebrow">On this page</div>
+    <ul class="toc__list">
+      <li><a href="#anchors">设计锚点</a></li>
+      <li><a href="#usage">使用本包的三种方式</a></li>
+      <li><a href="#filemap">文件地图</a></li>
+      <li><a href="#conventions">核心约定</a></li>
+      <li><a href="#brand">品牌架构</a></li>
+      <li><a href="#versions">版本</a></li>
+      <li><a href="#license">许可</a></li>
+    </ul>
+  </aside>
+
+  <!-- ====== Article ====== -->
+  <article class="doc__article">
+
+    <div class="doc__hero">
+      <div class="doc__eyebrow">
+        <span>Version 1.2 · 2026-04-21</span>
+      </div>
+      <h1 class="doc__title">BYAI Design System v1</h1>
+      <p class="doc__tagline">"One system. Every interface. BYAI, Telos AI, LeadSpark."</p>
+      <p class="doc__tagline-cn">一套规范，统驭百应、Telos AI、LeadSpark 的所有界面。</p>
+      <p class="doc__lede">
+        B2B SaaS / AI-native Agent 产品的视觉与交互规范，对标
+        Linear / Vercel / Stripe / Anthropic 的内部 Design Infrastructure 标准。
+        <strong>定位</strong>：给 AI 直接消费的 design spec。任何 Agent 读完本包后，
+        都能输出视觉、交互、文案层面一致的界面。
+      </p>
+    </div>
+
+    <!-- ============ 设计锚点 ============ -->
+    <h2 id="anchors">设计锚点</h2>
+    <ul>
+      <li><strong>视觉气质</strong>：Anthropic editorial warmth + Linear information density</li>
+      <li><strong>色彩模式</strong>：浅色专用（暗色模式非本期交付目标）</li>
+      <li><strong>语言</strong>：简体中文 + English（双字体堆栈）</li>
+      <li><strong>产品形态</strong>：Hybrid —— Dashboard 主视图 + 常驻 Agent Copilot 侧栏</li>
+      <li><strong>密度档位</strong>：Compact / Comfortable (default) / Spacious 三档</li>
+      <li><strong>色觉</strong>：amber / blue 为主二元轴（creator 红绿色弱，拒绝 red/green 单编码）</li>
+    </ul>
+
+    <!-- ============ 使用方式 ============ -->
+    <h2 id="usage">使用本包的三种方式</h2>
+
+    <h3>方式 A · AI 全量吃入（最可靠）</h3>
+    <p>
+      把 <code>README</code> + <code>spec/</code> 全部内容拼接为 system prompt 喂给 AI。
+      Token 量约 60–80K，适合 Claude / GPT-4o 级模型。
+    </p>
+
+    <h3>方式 B · 按需加载（推荐，省 token）</h3>
+    <p>
+      第一轮只喂 <code>README</code> + <code>spec/01-philosophy.md</code> + <code>tokens/tokens.json</code>
+      + <code>spec/appendix-c-ai-consumption.md</code>。AI 遇到具体任务时，按下表按需拉取单模块：
+    </p>
+    <table>
+      <thead><tr><th>任务类型</th><th>按需加载文件</th></tr></thead>
+      <tbody>
+        <tr><td>画 Button / Input / Table 等具象组件</td><td><code>06-components.md</code></td></tr>
+        <tr><td>画 Streaming / Tool call / Citation 等 Agent 界面</td><td><code>07-agent-patterns.md</code></td></tr>
+        <tr><td>处理 Loading / Empty / Error 态</td><td><code>08-states.md</code></td></tr>
+        <tr><td>选图表类型、画仪表板</td><td><code>09-data-viz.md</code></td></tr>
+        <tr><td>写按钮文案、错误提示</td><td><code>10-voice-microcopy.md</code></td></tr>
+      </tbody>
+    </table>
+
+    <h3>方式 C · 视觉 Ground Truth（最稳）</h3>
+    <p>
+      让 AI 先读 <code>pages/</code> 下的 12 张基线 HTML，再读 spec。AI 会以像素级范本为参照生成新页面，
+      一致性最高。
+    </p>
+    <div class="callout">
+      <strong>人类用户</strong>直接双击根目录 <code>index.html</code> 即可进入所有页面的入口；双击
+      <code>packages/ui/showcase.html</code> 进入 @byai/ui 组件画廊。
+    </div>
+
+    <!-- ============ 文件地图 ============ -->
+    <h2 id="filemap">文件地图</h2>
+<pre class="tree">byai-ds-v1/
+├── <a href="index.html">index.html</a>                              <span class="dim">← 首页入口 · 所有页面的 gallery</span>
+├── <a href="readme.html">readme.html</a>                            <span class="dim">← 你在这里（编辑化 HTML 版）</span>
+├── <span class="dim">README.md</span>                               <span class="dim">源文本（markdown 版）</span>
+│
+├── spec/                                  <span class="dim">规范主体（10 模块 + 4 附录）</span>
+│   ├── 01-philosophy.md                   <span class="dim">产品哲学与五条 Design Tenet</span>
+│   ├── 02-tokens-primitives.md            <span class="dim">原子层：颜色 / 字体 / 间距等基元</span>
+│   ├── 03-tokens-semantic.md              <span class="dim">语义层：意图 → 基元的映射</span>
+│   ├── 04-typography.md                   <span class="dim">9 级字阶 · 中英配对 · 数字字体</span>
+│   ├── 05-layout-grid.md                  <span class="dim">Shell 骨架 / 栅格 / 密度 / 响应式</span>
+│   ├── 06-components.md                   <span class="dim">40+ 组件完整 API</span>
+│   ├── 07-agent-patterns.md          <span class="star">★</span>    <span class="dim">Agent-native 模式集（最具差异化）</span>
+│   ├── 08-states.md                       <span class="dim">Loading / Empty / Error / Success / Onboarding</span>
+│   ├── 09-data-viz.md                     <span class="dim">图表选型 · 配色 · Table 模式</span>
+│   ├── 10-voice-microcopy.md              <span class="dim">中英双语文案规范 · Agent persona</span>
+│   │
+│   ├── appendix-a-accessibility.md        <span class="dim">WCAG 2.2 AA · 键盘 · 色觉差异</span>
+│   ├── appendix-b-motion.md               <span class="dim">缓动 · 时长 · 编排</span>
+│   ├── appendix-c-ai-consumption.md  <span class="star">★</span>    <span class="dim">AI 消费层 · Few-shot · Prompt 模板</span>
+│   └── appendix-d-antipatterns.md         <span class="dim">反例集：AI 最常犯的通病清单</span>
+│
+├── tokens/                                <span class="dim">机器可解析 Token</span>
+│   ├── tokens.json                        <span class="dim">W3C DTCG 格式 · 全量原子 + 语义</span>
+│   ├── tokens.css                         <span class="dim">CSS Custom Properties 版</span>
+│   └── tailwind.config.js                 <span class="dim">Tailwind v4 config 映射</span>
+│
+├── assets/                                <span class="dim">共享字体与 Shell 样式</span>
+│   ├── fonts.css                          <span class="dim">统一字体堆栈加载</span>
+│   └── shell.css                          <span class="dim">Topbar / Nav / Main / Agent 共享样式</span>
+│
+├── <a href="packages/ui/showcase.html">packages/ui/</a>                         <span class="dim">React 组件库 @byai/ui</span>
+│   ├── package.json                       <span class="dim">npm 包元数据（25 组件 · 零运行时依赖）</span>
+│   ├── tsconfig.json                      <span class="dim">TypeScript strict 配置</span>
+│   ├── README.md                          <span class="dim">包级使用文档</span>
+│   ├── showcase.html                <span class="star">★</span>    <span class="dim">组件画廊（静态 gallery）</span>
+│   └── src/
+│       ├── index.ts                       <span class="dim">公开 API barrel export</span>
+│       ├── styles.css                     <span class="dim">组件 CSS（消费 tokens.css）</span>
+│       ├── lib/cn.ts                      <span class="dim">classname 工具</span>
+│       ├── primitives.tsx                 <span class="dim">Button/Input/Card/Tag/Avatar 等 11 个</span>
+│       ├── navigation.tsx                 <span class="dim">Tabs/Breadcrumb/Segmented/Pagination</span>
+│       ├── feedback.tsx                   <span class="dim">Skeleton/Progress</span>
+│       ├── shell.tsx                      <span class="dim">AppShell/Topbar/Nav</span>
+│       └── agent.tsx                 <span class="star">★</span>    <span class="dim">Message/ToolCard/Citation/Streaming/Composer</span>
+│
+└── pages/                                 <span class="dim">视觉 Ground Truth · 12 张基线页</span>
+    │
+    │   <span class="dim">— 核心 5 页 —</span>
+    ├── <a href="pages/01-login.html">01-login.html</a>                      <span class="dim">登录 · 品牌露出</span>
+    ├── <a href="pages/02-dashboard.html">02-dashboard.html</a>            <span class="star">★</span>     <span class="dim">主仪表板 · Shell · KPI · Chart · Copilot</span>
+    ├── <a href="pages/03-table.html">03-table.html</a>                      <span class="dim">高密度 Lead Inbox · 筛选 · 批量操作</span>
+    ├── <a href="pages/04-chat.html">04-chat.html</a>                 <span class="star">★</span>     <span class="dim">Agent Copilot · Streaming · HITL · Tool call</span>
+    ├── <a href="pages/05-settings.html">05-settings.html</a>                   <span class="dim">设置 · 表单 · Danger zone</span>
+    │
+    │   <span class="dim">— 扩展 7 页 —</span>
+    ├── <a href="pages/06-lead-detail.html">06-lead-detail.html</a>                <span class="dim">Lead 详情 · 时间线 · Agent 活动轨迹</span>
+    ├── <a href="pages/07-agent-studio.html">07-agent-studio.html</a>         <span class="star">★</span>     <span class="dim">Agent Builder · Prompt · 工具 · 知识 · 护栏</span>
+    ├── <a href="pages/08-billing.html">08-billing.html</a>                    <span class="dim">订阅 · 用量 · 发票 · 超额预警</span>
+    ├── <a href="pages/09-team.html">09-team.html</a>                       <span class="dim">成员 · 角色 · 权限矩阵 · 邀请流</span>
+    ├── <a href="pages/10-audit-log.html">10-audit-log.html</a>                  <span class="dim">审计日志 · Agent 行为追踪 · 合规导出</span>
+    ├── <a href="pages/11-integrations.html">11-integrations.html</a>               <span class="dim">连接器市场 · API Key · Webhook</span>
+    └── <a href="pages/12-onboarding.html">12-onboarding.html</a>                 <span class="dim">首运行引导 · 嵌入式 checklist · 空态</span></pre>
+
+    <!-- ============ 核心约定 ============ -->
+    <h2 id="conventions">核心约定（读这份就够上手）</h2>
+
+    <h3>1 · Token 命名规则</h3>
+    <p>三层架构，严格单向依赖：</p>
+<pre class="tree">Primitive (原子)          Semantic (语义)             Component (组件)
+color.warm-grey.100  →   bg.canvas                →  (直接使用语义层)
+color.warm-grey.900  →   fg.default               →
+color.amber.600      →   intent.positive          →
+color.blue.700       →   intent.info              →</pre>
+    <p>
+      <strong>规则</strong>：UI 代码里<strong>禁止直接引用 primitive</strong>，必须通过 semantic token 访问。
+      只有在定义 semantic 时才能引用 primitive。这条是 AI 最容易违反的，务必校验。
+    </p>
+
+    <h3>2 · 色觉差异友好</h3>
+    <p>
+      本系统用 <strong>amber / orange ↔ blue / cyan</strong> 作为二元对比轴，
+      <strong>不使用 red / green 作为唯一状态区分</strong>。
+      Danger 仍使用红色但必须伴随 <strong>图标 + 文字</strong> 双编码，绝不孤立用色。
+    </p>
+
+    <h3>3 · 字体堆栈</h3>
+    <table>
+      <thead><tr><th>用途</th><th>堆栈</th></tr></thead>
+      <tbody>
+        <tr><td>English display (editorial)</td><td><code>Fraunces</code>, <code>Instrument Serif</code>, Georgia, serif</td></tr>
+        <tr><td>English body / UI</td><td><code>Geist</code>, <code>Söhne</code>, ui-sans-serif, system-ui, sans-serif</td></tr>
+        <tr><td>English mono</td><td><code>JetBrains Mono</code>, <code>Geist Mono</code>, ui-monospace, monospace</td></tr>
+        <tr><td>Chinese all</td><td><code>Microsoft YaHei</code>, <code>微软雅黑</code>, <code>PingFang SC</code>, <code>Source Han Sans CN</code>, sans-serif</td></tr>
+      </tbody>
+    </table>
+
+    <h3>4 · 四条不可违反的硬规</h3>
+
+    <div class="def">
+      <div class="def__head"><span class="def__num">1</span><span class="def__title">间距只能取 <code>space.*</code> token 值（4 的倍数）</span></div>
+      <p>违反后果：视觉节奏崩坏。</p>
+    </div>
+    <div class="def">
+      <div class="def__head"><span class="def__num">2</span><span class="def__title">颜色只能用 semantic token，禁止 hex 字面值</span></div>
+      <p>违反后果：语义漂移、品牌微调全量返工。</p>
+    </div>
+    <div class="def">
+      <div class="def__head"><span class="def__num">3</span><span class="def__title">Radius 只能取 token 定义的档位（不能自由 <code>5px</code>）</span></div>
+      <p>违反后果：圆角节奏不统一。</p>
+    </div>
+    <div class="def">
+      <div class="def__head"><span class="def__num">4</span><span class="def__title">组件 state 必须覆盖 5 态</span></div>
+      <p>default / hover / active / focus-visible / disabled。缺一态即键盘用户受损。</p>
+    </div>
+
+    <!-- ============ 品牌架构 ============ -->
+    <h2 id="brand">品牌架构</h2>
+    <p>本规范服务于 BYAI 集团下三条品牌线，所有品牌共享同一套 token 与组件：</p>
+
+    <div class="barch">
+      <div class="barch__row barch__row--head">
+        <div class="barch__cell">品牌</div>
+        <div class="barch__cell">定位</div>
+        <div class="barch__cell">色彩微调</div>
+      </div>
+      <div class="barch__row byai">
+        <div class="barch__cell"><div class="barch__brand">BYAI 百应</div></div>
+        <div class="barch__cell">中国母公司 · 企业 AI 外呼与 Agent 平台</div>
+        <div class="barch__cell">标准 amber 品牌色</div>
+      </div>
+      <div class="barch__row telos">
+        <div class="barch__cell"><div class="barch__brand">Telos AI</div></div>
+        <div class="barch__cell">新加坡实体 · 全球企业客户</div>
+        <div class="barch__cell">保留 amber，logo 偏深</div>
+      </div>
+      <div class="barch__row lead">
+        <div class="barch__cell"><div class="barch__brand">LeadSpark</div></div>
+        <div class="barch__cell">东南亚 Lead 交易平台 · AI 线索质检与竞价分发</div>
+        <div class="barch__cell">amber + 更亮的 signal accent</div>
+      </div>
+    </div>
+
+    <p>三品牌 Logo 区别只在字样，Shell / 组件 / 交互模式完全一致。</p>
+
+    <!-- ============ 版本 ============ -->
+    <h2 id="versions">版本</h2>
+    <div class="versions">
+      <div class="ver-row">
+        <span class="ver-row__tag">v1.0</span>
+        <span class="ver-row__date">2026-04-21</span>
+        <span class="ver-row__desc">Initial release —— 14 spec 文档、3 token 格式、5 张基线页面</span>
+      </div>
+      <div class="ver-row">
+        <span class="ver-row__tag">v1.1</span>
+        <span class="ver-row__date">2026-04-21</span>
+        <span class="ver-row__desc">BYAI 品牌化重命名 + 7 张扩展基线页面（06–12）</span>
+      </div>
+      <div class="ver-row">
+        <span class="ver-row__tag">v1.2</span>
+        <span class="ver-row__date">2026-04-21</span>
+        <span class="ver-row__desc">追加根目录 <code>index.html</code> gallery 首页，所有页面 logo 回链入口</span>
+      </div>
+      <div class="ver-row ver-row--current">
+        <span class="ver-row__tag">v1.3</span>
+        <span class="ver-row__date">2026-04-21</span>
+        <span class="ver-row__desc"><strong>当前</strong> · <code>@byai/ui</code> React 组件库代码化（25 组件）+ README 转 HTML · dark mode 从路线图移除</span>
+      </div>
+    </div>
+    <p style="font-size:13px;color:var(--fg-muted)">
+      后续迭代在文件名带 <code>-v2 / -v3 …</code> 版本号（BYAI 交付偏好）。
+    </p>
+
+    <!-- ============ 许可 ============ -->
+    <h2 id="license">许可</h2>
+    <p>
+      本规范包为 BYAI（<strong>浙江百应科技有限公司</strong>）内部资产，仅供
+      BYAI、Telos AI、LeadSpark 团队及授权协作方使用。转载请保留本声明。
+    </p>
+
+  </article>
+</div>
+
+<!-- ============ Footer ============ -->
+<footer class="doc-foot">
+  <span>© 2026 BYAI · 浙江百应科技有限公司</span>
+  <span>BYAI Design System v1.3</span>
+</footer>
+
+</body>
+</html>

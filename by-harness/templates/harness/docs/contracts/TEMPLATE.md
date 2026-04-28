@@ -39,6 +39,17 @@
 - **build**：编译/构建成功
 - **manual**：需要用户手动验证
 
+### 前端三层规范检查（若适用）
+
+- [ ] 已读取 `.harness/docs/frontend-dev-conventions.md`
+- [ ] 已按任务类型读取 `.harness/docs/frontend/rules.md`
+- [ ] 已按任务类型读取 `.harness/docs/frontend/code-design.md`
+- [ ] 已按任务类型读取 `.harness/docs/frontend/ui-design.md`
+- [ ] 若涉及页面级视觉，已打开 `.harness/docs/frontend/references/byai-ds-v/` 对应 HTML 参考页
+- [ ] 已明确页面类型：Dashboard / Table / Form / Settings / Agent / Data-viz / Login / Onboarding / Other
+- [ ] 验收标准覆盖 loading / empty / error / disabled / focus-visible
+- [ ] 验收标准覆盖 token/硬编码检查、响应式或截图验证
+
 ## 冲刺日志（Sprint Log）
 
 | 迭代轮次 | Generator 输出 | Evaluator 评分 | 问题 |

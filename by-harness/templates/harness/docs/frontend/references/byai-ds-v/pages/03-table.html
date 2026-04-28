@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Leads · BYAI</title>
+<link rel="stylesheet" href="../assets/fonts.css" />
+<link rel="stylesheet" href="../tokens/tokens.css" />
+<link rel="stylesheet" href="../assets/shell.css" />
+<style>
+  /* ---------- Toolbar ---------- */
+  .toolbar {
+    padding: var(--space-3) var(--space-8);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-subtle);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+  .search {
+    flex: 0 0 280px;
+    height: 28px;
+    padding: 0 var(--space-3);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    background: var(--bg-surface-subtle);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    color: var(--fg-muted);
+    font-size: var(--font-size-caption);
+  }
+  .search input {
+    border: 0;
+    background: transparent;
+    outline: none;
+    flex: 1;
+    font-family: inherit;
+    font-size: var(--font-size-caption);
+    color: var(--fg-strong);
+  }
+  .filter-chip {
+    height: 28px;
+    padding: 0 var(--space-2);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--bg-surface);
+    border: 1px dashed var(--border-default);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-caption);
+    color: var(--fg-muted);
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .filter-chip:hover { border-style: solid; color: var(--fg-default); background: var(--bg-hover); }
+  .filter-chip .icon { width: 12px; height: 12px; }
+  .filter-chip.is-on {
+    border-style: solid;
+    border-color: var(--border-default);
+    color: var(--fg-default);
+    background: var(--bg-surface);
+  }
+  .filter-chip .key { color: var(--fg-muted); font-weight: var(--font-weight-regular); }
+  .filter-chip .op { color: var(--fg-subtle); margin: 0 2px; }
+  .filter-chip .val { color: var(--fg-strong); font-weight: var(--font-weight-medium); }
+  .filter-chip .remove {
+    width: 14px; height: 14px;
+    border-radius: var(--radius-xs);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--fg-subtle);
+    margin-left: 2px;
+  }
+  .filter-chip .remove:hover { background: var(--bg-active); color: var(--fg-default); }
+
+  .toolbar__spacer { flex: 1; }
+  .toolbar__meta {
+    font-size: var(--font-size-caption);
+    color: var(--fg-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- Selection bar ---------- */
+  .selection-bar {
+    padding: var(--space-2) var(--space-8);
+    background: var(--color-amber-50);
+    border-bottom: 1px solid var(--color-amber-200);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-size: var(--font-size-small);
+    color: var(--color-amber-800);
+  }
+  .selection-bar strong { font-weight: var(--font-weight-semibold); font-variant-numeric: tabular-nums; }
+  .selection-bar__actions { margin-left: auto; display: flex; gap: var(--space-2); }
+
+  /* ---------- Data table ---------- */
+  .table-wrap {
+    background: var(--bg-surface);
+    overflow-x: auto;
+  }
+  .data-tbl {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: var(--font-size-small);
+  }
+  .data-tbl thead th {
+    position: sticky;
+    top: 0;
+    background: var(--bg-surface-subtle);
+    z-index: 1;
+    padding: var(--space-2) var(--space-3);
+    text-align: left;
+    font-size: var(--font-size-caption);
+    font-weight: var(--font-weight-medium);
+    color: var(--fg-muted);
+    text-transform: uppercase;
+    letter-spacing: var(--font-tracking-wider);
+    border-bottom: 1px solid var(--border-subtle);
+    white-space: nowrap;
+    height: 32px;
+  }
+  .data-tbl thead th.sortable { cursor: pointer; user-select: none; }
+  .data-tbl thead th.sortable:hover { color: var(--fg-default); }
+  .data-tbl thead th .sort {
+    display: inline-flex;
+    margin-left: 4px;
+    color: var(--fg-brand);
+  }
+  .data-tbl tbody td {
+    padding: 0 var(--space-3);
+    height: var(--row-h);
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--fg-default);
+    vertical-align: middle;
+    white-space: nowrap;
+    line-height: 1;
+  }
+  .data-tbl tbody tr:hover td { background: var(--bg-hover); }
+  .data-tbl tbody tr.is-selected td { background: var(--bg-selected); }
+  .data-tbl tbody tr.is-selected td:first-child { box-shadow: inset 3px 0 0 var(--color-amber-600); }
+
+  .data-tbl .checkbox {
+    width: 14px; height: 14px;
+    border: 1.5px solid var(--border-default);
+    border-radius: var(--radius-xs);
+    display: inline-flex; align-items: center; justify-content: center;
+    vertical-align: -2px;
+    background: var(--bg-surface);
+    cursor: pointer;
+  }
+  .data-tbl .checkbox.is-on {
+    background: var(--color-amber-600);
+    border-color: var(--color-amber-600);
+  }
+  .data-tbl .checkbox.is-on::after {
+    content: '';
+    width: 8px; height: 4px;
+    border-left: 1.5px solid #fff;
+    border-bottom: 1.5px solid #fff;
+    transform: rotate(-45deg) translate(1px, -1px);
+  }
+
+  .col-num { width: 32px; }
+  .col-name { min-width: 200px; }
+  .col-score { text-align: right; }
+  .col-actions { width: 32px; text-align: right; }
+
+  .lead-name {
+    font-weight: var(--font-weight-medium);
+    color: var(--fg-strong);
+  }
+  .lead-email {
+    font-size: 11px;
+    color: var(--fg-muted);
+    margin-top: 2px;
+  }
+
+  .score-bar {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-variant-numeric: tabular-nums;
+    font-family: var(--font-mono);
+    font-weight: var(--font-weight-medium);
+  }
+  .score-bar .track {
+    width: 40px; height: 4px;
+    background: var(--bg-active);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+  }
+  .score-bar .fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-amber-500), var(--color-amber-700));
+  }
+
+  /* ---------- Pagination ---------- */
+  .pager {
+    padding: var(--space-3) var(--space-8);
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .pager__meta {
+    font-size: var(--font-size-caption);
+    color: var(--fg-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .pager__controls {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+  .pager__btn {
+    width: 28px; height: 28px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background: var(--bg-surface);
+    color: var(--fg-muted);
+    font-family: inherit;
+    font-size: var(--font-size-caption);
+    cursor: pointer;
+    font-variant-numeric: tabular-nums;
+  }
+  .pager__btn:hover { background: var(--bg-hover); color: var(--fg-default); }
+  .pager__btn.is-current {
+    background: var(--intent-primary-bg);
+    border-color: var(--intent-primary-bg);
+    color: var(--intent-primary-fg);
+  }
+  .pager__btn.is-disabled { opacity: 0.4; cursor: not-allowed; }
+  .pager .ellipsis { color: var(--fg-subtle); padding: 0 4px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ==================== Topbar ==================== -->
+  <header class="topbar">
+    <a href="../index.html" class="topbar__brand" title="Back to index"><span class="dot"></span><span>BYAI</span></a>
+    <div class="topbar__search" role="search">
+      <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <span>Search leads, campaigns, or docs…</span>
+      <span class="kbd">⌘K</span>
+    </div>
+    <div class="topbar__actions">
+      <button class="icon-btn" aria-label="Notifications"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
+      <span class="topbar__avatar">WL</span>
+    </div>
+  </header>
+
+  <!-- ==================== Left Nav ==================== -->
+  <nav class="nav" aria-label="Primary">
+    <div class="nav__section-title">Workspace</div>
+    <a class="nav__item" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Overview</a>
+    <a class="nav__item" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Campaigns<span class="badge">12</span></a>
+    <a class="nav__item is-active" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Leads<span class="badge">2,847</span></a>
+    <a class="nav__item" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>Agents</a>
+    <a class="nav__item" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>Analytics</a>
+
+    <div class="nav__section-title">Views</div>
+    <a class="nav__item" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>All leads</a>
+    <a class="nav__item" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>My starred</a>
+    <a class="nav__item" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Needs approval<span class="badge">8</span></a>
+  </nav>
+
+  <!-- ==================== Main ==================== -->
+  <main class="main" style="overflow: hidden; display: flex; flex-direction: column;">
+    <div class="page-header" style="padding-bottom: var(--space-3);">
+      <div class="page-header__breadcrumb">
+        <a href="#">Workspace</a>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        <span>Leads</span>
+      </div>
+      <div class="page-header__row">
+        <div>
+          <h1 class="page-header__title">Leads</h1>
+          <p class="page-header__subtitle">All leads across active campaigns · 2,847 total</p>
+        </div>
+        <div class="page-header__actions">
+          <button class="btn btn--secondary">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export CSV
+          </button>
+          <button class="btn btn--primary">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Import leads
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="search">
+        <svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input placeholder="Filter by name, email, company…" />
+      </div>
+      <button class="filter-chip is-on">
+        <span class="key">Status</span>
+        <span class="op">is</span>
+        <span class="val">Qualified · In review</span>
+        <span class="remove"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+      </button>
+      <button class="filter-chip is-on">
+        <span class="key">Source</span>
+        <span class="op">=</span>
+        <span class="val">Philippines</span>
+        <span class="remove"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+      </button>
+      <button class="filter-chip">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add filter
+      </button>
+      <div class="toolbar__spacer"></div>
+      <div class="toolbar__meta">Showing 1–12 of 2,847</div>
+      <button class="icon-btn" aria-label="Density"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+      <button class="icon-btn" aria-label="Columns"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg></button>
+    </div>
+
+    <!-- Selection bar -->
+    <div class="selection-bar">
+      <strong>3 selected</strong>
+      <span>of 2,847 leads</span>
+      <div class="selection-bar__actions">
+        <button class="btn btn--sm btn--secondary">Assign owner</button>
+        <button class="btn btn--sm btn--secondary">Change status</button>
+        <button class="btn btn--sm btn--secondary">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          Delete
+        </button>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap" style="flex: 1;">
+      <table class="data-tbl">
+        <thead>
+          <tr>
+            <th class="col-num"><span class="checkbox"></span></th>
+            <th class="col-name sortable">Lead</th>
+            <th>Source</th>
+            <th class="col-score sortable">Score <span class="sort">↓</span></th>
+            <th>Status</th>
+            <th>Owner</th>
+            <th class="sortable">Created</th>
+            <th class="col-actions"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="is-selected">
+            <td><span class="checkbox is-on"></span></td>
+            <td>
+              <div class="lead-name">Maria Santos</div>
+              <div class="lead-email">maria.santos@mail.ph · +63 917 ••• 4821</div>
+            </td>
+            <td>PH × Insurance</td>
+            <td class="col-score"><span class="score-bar"><span class="track"><span class="fill" style="width: 94%"></span></span>94</span></td>
+            <td><span class="tag tag--primary"><span class="dot"></span>Qualified</span></td>
+            <td><span class="avatar avatar--amber">WL</span>Wang Lei</td>
+            <td class="text-muted">2 min ago</td>
+            <td class="col-actions"><button class="icon-btn"><svg class="icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button></td>
+          </tr>
+          <tr class="is-selected">
+            <td><span class="checkbox is-on"></span></td>
+            <td>
+              <div class="lead-name">Juan Dela Cruz</div>
+              <div class="lead-email">jdelacruz@gmail.com · +63 918 ••• 7210</div>
+            </td>
+            <td>PH × Insurance</td>
+            <td class="col-score"><span class="score-bar"><span class="track"><span class="fill" style="width: 89%"></span></span>89</span></td>
+            <td><span class="tag tag--primary"><span class="dot"></span>Qualified</span></td>
+            <td><span class="avatar avatar--amber">WL</span>Wang Lei</td>
+            <td class="text-muted">8 min ago</td>
+            <td class="col-actions"><button class="icon-btn"><svg class="icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button></td>
+          </tr>
+          <tr class="is-selected">
+            <td><span class="checkbox is-on"></span></td>
+            <td>
+              <div class="lead-name">Andrea Ramos</div>
+              <div class="lead-email">a.ramos@outlook.com · +63 915 ••• 3344</div>
+            </td>
+            <td>PH × Insurance</td>
+            <td class="col-score"><span class="score-bar"><span class="track"><span class="fill" style="width: 87%"></span></span>87</span></td>
+            <td><span class="tag tag--info"><span class="dot"></span>In review</span></td>
+            <td><span class="avatar avatar--blue">LH</span>Liu Hao</td>
+            <td class="text-muted">14 min ago</td>
+            <td class="col-actions"><button class="icon-btn"><svg class="icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button></td>
+          </tr>
+          <tr>
+            <td><span class="checkbox"></span></td>
+            <td>
+              <div class="lead-name">陈美玲</div>
+              <div class="lead-email">chen.ml@mail.ph · +63 927 ••• 8890</div>
+            </td>
+            <td>PH × Insurance</td>
+            <td class="col-score"><span class="score-bar"><span class="track"><span class="fill" style="width: 82%"></span></span>82</span></td>
+            <td><span class="tag tag--info"><span class="dot"></span>In review</span></td>
+            <td><span class="avatar avatar--blue">LH</span>Liu Hao</td>
+            <td class="text-muted">32 min ago</td>
+            <td class="col-actions"><button class="icon-btn"><svg class="icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button></td>
+          </tr>
+          <tr>
+            <td><span class="checkbox"></span></td>
+            <td>
+              <div class="lead-name">Rafael Tan</div>
+              <div class="lead-email">r.tan@gmail.com · +63 922 ••• 5501</div>
+            </td>
+            <td>PH × Insurance</td>
+            <td class="col-score"><span class="score-bar"><span class="track"><span class="fill" style="width: 78%"></span></span>78</span></td>
+            <td><span class="tag tag--agent"><span class="dot"></span>Awaiting you</span></td>
+            <td><span class="avatar avatar--violet">Ω</span>Orion-4</td>
+            <td class="text-muted">48 min ago</td>
+            <td class="col-actions"><button class="icon-btn"><svg class="icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button></td>
+          </tr>
+          <tr>
+            <td><span class="checkbox"></span></td>
+            <td>
+              <div class="lead-name">Liza Mercado</div>
+              <div class="lead-email">liza.m@icloud.com · +63 928 ••• 6712</div>
+            </td>
+            <td>PH × Insurance</td>
+            <td class="col-score"><span class="score-bar"><span class="track"><span class="fill" style="width: 73%"></span></span>73</span></td>
+            <td><span class="tag tag--primary"><span class="dot"></span>Qualified</span></td>
+            <td><span class="avatar avatar--amber">WL</span>Wang Lei</td>
+            <td class="text-muted">1 h ago</td>
+            <td class="col-actions"><button class="icon-btn"><svg class="icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button></td>
+          </tr>
+          <tr>
+            <td><span class="checkbox"></span></td>
+            <td>
+              <div class="lead-name">Kenji Morales</div>
+              <div class="lead-email">k.morales@mail.ph · +63 917 ••• 9901</div>
+            </td>
+            <td>PH × Insurance</td>
+            <td class="col-score"><span class="score-bar"><span class="track"><span class="fill" style="width: 68%"></span></span>68</span></td>
+            <td><span class="tag tag--info"><span class="dot"></span>In review</span></td>
+            <td><span class="avatar avatar--blue">LH</span>Liu Hao</td>
+            <td class="text-muted">1 h ago</td>
+            <td class="col-actions"><button class="icon-btn"><svg class="icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button></td>
+          </tr>
+          <tr>
+            <td><span class="checkbox"></span></td>
+            <td>
+              <div class="lead-name">Sofia Bautista</div>
+              <div class="lead-email">sbautista@mail.com · +63 910 ••• 2248</div>
+            </td>
+            <td>PH × Insurance</td>
+            <td class="col-score"><span class="score-bar"><span class="track"><span class="fill" style="width: 65%"></span></span>65</span></td>
+            <td><span class="tag"><span class="dot"></span>Contacted</span></td>
+            <td><span class="avatar avatar--teal">ZY</span>Zhang Yu</td>
+            <td class="text-muted">2 h ago</td>
+            <td class="col-actions"><button class="icon-btn"><svg class="icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button></td>
+          </tr>
+          <tr>
+            <td><span class="checkbox"></span></td>
+            <td>
+              <div class="lead-name">Miguel Villanueva</div>
+              <div class="lead-email">m.villa@yahoo.com · +63 933 ••• 1155</div>
+            </td>
+            <td>PH × Insurance</td>
+            <td class="col-score"><span class="score-bar"><span class="track"><span class="fill" style="width: 61%"></span></span>61</span></td>
+            <td><span class="tag"><span class="dot"></span>Contacted</span></td>
+            <td><span class="avatar avatar--teal">ZY</span>Zhang Yu</td>
+            <td class="text-muted">3 h ago</td>
+            <td class="col-actions"><button class="icon-btn"><svg class="icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button></td>
+          </tr>
+          <tr>
+            <td><span class="checkbox"></span></td>
+            <td>
+              <div class="lead-name">周小兰</div>
+              <div class="lead-email">zhou.xl@mail.ph · +63 920 ••• 4437</div>
+            </td>
+            <td>PH × Insurance</td>
+            <td class="col-score"><span class="score-bar"><span class="track"><span class="fill" style="width: 54%"></span></span>54</span></td>
+            <td><span class="tag tag--warning"><span class="dot"></span>Unverified</span></td>
+            <td><span class="avatar">—</span><span class="text-muted">Unassigned</span></td>
+            <td class="text-muted">4 h ago</td>
+            <td class="col-actions"><button class="icon-btn"><svg class="icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button></td>
+          </tr>
+          <tr>
+            <td><span class="checkbox"></span></td>
+            <td>
+              <div class="lead-name">Carmela Reyes</div>
+              <div class="lead-email">carmela@outlook.com · +63 906 ••• 0012</div>
+            </td>
+            <td>PH × Insurance</td>
+            <td class="col-score"><span class="score-bar"><span class="track"><span class="fill" style="width: 48%"></span></span>48</span></td>
+            <td><span class="tag tag--warning"><span class="dot"></span>Unverified</span></td>
+            <td><span class="avatar">—</span><span class="text-muted">Unassigned</span></td>
+            <td class="text-muted">5 h ago</td>
+            <td class="col-actions"><button class="icon-btn"><svg class="icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button></td>
+          </tr>
+          <tr>
+            <td><span class="checkbox"></span></td>
+            <td>
+              <div class="lead-name">Noel Aguilar</div>
+              <div class="lead-email">n.aguilar@mail.com · +63 912 ••• 8821</div>
+            </td>
+            <td>PH × Insurance</td>
+            <td class="col-score"><span class="score-bar"><span class="track"><span class="fill" style="width: 22%"></span></span>22</span></td>
+            <td><span class="tag tag--danger">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              Disqualified</span></td>
+            <td><span class="avatar avatar--violet">Ω</span>Orion-4</td>
+            <td class="text-muted">Yesterday</td>
+            <td class="col-actions"><button class="icon-btn"><svg class="icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pager">
+      <div class="pager__meta">12 of 2,847 · 237 pages</div>
+      <div class="pager__controls">
+        <button class="pager__btn is-disabled" aria-label="Previous">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button class="pager__btn is-current">1</button>
+        <button class="pager__btn">2</button>
+        <button class="pager__btn">3</button>
+        <span class="ellipsis">…</span>
+        <button class="pager__btn">237</button>
+        <button class="pager__btn" aria-label="Next">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+</body>
+</html>

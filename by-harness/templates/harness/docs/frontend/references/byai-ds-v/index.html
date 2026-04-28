@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BYAI Design System v1 · Index</title>
+<link rel="stylesheet" href="assets/fonts.css" />
+<link rel="stylesheet" href="tokens/tokens.css" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-body);
+    font-size: var(--font-size-body);
+    line-height: var(--font-line-body);
+    color: var(--fg-default);
+    background: var(--bg-canvas);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "ss01", "ss02", "cv02", "cv11";
+  }
+
+  /* ============ Page container ============ */
+  .site {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--space-6);
+  }
+
+  /* ============ Top strip ============ */
+  .site-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-5) 0;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: var(--font-tracking-tight);
+    color: var(--fg-strong);
+  }
+  .brand .dot {
+    width: 20px; height: 20px;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(135deg, var(--color-amber-500), var(--color-amber-700));
+    box-shadow: 0 1px 3px rgba(163, 110, 16, 0.25);
+  }
+  .brand__sub {
+    font-family: var(--font-body);
+    font-weight: var(--font-weight-regular);
+    font-size: 13px;
+    color: var(--fg-muted);
+    margin-left: 6px;
+    letter-spacing: 0;
+  }
+  .brand__ver {
+    margin-left: var(--space-2);
+    padding: 2px 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: var(--font-weight-medium);
+    background: var(--intent-primary-surface);
+    color: var(--intent-primary-text-on-surface);
+    border-radius: var(--radius-sm);
+    letter-spacing: 0;
+  }
+  .top-links {
+    display: flex;
+    gap: var(--space-4);
+    align-items: center;
+  }
+  .top-links a {
+    font-size: var(--font-size-small);
+    color: var(--fg-muted);
+    text-decoration: none;
+    font-weight: var(--font-weight-medium);
+    transition: color var(--motion-duration-fast);
+  }
+  .top-links a:hover { color: var(--fg-strong); }
+  .top-links .divider {
+    width: 1px; height: 14px;
+    background: var(--border-default);
+  }
+
+  /* ============ Editorial hero ============ */
+  .hero {
+    padding: var(--space-10) 0 var(--space-8);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .hero__eyebrow {
+    font-size: 11px;
+    font-weight: var(--font-weight-medium);
+    letter-spacing: var(--font-tracking-wider);
+    text-transform: uppercase;
+    color: var(--fg-brand);
+    margin-bottom: var(--space-4);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .hero__eyebrow::before {
+    content: '';
+    width: 24px; height: 1px;
+    background: currentColor;
+  }
+  .hero__title {
+    font-family: var(--font-display);
+    font-size: 56px;
+    line-height: 60px;
+    letter-spacing: -0.03em;
+    font-weight: var(--font-weight-semibold);
+    color: var(--fg-strong);
+    margin: 0 0 var(--space-5);
+    max-width: 900px;
+  }
+  .hero__title em {
+    font-style: italic;
+    font-weight: var(--font-weight-regular);
+    color: var(--fg-brand);
+  }
+  .hero__lede {
+    font-size: 19px;
+    line-height: 30px;
+    color: var(--fg-muted);
+    max-width: 680px;
+    margin: 0 0 var(--space-6);
+  }
+  .hero__meta {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+  }
+  .meta-pill {
+    height: 28px;
+    padding: 0 var(--space-3);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-caption);
+    color: var(--fg-default);
+    font-variant-numeric: tabular-nums;
+  }
+  .meta-pill strong {
+    color: var(--fg-strong);
+    font-weight: var(--font-weight-semibold);
+    font-family: var(--font-mono);
+  }
+
+  /* ============ Section ============ */
+  .sect {
+    padding: var(--space-10) 0 var(--space-6);
+  }
+  .sect__head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: var(--space-6);
+    gap: var(--space-6);
+  }
+  .sect__title {
+    font-family: var(--font-display);
+    font-size: 32px;
+    line-height: 38px;
+    letter-spacing: -0.02em;
+    font-weight: var(--font-weight-semibold);
+    color: var(--fg-strong);
+    margin: 0;
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+  }
+  .sect__count {
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: var(--font-weight-regular);
+    color: var(--fg-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .sect__sub {
+    font-size: var(--font-size-body);
+    color: var(--fg-muted);
+    margin: 0;
+    max-width: 480px;
+    text-align: right;
+    line-height: 22px;
+  }
+
+  /* ============ Foundations row ============ */
+  .found-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-4);
+  }
+  .found-card {
+    padding: var(--space-5);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    transition: border-color var(--motion-duration-base), transform var(--motion-duration-base);
+  }
+  .found-card:hover {
+    border-color: var(--color-amber-300);
+    transform: translateY(-1px);
+  }
+  .found-card__label {
+    font-size: 11px;
+    font-weight: var(--font-weight-medium);
+    letter-spacing: var(--font-tracking-wider);
+    text-transform: uppercase;
+    color: var(--fg-subtle);
+  }
+  .found-card__title {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: var(--font-weight-semibold);
+    color: var(--fg-strong);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .found-card__title .arrow {
+    margin-left: auto;
+    color: var(--fg-subtle);
+    font-size: 18px;
+    transition: transform var(--motion-duration-base), color var(--motion-duration-base);
+  }
+  .found-card:hover .arrow { color: var(--fg-brand); transform: translateX(2px); }
+  .found-card__desc {
+    font-size: var(--font-size-small);
+    color: var(--fg-muted);
+    line-height: 20px;
+    margin: 0;
+  }
+
+  /* ============ Pages grid ============ */
+  .pages-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-5);
+  }
+  @media (max-width: 1100px) { .pages-grid, .found-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 720px) { .pages-grid, .found-grid { grid-template-columns: 1fr; } }
+
+  .pcard {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    color: inherit;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: border-color var(--motion-duration-base), transform var(--motion-duration-base), box-shadow var(--motion-duration-base);
+  }
+  .pcard:hover {
+    border-color: var(--color-amber-300);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px -8px rgba(163, 110, 16, 0.18);
+  }
+
+  /* ---- Card viz header ---- */
+  .pcard__viz {
+    height: 140px;
+    background: var(--bg-surface-subtle);
+    border-bottom: 1px solid var(--border-subtle);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .pcard__num {
+    position: absolute;
+    top: var(--space-3);
+    left: var(--space-3);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: var(--font-weight-medium);
+    color: var(--fg-subtle);
+    letter-spacing: var(--font-tracking-wider);
+    z-index: 2;
+  }
+  .pcard__viz svg { display: block; }
+
+  /* Viz variants */
+  .pcard__viz--amber { background: linear-gradient(135deg, var(--color-amber-50) 0%, var(--bg-surface-subtle) 100%); }
+  .pcard__viz--blue  { background: linear-gradient(135deg, var(--color-blue-50) 0%, var(--bg-surface-subtle) 100%); }
+  .pcard__viz--violet{ background: linear-gradient(135deg, var(--color-violet-50) 0%, var(--bg-surface-subtle) 100%); }
+  .pcard__viz--warm  { background: linear-gradient(135deg, #F5EFE4 0%, var(--bg-surface-subtle) 100%); }
+
+  /* ---- Card body ---- */
+  .pcard__body {
+    padding: var(--space-4) var(--space-5) var(--space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    flex: 1;
+  }
+  .pcard__title {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: var(--font-weight-semibold);
+    color: var(--fg-strong);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .pcard__title .star {
+    font-size: 12px;
+    color: var(--fg-brand);
+  }
+  .pcard__desc {
+    font-size: var(--font-size-small);
+    color: var(--fg-muted);
+    line-height: 20px;
+    margin: 0;
+    flex: 1;
+  }
+  .pcard__tags {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    padding-top: var(--space-2);
+    border-top: 1px dashed var(--border-subtle);
+    margin-top: var(--space-2);
+  }
+  .pcard__tag {
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: var(--font-weight-medium);
+    background: var(--bg-surface-subtle);
+    color: var(--fg-muted);
+    border-radius: var(--radius-sm);
+    letter-spacing: var(--font-tracking-wider);
+    text-transform: uppercase;
+  }
+  .pcard__tag--agent {
+    background: var(--color-violet-50);
+    color: var(--color-violet-700);
+  }
+  .pcard__tag--primary {
+    background: var(--intent-primary-surface);
+    color: var(--intent-primary-text-on-surface);
+  }
+
+  /* ============ Footer ============ */
+  .site-foot {
+    margin-top: var(--space-10);
+    padding: var(--space-8) 0 var(--space-6);
+    border-top: 1px solid var(--border-subtle);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  .brand-arch {
+    display: flex;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+    font-size: var(--font-size-small);
+    color: var(--fg-muted);
+    line-height: 22px;
+  }
+  .brand-arch__item strong {
+    font-family: var(--font-display);
+    color: var(--fg-strong);
+    font-weight: var(--font-weight-semibold);
+    margin-right: 4px;
+  }
+  .brand-arch__divider {
+    color: var(--fg-subtle);
+  }
+  .foot-legal {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--font-size-caption);
+    color: var(--fg-subtle);
+  }
+
+  /* ============ Viz detail colors (shared SVG tokens) ============ */
+  .viz-stroke   { stroke: var(--color-warm-grey-400); }
+  .viz-fill     { fill: var(--color-warm-grey-300); }
+  .viz-fill-amber { fill: var(--color-amber-500); }
+  .viz-fill-amber-soft { fill: var(--color-amber-200); }
+  .viz-fill-blue  { fill: var(--color-blue-400); }
+  .viz-fill-violet { fill: var(--color-violet-400); }
+  .viz-fill-surface { fill: var(--bg-surface); }
+  .viz-stroke-subtle { stroke: var(--border-default); }
+</style>
+</head>
+<body>
+<div class="site">
+
+  <!-- ======================== Top ======================== -->
+  <header class="site-top">
+    <div class="brand">
+      <span class="dot"></span>
+      <span>BYAI</span>
+      <span class="brand__sub">Design System</span>
+      <span class="brand__ver">v1.3</span>
+    </div>
+    <nav class="top-links">
+      <a href="readme.html">README</a>
+      <span class="divider"></span>
+      <a href="spec/01-philosophy.md">Spec</a>
+      <a href="tokens/tokens.json">Tokens</a>
+      <a href="packages/ui/showcase.html">Components</a>
+    </nav>
+  </header>
+
+  <!-- ======================== Hero ======================== -->
+  <section class="hero">
+    <span class="hero__eyebrow">One system · Every interface</span>
+    <h1 class="hero__title">
+      BYAI, Telos AI, LeadSpark,<br/>
+      统驭在 <em>同一套</em> 规范之下。
+    </h1>
+    <p class="hero__lede">
+      12 baseline pages, 14 spec modules, 3 machine-readable token formats.
+      Built so humans and agents produce interfaces that feel like one mind.
+    </p>
+    <div class="hero__meta">
+      <span class="meta-pill"><strong>12</strong> baseline pages</span>
+      <span class="meta-pill"><strong>14</strong> spec modules</span>
+      <span class="meta-pill"><strong>25</strong> React components</span>
+      <span class="meta-pill"><strong>W3C DTCG</strong> tokens</span>
+      <span class="meta-pill"><strong>WCAG 2.2</strong> AA</span>
+      <span class="meta-pill"><strong>CN + EN</strong> bilingual</span>
+    </div>
+  </section>
+
+  <!-- ======================== Foundations ======================== -->
+  <section class="sect">
+    <div class="sect__head">
+      <h2 class="sect__title">Foundations <span class="sect__count">Start here</span></h2>
+      <p class="sect__sub">The underlying spec, tokens, and shared shell styles that every page in this index is built on.</p>
+    </div>
+    <div class="found-grid">
+      <a href="readme.html" class="found-card">
+        <span class="found-card__label">Doc</span>
+        <h3 class="found-card__title">README <span class="arrow">→</span></h3>
+        <p class="found-card__desc">Usage patterns, token rules, brand architecture, and the four hard rules that AI must never violate.</p>
+      </a>
+      <a href="packages/ui/showcase.html" class="found-card">
+        <span class="found-card__label">Code · New</span>
+        <h3 class="found-card__title">@byai/ui · 25 components <span class="arrow">→</span></h3>
+        <p class="found-card__desc">React + TypeScript component library. Zero runtime deps. Primitives, navigation, feedback, shell, and Agent UI — rendered live in the showcase.</p>
+      </a>
+      <a href="spec/01-philosophy.md" class="found-card">
+        <span class="found-card__label">Directory</span>
+        <h3 class="found-card__title">Spec · 14 docs <span class="arrow">→</span></h3>
+        <p class="found-card__desc">Philosophy, tokens, typography, layout, components, agent patterns, states, data viz, microcopy, plus four appendices.</p>
+      </a>
+      <a href="tokens/tokens.json" class="found-card">
+        <span class="found-card__label">Files</span>
+        <h3 class="found-card__title">Tokens · 3 formats <span class="arrow">→</span></h3>
+        <p class="found-card__desc"><code style="font-family:var(--font-mono);font-size:12px;">tokens.json</code> (W3C DTCG), <code style="font-family:var(--font-mono);font-size:12px;">tokens.css</code>, <code style="font-family:var(--font-mono);font-size:12px;">tailwind.config.js</code> — machine-readable for any pipeline.</p>
+      </a>
+    </div>
+  </section>
+
+  <!-- ======================== Core 5 ======================== -->
+  <section class="sect">
+    <div class="sect__head">
+      <h2 class="sect__title">Core <span class="sect__count">5 pages</span></h2>
+      <p class="sect__sub">The minimum set of visual Ground Truth an AI needs to produce consistent new pages. Read these first.</p>
+    </div>
+
+    <div class="pages-grid">
+
+      <!-- 01 Login -->
+      <a href="pages/01-login.html" class="pcard">
+        <div class="pcard__viz pcard__viz--warm">
+          <span class="pcard__num">01</span>
+          <svg width="200" height="100" viewBox="0 0 200 100" fill="none">
+            <rect x="6" y="10" width="92" height="80" rx="4" class="viz-fill-amber-soft"/>
+            <circle cx="22" cy="26" r="4" class="viz-fill-amber"/>
+            <rect x="14" y="48" width="70" height="6" rx="1" class="viz-fill-amber" opacity="0.6"/>
+            <rect x="14" y="58" width="52" height="4" rx="1" class="viz-fill-amber" opacity="0.3"/>
+            <rect x="102" y="10" width="92" height="80" rx="4" class="viz-fill-surface" stroke-width="1" class="viz-stroke-subtle"/>
+            <rect x="102" y="10" width="92" height="80" rx="4" fill="#fff" stroke="var(--border-default)" stroke-width="1"/>
+            <rect x="112" y="28" width="72" height="10" rx="2" fill="var(--bg-surface-subtle)"/>
+            <rect x="112" y="44" width="72" height="10" rx="2" fill="var(--bg-surface-subtle)"/>
+            <rect x="112" y="66" width="72" height="12" rx="2" class="viz-fill-amber"/>
+          </svg>
+        </div>
+        <div class="pcard__body">
+          <h3 class="pcard__title">Login</h3>
+          <p class="pcard__desc">品牌露出 · 编辑化 hero · Google SSO form · testimonial block</p>
+          <div class="pcard__tags">
+            <span class="pcard__tag">Editorial</span>
+            <span class="pcard__tag">Form</span>
+            <span class="pcard__tag">Auth</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 02 Dashboard -->
+      <a href="pages/02-dashboard.html" class="pcard">
+        <div class="pcard__viz pcard__viz--amber">
+          <span class="pcard__num">02 · ★</span>
+          <svg width="200" height="100" viewBox="0 0 200 100" fill="none">
+            <rect x="10" y="10" width="42" height="30" rx="3" fill="#fff" stroke="var(--border-default)"/>
+            <rect x="56" y="10" width="42" height="30" rx="3" fill="#fff" stroke="var(--border-default)"/>
+            <rect x="102" y="10" width="42" height="30" rx="3" fill="#fff" stroke="var(--border-default)"/>
+            <rect x="148" y="10" width="42" height="30" rx="3" fill="#fff" stroke="var(--border-default)"/>
+            <rect x="14" y="18" width="14" height="3" rx="1" class="viz-fill-amber-soft"/>
+            <rect x="14" y="25" width="24" height="8" rx="1" class="viz-fill-amber"/>
+            <rect x="60" y="18" width="14" height="3" rx="1" fill="var(--color-blue-200)"/>
+            <rect x="60" y="25" width="24" height="8" rx="1" class="viz-fill-blue"/>
+            <rect x="106" y="18" width="14" height="3" rx="1" class="viz-fill-amber-soft"/>
+            <rect x="106" y="25" width="24" height="8" rx="1" class="viz-fill-amber"/>
+            <rect x="152" y="18" width="14" height="3" rx="1" fill="var(--color-blue-200)"/>
+            <rect x="152" y="25" width="24" height="8" rx="1" class="viz-fill-blue"/>
+            <rect x="10" y="46" width="120" height="44" rx="3" fill="#fff" stroke="var(--border-default)"/>
+            <path d="M 18 82 L 34 70 L 50 74 L 66 60 L 82 64 L 98 52 L 114 58 L 122 54" stroke="var(--color-amber-600)" stroke-width="1.5" fill="none"/>
+            <path d="M 18 82 L 34 70 L 50 74 L 66 60 L 82 64 L 98 52 L 114 58 L 122 54 L 122 86 L 18 86 Z" fill="var(--color-amber-100)" opacity="0.6"/>
+            <rect x="134" y="46" width="56" height="44" rx="3" fill="#fff" stroke="var(--border-default)"/>
+            <rect x="140" y="54" width="44" height="3" rx="1" class="viz-fill-amber"/>
+            <rect x="140" y="62" width="36" height="3" rx="1" class="viz-fill-amber" opacity="0.7"/>
+            <rect x="140" y="70" width="28" height="3" rx="1" class="viz-fill-amber" opacity="0.5"/>
+            <rect x="140" y="78" width="20" height="3" rx="1" class="viz-fill-amber" opacity="0.3"/>
+          </svg>
+        </div>
+        <div class="pcard__body">
+          <h3 class="pcard__title">Dashboard <span class="star">★</span></h3>
+          <p class="pcard__desc">Shell 全貌 · 4 KPI tiles · 面积图 + 排行 · 常驻 Agent Copilot 侧栏</p>
+          <div class="pcard__tags">
+            <span class="pcard__tag">Shell</span>
+            <span class="pcard__tag">Data viz</span>
+            <span class="pcard__tag pcard__tag--agent">Agent</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 03 Table -->
+      <a href="pages/03-table.html" class="pcard">
+        <div class="pcard__viz pcard__viz--warm">
+          <span class="pcard__num">03</span>
+          <svg width="200" height="100" viewBox="0 0 200 100" fill="none">
+            <rect x="10" y="10" width="180" height="12" rx="2" fill="var(--bg-surface-subtle)" stroke="var(--border-default)"/>
+            <rect x="14" y="14" width="6" height="4" rx="1" class="viz-fill"/>
+            <rect x="26" y="14" width="18" height="4" rx="1" class="viz-fill"/>
+            <rect x="54" y="14" width="28" height="4" rx="1" class="viz-fill"/>
+            <rect x="92" y="14" width="16" height="4" rx="1" class="viz-fill"/>
+            <rect x="118" y="14" width="12" height="4" rx="1" class="viz-fill"/>
+            <rect x="10" y="26" width="180" height="60" rx="2" fill="#fff" stroke="var(--border-default)"/>
+            <line x1="10" y1="40" x2="190" y2="40" stroke="var(--border-subtle)"/>
+            <line x1="10" y1="55" x2="190" y2="55" stroke="var(--border-subtle)"/>
+            <line x1="10" y1="70" x2="190" y2="70" stroke="var(--border-subtle)"/>
+            <circle cx="18" cy="33" r="2" class="viz-fill-amber"/>
+            <rect x="26" y="30" width="44" height="3" rx="1" class="viz-stroke" fill="none" stroke-width="6"/>
+            <rect x="26" y="30" width="44" height="6" rx="1" class="viz-fill" opacity="0.8"/>
+            <rect x="80" y="30" width="36" height="6" rx="1" class="viz-fill" opacity="0.5"/>
+            <rect x="126" y="30" width="22" height="6" rx="2" class="viz-fill-amber-soft"/>
+            <circle cx="18" cy="48" r="2" fill="var(--color-blue-400)"/>
+            <rect x="26" y="45" width="44" height="6" rx="1" class="viz-fill" opacity="0.8"/>
+            <rect x="80" y="45" width="36" height="6" rx="1" class="viz-fill" opacity="0.5"/>
+            <rect x="126" y="45" width="22" height="6" rx="2" fill="var(--color-blue-100)"/>
+            <circle cx="18" cy="63" r="2" class="viz-fill-amber"/>
+            <rect x="26" y="60" width="44" height="6" rx="1" class="viz-fill" opacity="0.8"/>
+            <rect x="80" y="60" width="36" height="6" rx="1" class="viz-fill" opacity="0.5"/>
+            <rect x="126" y="60" width="22" height="6" rx="2" class="viz-fill-amber-soft"/>
+            <circle cx="18" cy="78" r="2" class="viz-fill"/>
+            <rect x="26" y="75" width="44" height="6" rx="1" class="viz-fill" opacity="0.8"/>
+            <rect x="80" y="75" width="36" height="6" rx="1" class="viz-fill" opacity="0.5"/>
+            <rect x="126" y="75" width="22" height="6" rx="2" fill="var(--bg-surface-subtle)"/>
+          </svg>
+        </div>
+        <div class="pcard__body">
+          <h3 class="pcard__title">Table</h3>
+          <p class="pcard__desc">高密度 Lead Inbox · 多列筛选 · 批量操作 · 快速预览</p>
+          <div class="pcard__tags">
+            <span class="pcard__tag">Density</span>
+            <span class="pcard__tag">Bulk ops</span>
+            <span class="pcard__tag">Filter</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 04 Chat -->
+      <a href="pages/04-chat.html" class="pcard">
+        <div class="pcard__viz pcard__viz--violet">
+          <span class="pcard__num">04 · ★</span>
+          <svg width="200" height="100" viewBox="0 0 200 100" fill="none">
+            <rect x="12" y="12" width="110" height="14" rx="7" fill="#fff" stroke="var(--border-default)"/>
+            <rect x="16" y="16" width="80" height="6" rx="1" class="viz-fill" opacity="0.6"/>
+            <rect x="48" y="32" width="140" height="20" rx="2" fill="var(--color-violet-50)" stroke="var(--color-violet-200)"/>
+            <rect x="52" y="38" width="4" height="8" rx="1" class="viz-fill-violet"/>
+            <rect x="60" y="36" width="100" height="4" rx="1" class="viz-fill-violet" opacity="0.6"/>
+            <rect x="60" y="44" width="80" height="4" rx="1" class="viz-fill-violet" opacity="0.4"/>
+            <rect x="48" y="58" width="120" height="26" rx="2" fill="#fff" stroke="var(--border-default)"/>
+            <rect x="52" y="62" width="8" height="4" rx="1" fill="var(--color-blue-400)"/>
+            <rect x="64" y="62" width="46" height="4" rx="1" class="viz-fill" opacity="0.5"/>
+            <rect x="52" y="70" width="100" height="3" rx="1" class="viz-fill" opacity="0.5" style="font-family:monospace;"/>
+            <rect x="52" y="76" width="80" height="3" rx="1" class="viz-fill" opacity="0.3"/>
+            <circle cx="136" cy="46" r="4" fill="#FDE5B3"/>
+            <text x="133" y="48" font-size="5" fill="var(--color-amber-700)" font-family="monospace">1</text>
+          </svg>
+        </div>
+        <div class="pcard__body">
+          <h3 class="pcard__title">Chat <span class="star">★</span></h3>
+          <p class="pcard__desc">Agent Copilot 全屏 · Streaming · Tool call · HITL · Citation</p>
+          <div class="pcard__tags">
+            <span class="pcard__tag pcard__tag--agent">Agent</span>
+            <span class="pcard__tag">Streaming</span>
+            <span class="pcard__tag">HITL</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 05 Settings -->
+      <a href="pages/05-settings.html" class="pcard">
+        <div class="pcard__viz pcard__viz--warm">
+          <span class="pcard__num">05</span>
+          <svg width="200" height="100" viewBox="0 0 200 100" fill="none">
+            <rect x="10" y="10" width="50" height="80" rx="3" fill="#fff" stroke="var(--border-default)"/>
+            <rect x="16" y="18" width="36" height="4" rx="1" class="viz-fill-amber-soft"/>
+            <rect x="16" y="28" width="36" height="4" rx="1" class="viz-fill" opacity="0.4"/>
+            <rect x="16" y="38" width="36" height="4" rx="1" class="viz-fill" opacity="0.4"/>
+            <rect x="16" y="48" width="36" height="4" rx="1" class="viz-fill" opacity="0.4"/>
+            <rect x="16" y="58" width="36" height="4" rx="1" class="viz-fill" opacity="0.4"/>
+            <rect x="66" y="10" width="124" height="80" rx="3" fill="#fff" stroke="var(--border-default)"/>
+            <rect x="72" y="18" width="60" height="5" rx="1" class="viz-fill" opacity="0.7"/>
+            <rect x="72" y="30" width="110" height="10" rx="2" fill="var(--bg-surface-subtle)" stroke="var(--border-subtle)"/>
+            <rect x="72" y="48" width="110" height="10" rx="2" fill="var(--bg-surface-subtle)" stroke="var(--border-subtle)"/>
+            <rect x="72" y="66" width="110" height="14" rx="2" fill="#FEF2F2" stroke="#FCA5A5"/>
+            <rect x="78" y="72" width="40" height="3" rx="1" fill="#B91C1C"/>
+          </svg>
+        </div>
+        <div class="pcard__body">
+          <h3 class="pcard__title">Settings</h3>
+          <p class="pcard__desc">表单规范 · 分区导航 · Toggle / Switch · Danger zone pattern</p>
+          <div class="pcard__tags">
+            <span class="pcard__tag">Form</span>
+            <span class="pcard__tag">Nav</span>
+            <span class="pcard__tag">Danger</span>
+          </div>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ======================== Extended 7 ======================== -->
+  <section class="sect">
+    <div class="sect__head">
+      <h2 class="sect__title">Extended <span class="sect__count">7 pages</span></h2>
+      <p class="sect__sub">Page types every B2B SaaS / AI agent product needs in production: detail, configuration, admin, and empty-state rituals.</p>
+    </div>
+
+    <div class="pages-grid">
+
+      <!-- 06 Lead detail -->
+      <a href="pages/06-lead-detail.html" class="pcard">
+        <div class="pcard__viz pcard__viz--amber">
+          <span class="pcard__num">06</span>
+          <svg width="200" height="100" viewBox="0 0 200 100" fill="none">
+            <rect x="10" y="10" width="120" height="18" rx="3" fill="#fff" stroke="var(--border-default)"/>
+            <circle cx="22" cy="19" r="5" class="viz-fill-amber"/>
+            <rect x="32" y="15" width="42" height="3" rx="1" class="viz-fill" opacity="0.7"/>
+            <rect x="32" y="21" width="28" height="3" rx="1" class="viz-fill" opacity="0.4"/>
+            <rect x="102" y="15" width="20" height="9" rx="3" class="viz-fill-amber-soft"/>
+            <line x1="20" y1="38" x2="20" y2="90" stroke="var(--border-default)" stroke-dasharray="2 2"/>
+            <circle cx="20" cy="44" r="3" class="viz-fill-amber"/>
+            <circle cx="20" cy="58" r="3" fill="var(--color-violet-400)"/>
+            <circle cx="20" cy="72" r="3" fill="var(--color-blue-400)"/>
+            <circle cx="20" cy="86" r="3" class="viz-fill"/>
+            <rect x="30" y="41" width="70" height="3" rx="1" class="viz-fill" opacity="0.7"/>
+            <rect x="30" y="46" width="50" height="3" rx="1" class="viz-fill" opacity="0.4"/>
+            <rect x="30" y="55" width="60" height="3" rx="1" class="viz-fill" opacity="0.7"/>
+            <rect x="30" y="60" width="40" height="3" rx="1" class="viz-fill" opacity="0.4"/>
+            <rect x="30" y="69" width="80" height="3" rx="1" class="viz-fill" opacity="0.7"/>
+            <rect x="30" y="83" width="50" height="3" rx="1" class="viz-fill" opacity="0.5"/>
+            <rect x="138" y="10" width="52" height="80" rx="3" fill="#fff" stroke="var(--border-default)"/>
+            <rect x="144" y="18" width="30" height="3" rx="1" class="viz-fill-amber" opacity="0.7"/>
+            <rect x="144" y="28" width="40" height="4" rx="1" class="viz-fill" opacity="0.5"/>
+            <rect x="144" y="36" width="40" height="4" rx="1" class="viz-fill" opacity="0.5"/>
+            <rect x="144" y="44" width="40" height="4" rx="1" class="viz-fill" opacity="0.5"/>
+            <rect x="144" y="56" width="30" height="3" rx="1" class="viz-fill-amber" opacity="0.7"/>
+            <rect x="144" y="66" width="40" height="4" rx="1" class="viz-fill" opacity="0.5"/>
+            <rect x="144" y="74" width="40" height="4" rx="1" class="viz-fill" opacity="0.5"/>
+          </svg>
+        </div>
+        <div class="pcard__body">
+          <h3 class="pcard__title">Lead detail</h3>
+          <p class="pcard__desc">Profile · 人机混合事件时间线 · Agent 活动轨迹 · 经济学概要</p>
+          <div class="pcard__tags">
+            <span class="pcard__tag">Timeline</span>
+            <span class="pcard__tag">Tabs</span>
+            <span class="pcard__tag pcard__tag--agent">Agent trail</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 07 Agent Studio -->
+      <a href="pages/07-agent-studio.html" class="pcard">
+        <div class="pcard__viz pcard__viz--violet">
+          <span class="pcard__num">07 · ★</span>
+          <svg width="200" height="100" viewBox="0 0 200 100" fill="none">
+            <rect x="10" y="10" width="48" height="80" rx="3" fill="#fff" stroke="var(--border-default)"/>
+            <rect x="16" y="18" width="20" height="3" rx="1" class="viz-fill" opacity="0.5"/>
+            <rect x="16" y="26" width="34" height="8" rx="1" fill="var(--color-violet-50)"/>
+            <rect x="16" y="38" width="34" height="8" rx="1" fill="var(--bg-surface-subtle)"/>
+            <rect x="16" y="50" width="34" height="8" rx="1" fill="var(--bg-surface-subtle)"/>
+            <rect x="16" y="62" width="34" height="8" rx="1" fill="var(--bg-surface-subtle)"/>
+            <rect x="62" y="10" width="78" height="80" rx="3" fill="#fff" stroke="var(--border-default)"/>
+            <rect x="66" y="16" width="30" height="3" rx="1" class="viz-fill" opacity="0.5"/>
+            <rect x="66" y="24" width="70" height="62" rx="2" fill="var(--bg-surface-subtle)"/>
+            <rect x="70" y="28" width="40" height="2" rx="1" class="viz-fill-violet" opacity="0.7"/>
+            <rect x="70" y="33" width="60" height="2" rx="1" class="viz-fill" opacity="0.5"/>
+            <rect x="70" y="38" width="52" height="2" rx="1" class="viz-fill" opacity="0.5"/>
+            <rect x="70" y="43" width="30" height="2" rx="1" class="viz-fill-violet" opacity="0.7"/>
+            <rect x="70" y="48" width="55" height="2" rx="1" class="viz-fill" opacity="0.5"/>
+            <rect x="70" y="53" width="40" height="2" rx="1" class="viz-fill" opacity="0.5"/>
+            <rect x="70" y="58" width="48" height="2" rx="1" class="viz-fill" opacity="0.5"/>
+            <rect x="70" y="68" width="28" height="2" rx="1" class="viz-fill-violet" opacity="0.7"/>
+            <rect x="70" y="73" width="40" height="2" rx="1" class="viz-fill" opacity="0.5"/>
+            <rect x="144" y="10" width="46" height="80" rx="3" fill="#fff" stroke="var(--border-default)"/>
+            <rect x="150" y="18" width="24" height="3" rx="1" class="viz-fill" opacity="0.5"/>
+            <rect x="150" y="28" width="34" height="14" rx="2" fill="var(--color-violet-50)"/>
+            <rect x="154" y="32" width="14" height="2" rx="1" class="viz-fill-violet"/>
+            <rect x="154" y="37" width="24" height="2" rx="1" class="viz-fill-violet" opacity="0.6"/>
+            <rect x="150" y="46" width="34" height="14" rx="2" fill="var(--bg-surface-subtle)"/>
+            <rect x="150" y="64" width="34" height="10" rx="2" class="viz-fill-amber-soft"/>
+          </svg>
+        </div>
+        <div class="pcard__body">
+          <h3 class="pcard__title">Agent studio <span class="star">★</span></h3>
+          <p class="pcard__desc">三栏 Agent builder · Prompt 编辑 · Tool 启用 · 实时测试面板</p>
+          <div class="pcard__tags">
+            <span class="pcard__tag pcard__tag--agent">Agent</span>
+            <span class="pcard__tag">Editor</span>
+            <span class="pcard__tag">Test runner</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 08 Billing -->
+      <a href="pages/08-billing.html" class="pcard">
+        <div class="pcard__viz pcard__viz--amber">
+          <span class="pcard__num">08</span>
+          <svg width="200" height="100" viewBox="0 0 200 100" fill="none">
+            <rect x="10" y="10" width="90" height="38" rx="3" fill="#fff" stroke="var(--color-amber-300)"/>
+            <rect x="16" y="16" width="34" height="3" rx="1" class="viz-fill-amber" opacity="0.7"/>
+            <text x="16" y="38" font-family="serif" font-size="18" font-weight="600" fill="var(--color-amber-800)">$18,420</text>
+            <rect x="10" y="54" width="180" height="36" rx="3" fill="#fff" stroke="var(--border-default)"/>
+            <rect x="18" y="70" width="6" height="14" rx="1" class="viz-fill-amber-soft"/>
+            <rect x="30" y="66" width="6" height="18" rx="1" class="viz-fill-amber-soft"/>
+            <rect x="42" y="62" width="6" height="22" rx="1" class="viz-fill-amber"/>
+            <rect x="54" y="58" width="6" height="26" rx="1" class="viz-fill-amber"/>
+            <rect x="66" y="64" width="6" height="20" rx="1" class="viz-fill-amber-soft"/>
+            <rect x="78" y="68" width="6" height="16" rx="1" class="viz-fill-amber-soft"/>
+            <rect x="90" y="60" width="6" height="24" rx="1" class="viz-fill-amber"/>
+            <rect x="102" y="56" width="6" height="28" rx="1" class="viz-fill-amber"/>
+            <rect x="114" y="62" width="6" height="22" rx="1" class="viz-fill-amber"/>
+            <rect x="126" y="66" width="6" height="18" rx="1" class="viz-fill-amber-soft"/>
+            <rect x="138" y="64" width="6" height="20" rx="1" class="viz-fill-amber-soft"/>
+            <rect x="150" y="58" width="6" height="26" rx="1" class="viz-fill-amber"/>
+            <rect x="162" y="54" width="6" height="30" rx="1" class="viz-fill-amber"/>
+            <rect x="174" y="60" width="6" height="24" rx="1" class="viz-fill-amber"/>
+            <rect x="108" y="10" width="82" height="38" rx="3" fill="#fff" stroke="var(--border-default)"/>
+            <rect x="114" y="16" width="28" height="3" rx="1" class="viz-fill" opacity="0.6"/>
+            <rect x="114" y="26" width="60" height="3" rx="1" class="viz-fill" opacity="0.5"/>
+            <rect x="114" y="34" width="50" height="3" rx="1" class="viz-fill" opacity="0.5"/>
+            <rect x="114" y="42" width="40" height="3" rx="1" class="viz-fill" opacity="0.3"/>
+          </svg>
+        </div>
+        <div class="pcard__body">
+          <h3 class="pcard__title">Billing</h3>
+          <p class="pcard__desc">订阅概览 · 消耗型用量可视化 · 发票列表 · 超额预警</p>
+          <div class="pcard__tags">
+            <span class="pcard__tag">Subnav</span>
+            <span class="pcard__tag">Usage viz</span>
+            <span class="pcard__tag">Invoices</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 09 Team -->
+      <a href="pages/09-team.html" class="pcard">
+        <div class="pcard__viz pcard__viz--warm">
+          <span class="pcard__num">09</span>
+          <svg width="200" height="100" viewBox="0 0 200 100" fill="none">
+            <rect x="10" y="10" width="180" height="20" rx="3" fill="var(--bg-surface-subtle)" stroke="var(--border-default)"/>
+            <rect x="16" y="16" width="12" height="3" rx="1" class="viz-fill" opacity="0.5"/>
+            <rect x="60" y="16" width="12" height="3" rx="1" class="viz-fill" opacity="0.5"/>
+            <rect x="100" y="16" width="20" height="3" rx="1" class="viz-fill" opacity="0.5"/>
+            <rect x="140" y="16" width="16" height="3" rx="1" class="viz-fill" opacity="0.5"/>
+            <rect x="170" y="16" width="14" height="3" rx="1" class="viz-fill" opacity="0.5"/>
+            <rect x="10" y="32" width="180" height="58" rx="3" fill="#fff" stroke="var(--border-default)"/>
+            <circle cx="22" cy="44" r="6" class="viz-fill-amber"/>
+            <rect x="34" y="41" width="18" height="3" rx="1" class="viz-fill" opacity="0.7"/>
+            <rect x="34" y="46" width="30" height="3" rx="1" class="viz-fill" opacity="0.4"/>
+            <rect x="98" y="41" width="24" height="8" rx="4" fill="var(--color-violet-100)"/>
+            <rect x="140" y="42" width="16" height="6" rx="1" class="viz-fill-amber-soft"/>
+            <line x1="14" y1="56" x2="186" y2="56" stroke="var(--border-subtle)"/>
+            <circle cx="22" cy="66" r="6" fill="var(--color-blue-400)"/>
+            <rect x="34" y="63" width="22" height="3" rx="1" class="viz-fill" opacity="0.7"/>
+            <rect x="34" y="68" width="30" height="3" rx="1" class="viz-fill" opacity="0.4"/>
+            <rect x="98" y="63" width="20" height="8" rx="4" fill="var(--bg-surface-subtle)" stroke="var(--border-subtle)"/>
+            <rect x="140" y="64" width="16" height="6" rx="1" class="viz-fill" opacity="0.4"/>
+            <line x1="14" y1="78" x2="186" y2="78" stroke="var(--border-subtle)"/>
+            <circle cx="22" cy="84" r="5" class="viz-fill" opacity="0.6"/>
+          </svg>
+        </div>
+        <div class="pcard__body">
+          <h3 class="pcard__title">Team</h3>
+          <p class="pcard__desc">成员表格 · 角色权限矩阵 · 邀请流 · 待处理邀请</p>
+          <div class="pcard__tags">
+            <span class="pcard__tag">Table</span>
+            <span class="pcard__tag">RBAC</span>
+            <span class="pcard__tag">Invite</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 10 Audit log -->
+      <a href="pages/10-audit-log.html" class="pcard">
+        <div class="pcard__viz pcard__viz--blue">
+          <span class="pcard__num">10</span>
+          <svg width="200" height="100" viewBox="0 0 200 100" fill="none">
+            <rect x="10" y="10" width="180" height="14" rx="2" fill="#fff" stroke="var(--border-default)"/>
+            <rect x="14" y="15" width="30" height="4" rx="1" class="viz-fill-amber-soft"/>
+            <rect x="50" y="15" width="22" height="4" rx="1" fill="var(--bg-surface-subtle)" stroke="var(--border-subtle)"/>
+            <rect x="78" y="15" width="22" height="4" rx="1" fill="var(--bg-surface-subtle)" stroke="var(--border-subtle)"/>
+            <rect x="106" y="15" width="24" height="4" rx="1" fill="var(--bg-surface-subtle)" stroke="var(--border-subtle)"/>
+            <rect x="10" y="28" width="180" height="58" rx="2" fill="#fff" stroke="var(--border-default)"/>
+            <circle cx="22" cy="38" r="3" fill="var(--color-violet-400)"/>
+            <rect x="30" y="36" width="40" height="3" rx="1" class="viz-fill" opacity="0.6"/>
+            <rect x="30" y="41" width="24" height="2" rx="1" class="viz-fill" opacity="0.4"/>
+            <rect x="80" y="36" width="60" height="3" rx="1" style="font-family:monospace;" class="viz-fill" opacity="0.5"/>
+            <circle cx="156" cy="38" r="2" class="viz-fill-amber"/>
+            <line x1="14" y1="48" x2="186" y2="48" stroke="var(--border-subtle)" stroke-dasharray="1 1"/>
+            <circle cx="22" cy="56" r="3" class="viz-fill-amber"/>
+            <rect x="30" y="54" width="40" height="3" rx="1" class="viz-fill" opacity="0.6"/>
+            <rect x="30" y="59" width="24" height="2" rx="1" class="viz-fill" opacity="0.4"/>
+            <rect x="80" y="54" width="50" height="3" rx="1" class="viz-fill" opacity="0.5"/>
+            <circle cx="156" cy="56" r="2" class="viz-fill-amber"/>
+            <line x1="14" y1="66" x2="186" y2="66" stroke="var(--border-subtle)" stroke-dasharray="1 1"/>
+            <circle cx="22" cy="74" r="3" fill="var(--color-violet-400)"/>
+            <rect x="30" y="72" width="40" height="3" rx="1" class="viz-fill" opacity="0.6"/>
+            <rect x="30" y="77" width="24" height="2" rx="1" class="viz-fill" opacity="0.4"/>
+            <rect x="80" y="72" width="70" height="3" rx="1" class="viz-fill" opacity="0.5"/>
+            <circle cx="156" cy="74" r="2" fill="#DC2626"/>
+          </svg>
+        </div>
+        <div class="pcard__body">
+          <h3 class="pcard__title">Audit log</h3>
+          <p class="pcard__desc">过滤条 · 可展开行 + diff · 人 / Agent / System actor 区分 · 合规导出</p>
+          <div class="pcard__tags">
+            <span class="pcard__tag">Compliance</span>
+            <span class="pcard__tag">Expandable</span>
+            <span class="pcard__tag pcard__tag--agent">Agent trace</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 11 Integrations -->
+      <a href="pages/11-integrations.html" class="pcard">
+        <div class="pcard__viz pcard__viz--warm">
+          <span class="pcard__num">11</span>
+          <svg width="200" height="100" viewBox="0 0 200 100" fill="none">
+            <rect x="10" y="10" width="56" height="36" rx="3" fill="#FEF3C7" stroke="var(--color-amber-300)"/>
+            <rect x="18" y="18" width="12" height="12" rx="2" fill="#00d6b9"/>
+            <rect x="34" y="21" width="26" height="3" rx="1" class="viz-fill" opacity="0.7"/>
+            <rect x="34" y="27" width="20" height="2" rx="1" class="viz-fill" opacity="0.4"/>
+            <circle cx="18" cy="40" r="1.5" class="viz-fill-amber"/>
+            <rect x="72" y="10" width="56" height="36" rx="3" fill="#FEF3C7" stroke="var(--color-amber-300)"/>
+            <rect x="80" y="18" width="12" height="12" rx="2" fill="#f22f46"/>
+            <rect x="96" y="21" width="26" height="3" rx="1" class="viz-fill" opacity="0.7"/>
+            <rect x="96" y="27" width="20" height="2" rx="1" class="viz-fill" opacity="0.4"/>
+            <rect x="134" y="10" width="56" height="36" rx="3" fill="#FEF3C7" stroke="var(--color-amber-300)"/>
+            <rect x="142" y="18" width="12" height="12" rx="2" fill="#ff7a59"/>
+            <rect x="158" y="21" width="26" height="3" rx="1" class="viz-fill" opacity="0.7"/>
+            <rect x="158" y="27" width="20" height="2" rx="1" class="viz-fill" opacity="0.4"/>
+            <rect x="10" y="52" width="56" height="36" rx="3" fill="#fff" stroke="var(--border-default)"/>
+            <rect x="18" y="60" width="12" height="12" rx="2" fill="#25d366"/>
+            <rect x="34" y="63" width="26" height="3" rx="1" class="viz-fill" opacity="0.6"/>
+            <rect x="34" y="69" width="20" height="2" rx="1" class="viz-fill" opacity="0.4"/>
+            <rect x="72" y="52" width="56" height="36" rx="3" fill="#fff" stroke="var(--border-default)"/>
+            <rect x="80" y="60" width="12" height="12" rx="2" fill="#4a154b"/>
+            <rect x="96" y="63" width="26" height="3" rx="1" class="viz-fill" opacity="0.6"/>
+            <rect x="96" y="69" width="20" height="2" rx="1" class="viz-fill" opacity="0.4"/>
+            <rect x="134" y="52" width="56" height="36" rx="3" fill="#fff" stroke="var(--border-default)"/>
+            <rect x="142" y="60" width="12" height="12" rx="2" fill="#635bff"/>
+            <rect x="158" y="63" width="26" height="3" rx="1" class="viz-fill" opacity="0.6"/>
+            <rect x="158" y="69" width="20" height="2" rx="1" class="viz-fill" opacity="0.4"/>
+          </svg>
+        </div>
+        <div class="pcard__body">
+          <h3 class="pcard__title">Integrations</h3>
+          <p class="pcard__desc">连接器市场 · 已连接 vs 可用 · 分类筛选 · API Keys 表</p>
+          <div class="pcard__tags">
+            <span class="pcard__tag">Marketplace</span>
+            <span class="pcard__tag">OAuth</span>
+            <span class="pcard__tag">API keys</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 12 Onboarding -->
+      <a href="pages/12-onboarding.html" class="pcard">
+        <div class="pcard__viz pcard__viz--amber">
+          <span class="pcard__num">12</span>
+          <svg width="200" height="100" viewBox="0 0 200 100" fill="none">
+            <text x="14" y="22" font-family="serif" font-size="11" font-style="italic" font-weight="600" fill="var(--color-amber-700)">earning its keep.</text>
+            <rect x="14" y="30" width="172" height="6" rx="3" fill="var(--bg-surface-subtle)"/>
+            <rect x="14" y="30" width="68" height="6" rx="3" class="viz-fill-amber"/>
+            <rect x="14" y="44" width="172" height="14" rx="2" fill="#fff" stroke="var(--border-default)"/>
+            <circle cx="24" cy="51" r="4" class="viz-fill-amber"/>
+            <path d="M 21 51 L 24 54 L 28 49" stroke="#fff" stroke-width="1.5" fill="none"/>
+            <rect x="34" y="49" width="60" height="2" rx="1" class="viz-fill" opacity="0.4"/>
+            <rect x="34" y="53" width="40" height="2" rx="1" class="viz-fill" opacity="0.3"/>
+            <rect x="14" y="62" width="172" height="14" rx="2" fill="var(--color-amber-50)" stroke="var(--color-amber-300)"/>
+            <circle cx="24" cy="69" r="4" fill="none" stroke="var(--color-amber-500)" stroke-width="1.5"/>
+            <text x="22" y="71" font-size="6" fill="var(--color-amber-700)" font-family="monospace">3</text>
+            <rect x="34" y="67" width="50" height="2" rx="1" class="viz-fill-amber"/>
+            <rect x="34" y="71" width="80" height="2" rx="1" class="viz-fill" opacity="0.4"/>
+            <rect x="160" y="66" width="20" height="6" rx="1" class="viz-fill-amber"/>
+            <rect x="14" y="80" width="172" height="12" rx="2" fill="#fff" stroke="var(--border-subtle)"/>
+            <circle cx="24" cy="86" r="4" fill="none" stroke="var(--border-default)" stroke-width="1.5"/>
+            <text x="22" y="88" font-size="6" fill="var(--fg-muted)" font-family="monospace">4</text>
+            <rect x="34" y="84" width="50" height="2" rx="1" class="viz-fill" opacity="0.5"/>
+            <rect x="34" y="88" width="30" height="2" rx="1" class="viz-fill" opacity="0.3"/>
+          </svg>
+        </div>
+        <div class="pcard__body">
+          <h3 class="pcard__title">Onboarding</h3>
+          <p class="pcard__desc">编辑化首页欢迎 · 进度条 · 嵌入式 checklist · 不用 modal wizard</p>
+          <div class="pcard__tags">
+            <span class="pcard__tag">Empty state</span>
+            <span class="pcard__tag">Checklist</span>
+            <span class="pcard__tag">Progress</span>
+          </div>
+        </div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- ======================== Footer ======================== -->
+  <footer class="site-foot">
+    <div class="brand-arch">
+      <span class="brand-arch__item"><strong>BYAI</strong> 百应 · 中国母公司</span>
+      <span class="brand-arch__divider">/</span>
+      <span class="brand-arch__item"><strong>Telos AI</strong> · Singapore global</span>
+      <span class="brand-arch__divider">/</span>
+      <span class="brand-arch__item"><strong>LeadSpark</strong> · SEA lead platform</span>
+    </div>
+    <div class="foot-legal">
+      <span>© 2026 BYAI · 浙江百应科技有限公司</span>
+      <span>BYAI Design System v1.1 · 2026-04-21</span>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>
