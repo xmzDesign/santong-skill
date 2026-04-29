@@ -24,8 +24,8 @@ argument-hint: 可选 - 指定要评估的 contract 或 spec
 3. 用 Chrome DevTools 检查控制台错误、网络与性能。
 4. 若涉及 UI，结合截图进行视觉检查。
 5. 阅读源码并校验逻辑正确性。
-6. 若涉及 Java，读取 `.harness/docs/java-dev-conventions.md`，按 Java Gate 检查 Service、入口依赖、MapStruct、注释、金额、分页、Redis、日志、配置密钥，并运行 convention-check。
-7. 若存在 Java 改动，检查 spec/contract 是否包含 Distributed Java Gate；未声明则 FAIL。若触发第 14 章，逐项检查外部调用超时/重试/幂等、资源隔离、锁、事务与最终一致性、缓存、消息、批量异步、容错降级、可观测性、配置安全、发布回滚/优雅停机。
+6. 若涉及 Java，读取 `.harness/docs/java-dev-conventions.md` 入口和任务触发的 `.harness/docs/java/rules/` 分片规则，按 Java Gate 检查 Service、入口依赖、MapStruct、注释、金额、分页、Redis、日志、配置密钥，并运行 convention-check。
+7. 若存在 Java 改动，检查 spec/contract 是否包含 Distributed Java Gate；未声明则 FAIL。若触发 `.harness/docs/java/rules/distributed-java-gate.md`，逐项检查外部调用超时/重试/幂等、资源隔离、锁、事务与最终一致性、缓存、消息、批量异步、容错降级、可观测性、配置安全、发布回滚/优雅停机。
 8. 若涉及前端，读取 `.harness/docs/frontend-dev-conventions.md`、`.harness/docs/frontend/` 三层规范和对应 BYAI HTML 参考页，检查 token、状态覆盖、响应式、可访问性、视觉一致性与反例规避。
 
 ### 3. 评分报告

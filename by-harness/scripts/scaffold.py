@@ -17,7 +17,7 @@ from datetime import date
 from pathlib import Path
 
 HARNESS_DIR_NAME = ".harness"
-HARNESS_RUNTIME_VERSION = "2.3.3"
+HARNESS_RUNTIME_VERSION = "2.3.5"
 FRONTEND_REFERENCE_FILES = (
     "docs/frontend/references/byai-ds-v/index.html",
     "docs/frontend/references/byai-ds-v/readme.html",
@@ -54,6 +54,15 @@ FRONTEND_REFERENCE_FILES = (
     "docs/frontend/references/byai-ds-v/spec/appendix-b-motion.md",
     "docs/frontend/references/byai-ds-v/spec/appendix-c-ai-consumption.md",
     "docs/frontend/references/byai-ds-v/spec/appendix-d-antipatterns.md",
+)
+JAVA_RULE_FILES = (
+    "docs/java/rules/00-core.md",
+    "docs/java/rules/java-ddd.md",
+    "docs/java/rules/dubbo-api.md",
+    "docs/java/rules/logging-error.md",
+    "docs/java/rules/persistence-infra.md",
+    "docs/java/rules/testing-security.md",
+    "docs/java/rules/distributed-java-gate.md",
 )
 
 
@@ -243,6 +252,7 @@ def verify_outputs(target_dir: Path):
         ".claude/settings.json",
         f"{HARNESS_DIR_NAME}/docs/contracts/TEMPLATE.md",
         f"{HARNESS_DIR_NAME}/docs/java-dev-conventions.md",
+        *[f"{HARNESS_DIR_NAME}/{rel}" for rel in JAVA_RULE_FILES],
         f"{HARNESS_DIR_NAME}/docs/frontend-dev-conventions.md",
         f"{HARNESS_DIR_NAME}/docs/frontend/README.md",
         f"{HARNESS_DIR_NAME}/docs/frontend/rules.md",
@@ -275,6 +285,10 @@ def main():
         ("harness/docs/golden-principles.md", f"{HARNESS_DIR_NAME}/docs/golden-principles.md"),
         ("harness/docs/sprint-workflow.md", f"{HARNESS_DIR_NAME}/docs/sprint-workflow.md"),
         ("harness/docs/java-dev-conventions.md", f"{HARNESS_DIR_NAME}/docs/java-dev-conventions.md"),
+        *[
+            (f"harness/{rel}", f"{HARNESS_DIR_NAME}/{rel}")
+            for rel in JAVA_RULE_FILES
+        ],
         ("harness/docs/frontend-dev-conventions.md", f"{HARNESS_DIR_NAME}/docs/frontend-dev-conventions.md"),
         ("harness/docs/frontend/README.md", f"{HARNESS_DIR_NAME}/docs/frontend/README.md"),
         ("harness/docs/frontend/rules.md", f"{HARNESS_DIR_NAME}/docs/frontend/rules.md"),

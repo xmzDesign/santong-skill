@@ -28,8 +28,8 @@ read task -> plan -> build -> qa -> fix -> mark_pass -> session_close
 | 会话收口 | “收口”“保存进度”“session_close” | 运行 `.harness/scripts/session_close.py` |
 | 自动续跑 | “继续下个任务”“自动续跑” | 运行 `.harness/scripts/task_switch.py continue --target-dir .` |
 | 老仓库升级 | “升级 harness”“同步 runtime”“更新脚手架” | 运行 `scripts/update_runtime.py`，优先备份与版本化迁移 |
-| Java 规范约束 | “Java 硬规则”“Service 接口实现”“MapStruct/金额/Redis/分页规则” | 使用 `.harness/docs/java-dev-conventions.md` 第 7 章 Java Gate 约束 plan/build/qa |
-| 分布式 Java 约束 | “分布式编码规范”“幂等/重试/锁/事务/消息/缓存一致性” | 使用 `.harness/docs/java-dev-conventions.md` 第 14 章 Distributed Java Gate 约束 spec/contract/build/qa |
+| Java 规范约束 | “Java 硬规则”“Service 接口实现”“MapStruct/金额/Redis/分页规则” | 先读 `.harness/docs/java-dev-conventions.md` 入口，再按触发项读取 `.harness/docs/java/rules/` 分片规则 |
+| 分布式 Java 约束 | “分布式编码规范”“幂等/重试/锁/事务/消息/缓存一致性” | 使用 `.harness/docs/java/rules/distributed-java-gate.md` 约束 spec/contract/build/qa |
 | 前端规范约束 | “前端规范”“UI 约束”“按设计稿/参考页” | 使用已下发的前端三层规范和 BYAI HTML 参考约束实现 |
 
 如果缺少项目名、目标目录或任务 ID，能从当前仓库和 `.harness/task-harness/index.json` 推断时直接推断；推断风险高时再问一个简短问题。
@@ -170,13 +170,16 @@ python3 .harness/scripts/update_runtime.py --target-dir . --check-remote
 
 初始化会下发两类工程规范：
 
-- 后端：`.harness/docs/java-dev-conventions.md`
+- 后端入口：`.harness/docs/java-dev-conventions.md`
+- 后端分片：`.harness/docs/java/rules/`
 - 前端入口：`.harness/docs/frontend-dev-conventions.md`
 
-Java 后端采用 Java Gate：
+Java 后端采用分片 Java Gate，并融合真实项目验证过的落地规则：
 
+- Plan 阶段先读 Java 入口，再按任务触发项读取分片规则：`00-core.md`、`java-ddd.md`、`dubbo-api.md`、`logging-error.md`、`persistence-infra.md`、`testing-security.md`、`distributed-java-gate.md`。
 - Plan 阶段声明触发项：Service、入口依赖、MapStruct、中文注释、金额、分页、Redis、日志、配置密钥。
-- 所有 Java 改动必须声明 Distributed Java Gate：未触发需说明理由；触发外部调用、Dubbo/HTTP/RPC、MQ、异步、线程池、锁、Redis、事务、补偿或发布停机时，必须逐条对照第 14 章。
+- Plan 阶段同时声明真实项目触发项：DDD 包职责、Dubbo/API 契约、`ApiResponse<T>`、DTO 序列化、enum `name()`、日志脱敏、异常安全响应、MyBatis XML、测试/安全/监控/部署影响。
+- 所有 Java 改动必须声明 Distributed Java Gate：未触发需说明理由；触发外部调用、Dubbo/HTTP/RPC、MQ、异步、线程池、锁、Redis、事务、补偿或发布停机时，必须逐条对照 `distributed-java-gate.md`。
 - Contract 阶段必须把 Java Gate 和 Distributed Java Gate 转成可验收清单，不能只写“已阅读规范”。
 - Build 阶段复述适用清单并按正反例实现。
 - QA 阶段对照 contract 和 convention-check 结果验收。
@@ -201,7 +204,7 @@ Java 后端采用 Java Gate：
 - 单元测试通过且 spec/contract 已落盘后才可 `passes=true`；QA 报告默认非阻塞，但必须记录结果。
 - 任何已标记 `passes=true` 的 feature，如果缺少 `spec_path` 或 `contract_path` 对应文件，pre-completion hook 必须阻断完成。
 - 所有新增或修改的函数、方法必须补齐中文注释，说明用途、关键参数、返回值和副作用。
-- 涉及 Java 时，完成前自检 Java Gate：Service 接口/实现、入口依赖接口、MapStruct ERROR、金额、分页、Redis、日志、配置密钥；同时自检 Distributed Java Gate，并运行 convention-check。
+- 涉及 Java 时，完成前自检 Java Gate：Service 接口/实现、入口依赖接口、MapStruct ERROR、金额、分页、Redis、日志、配置密钥，以及真实项目规则：DDD 依赖方向、Dubbo/API `ApiResponse<T>`、Public DTO `Serializable + serialVersionUID`、enum 不用 `ordinal()`、日志脱敏、异常安全响应；同时自检 Distributed Java Gate，并运行 convention-check。读取规范时必须先读入口，再按触发项读分片，不能默认整包加载所有规则。
 - 涉及前端时，完成前自检 token、状态覆盖、响应式、可访问性、BYAI 参考页对齐和反例规避。
 - 不使用破坏性 git 命令，不覆盖用户已有修改，不在已有项目中默认 `--force`。
 

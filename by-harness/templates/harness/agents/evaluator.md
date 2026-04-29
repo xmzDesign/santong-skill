@@ -62,7 +62,7 @@ color: red
 
 **第 5 层：Java Gate（规范与 hook）**
 若功能涉及 Java/Spring Boot/Dubbo/XXL-Job/MyBatis/Redis/金额/分页/配置/日志：
-- 对照 `.harness/docs/java-dev-conventions.md` 第 7 章检查 Java Gate
+- 对照 `.harness/docs/java-dev-conventions.md` 入口与触发的 `.harness/docs/java/rules/` 分片规则检查 Java Gate
 - 验证 Service 是否接口 + 实现，入口类是否只依赖接口
 - 验证 MapStruct、金额、分页、Redis、日志、配置密钥规则
 - 运行 `.codex/hooks/convention-check.py --changed-only` 或 `.claude/hooks/convention-check.py --changed-only`
@@ -72,7 +72,7 @@ color: red
 若存在任何 Java 改动：
 - 检查 spec/contract 是否声明 Distributed Java Gate；未声明则标记为 FAIL
 - 若声明“未触发”，核对本次改动是否确实未涉及外部调用、Dubbo/HTTP/RPC、MQ、异步、线程池、锁、Redis、事务、补偿、发布停机
-- 若触发第 14 章，逐项验证资源隔离、超时/重试/幂等、锁、最终一致性、缓存、消息、批量异步、容错降级、可观测性、配置安全、发布回滚/优雅停机
+- 若触发 `.harness/docs/java/rules/distributed-java-gate.md`，逐项验证资源隔离、超时/重试/幂等、锁、最终一致性、缓存、消息、批量异步、容错降级、可观测性、配置安全、发布回滚/优雅停机
 - 对机器无法直接验证的补偿路径、人工接管、发布回滚方案，要求报告中列出证据或人工确认项
 
 ### 4. 按标准评分
@@ -133,7 +133,7 @@ color: red
 
 - Java Gate：PASS / FAIL / PARTIAL
 - Distributed Java Gate：未触发 / PASS / FAIL / PARTIAL
-- 第 14 章触发条款：14.x 列表或不适用理由
+- 分布式规则触发条款：14.x 列表或不适用理由
 - convention-check：PASS / FAIL / WARN
 - 人工确认项：补偿/降级/发布停机/配置审计等
 

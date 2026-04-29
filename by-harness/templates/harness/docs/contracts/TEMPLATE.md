@@ -14,8 +14,14 @@
 
 | 规范文件 | 是否适用 | 适用/不适用原因 | 派生验收项 |
 |---|---|---|---|
-| `.harness/docs/java-dev-conventions.md` | 是/否 | | |
-| `.harness/docs/java-dev-conventions.md` 第 14 章 | 未触发/触发 | | |
+| `.harness/docs/java-dev-conventions.md` | 是/否 | Java 入口索引 | |
+| `.harness/docs/java/rules/00-core.md` | 是/否 | | |
+| `.harness/docs/java/rules/java-ddd.md` | 是/否 | | |
+| `.harness/docs/java/rules/dubbo-api.md` | 是/否 | | |
+| `.harness/docs/java/rules/logging-error.md` | 是/否 | | |
+| `.harness/docs/java/rules/persistence-infra.md` | 是/否 | | |
+| `.harness/docs/java/rules/testing-security.md` | 是/否 | | |
+| `.harness/docs/java/rules/distributed-java-gate.md` | 未触发/触发 | | |
 | `.harness/docs/frontend-dev-conventions.md` | 是/否 | | |
 | `.harness/docs/frontend/rules.md` | 是/否 | | |
 | `.harness/docs/frontend/code-design.md` | 是/否 | | |
@@ -55,7 +61,8 @@
 
 ### Java Gate 检查（若适用）
 
-- [ ] 已读取 `.harness/docs/java-dev-conventions.md`
+- [ ] 已读取 `.harness/docs/java-dev-conventions.md` 入口
+- [ ] 已按任务触发项读取 `.harness/docs/java/rules/` 分片规则
 - [ ] 已在 spec/build 中列出本次触发的 Java Gate
 - [ ] Service 为 `XxxAppService` 接口 + `XxxAppServiceImpl` 实现
 - [ ] Controller / Dubbo Provider / Job Handler 只依赖 Service 接口
@@ -66,6 +73,13 @@
 - [ ] Redis key 有统一命名空间，业务缓存写入有 TTL
 - [ ] Web 日志走 AOP；Dubbo 日志走 Filter；关键节点日志字段完整
 - [ ] 关键配置可审计、可回滚；无硬编码密钥
+- [ ] DDD 包职责与依赖方向正确，Application 不直接操作 Mapper，Domain 不依赖 Infrastructure
+- [ ] Dubbo/API 公共方法返回 `ApiResponse<T>`，不新增第二套响应包装
+- [ ] Public DTO 实现 `Serializable` 并声明 `serialVersionUID`
+- [ ] 公共枚举使用 `name()` 作为外部稳定值，未使用 `ordinal()`
+- [ ] 对外契约未暴露 Domain 模型、数据库 Entity 或 Infrastructure 内部类型
+- [ ] 日志敏感字段已脱敏，异常响应不暴露原始系统错误
+- [ ] 输入校验、鉴权/限流、监控指标、部署/回滚影响已按任务风险覆盖
 - [ ] 已运行 convention-check，fail 已修复，warn 已修复或说明风险
 
 ### Distributed Java Gate 检查（所有 Java 改动必须声明）

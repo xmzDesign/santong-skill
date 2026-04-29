@@ -52,6 +52,9 @@ JAVA_RULE_CARD = [
     "6. PageHelper pagination must use stable ordering.",
     "7. Redis keys need namespaces and business cache writes need TTL.",
     "8. Secrets must come from managed config, never hardcoded literals.",
+    "9. Public client APIs must return ApiResponse<T>; public DTOs need Serializable + serialVersionUID.",
+    "10. Public enum values must use name(), never ordinal(); logs and external errors must be sanitized.",
+    "11. Domain cannot depend on infrastructure; application code cannot directly operate MyBatis mappers.",
 ]
 
 DISTRIBUTED_JAVA_RULE_CARD = [
@@ -199,6 +202,10 @@ SECRET_NAME_RE = re.compile(
     r"(password|passwd|secret|token|access_?key|secret_?key|private_?key|ak|sk)",
     re.IGNORECASE,
 )
+SENSITIVE_LOG_RE = re.compile(
+    r"(authInfo|password|passwd|secret|apiSecret|appSecret|clientSecret|token|accessToken|refreshToken|authorization|signature|apiKey|x-api-key|privateKey|skey|appKey)",
+    re.IGNORECASE,
+)
 MESSAGE_SEND_RE = re.compile(r"(rocketMQTemplate|kafkaTemplate|rabbitTemplate|jmsTemplate)\s*\.\s*(send|convertAndSend|syncSend|asyncSend)")
 ASYNC_BOUNDARY_RE = re.compile(r"(@Async\b|CompletableFuture\.(runAsync|supplyAsync)|new\s+Thread\s*\()")
 
@@ -217,6 +224,35 @@ def is_java_entry_path(path: Path) -> bool:
         any(part in lowered for part in ("/controller/", "/provider/", "/job/", "/handler/"))
         or any(token in name for token in ("controller", "provider", "jobhandler", "handler"))
     )
+
+
+def normalized_path(path: Path) -> str:
+    return str(path).replace("\\", "/").lower()
+
+
+def is_client_service_file(path: Path, class_name) -> bool:
+    lowered = normalized_path(path)
+    return "/client/service/" in lowered or "/api/service/" in lowered or (class_name or "").endswith("ClientService")
+
+
+def is_public_dto_file(path: Path, class_name) -> bool:
+    lowered = normalized_path(path)
+    return (
+        "/client/request/" in lowered
+        or "/client/response/" in lowered
+        or "/api/request/" in lowered
+        or "/api/response/" in lowered
+        or ("/client/" in lowered and bool(re.search(r"(Request|Response|DTO)$", class_name or "")))
+        or ("/api/" in lowered and bool(re.search(r"(Request|Response|DTO)$", class_name or "")))
+    )
+
+
+def is_domain_file(path: Path) -> bool:
+    return "/domain/" in normalized_path(path)
+
+
+def is_application_file(path: Path) -> bool:
+    return "/application/" in normalized_path(path)
 
 
 def previous_comment_has_chinese(lines: list[str], index: int) -> bool:
@@ -238,6 +274,15 @@ def looks_like_java_method(line: str) -> bool:
     return bool(re.search(r"\b[\w<>\[\], ?]+\s+\w+\s*\(", stripped))
 
 
+def looks_like_contract_method(line: str) -> bool:
+    stripped = line.strip()
+    if not stripped or stripped.startswith(("//", "*", "@")):
+        return False
+    if re.search(r"\b(class|interface|enum|if|for|while|switch|catch|return)\b", stripped):
+        return False
+    return bool(re.search(r"\w[\w<>\[\], ?]+\s+\w+\s*\([^)]*\)\s*(?:throws\s+[\w, .]+)?;", stripped))
+
+
 def is_trivial_java_method(line: str) -> bool:
     return bool(re.search(r"\b(get|set|is|equals|hashCode|toString)\w*\s*\(", line))
 
@@ -246,21 +291,25 @@ def scan_java(root: Path, path: Path, findings: list[Finding]):
     text = read_text(path)
     lines = text.splitlines()
     entry_file = is_java_entry_path(path)
-    class_match = re.search(r"\bclass\s+(\w+)", text)
-    if class_match:
-        class_name = class_match.group(1)
+    type_match = re.search(r"\b(class|interface|enum)\s+(\w+)", text)
+    class_name = type_match.group(2) if type_match else None
+    class_kind = type_match.group(1) if type_match else None
+    client_service_file = is_client_service_file(path, class_name)
+    public_dto_file = is_public_dto_file(path, class_name)
+    if type_match and class_name:
         class_line = java_class_line(text, class_name)
         if class_name.endswith("AppService") and not class_name.endswith("AppServiceImpl"):
-            add_finding(
-                findings,
-                "fail",
-                "JAVA_SERVICE_INTERFACE_REQUIRED",
-                root,
-                path,
-                class_line,
-                "AppService must be an interface; put implementation in XxxAppServiceImpl.",
-                lines[class_line - 1] if lines else "",
-            )
+            if class_kind != "interface":
+                add_finding(
+                    findings,
+                    "fail",
+                    "JAVA_SERVICE_INTERFACE_REQUIRED",
+                    root,
+                    path,
+                    class_line,
+                    "AppService must be an interface; put implementation in XxxAppServiceImpl.",
+                    lines[class_line - 1] if lines else "",
+                )
         if class_name.endswith("AppServiceImpl"):
             expected_interface = class_name[:-4]
             if not re.search(rf"\bimplements\s+[^\{{;]*\b{re.escape(expected_interface)}\b", text):
@@ -274,6 +323,11 @@ def scan_java(root: Path, path: Path, findings: list[Finding]):
                     f"{class_name} must implement {expected_interface}.",
                     lines[class_line - 1] if lines else "",
                 )
+        if public_dto_file:
+            if not re.search(r"\bimplements\s+[^{;]*\bSerializable\b", text):
+                add_finding(findings, "fail", "JAVA_PUBLIC_DTO_SERIALIZABLE", root, path, class_line, "Public client DTOs must implement Serializable.", lines[class_line - 1] if lines else "")
+            if "serialVersionUID" not in text:
+                add_finding(findings, "fail", "JAVA_PUBLIC_DTO_SERIAL_VERSION_UID", root, path, class_line, "Public client DTOs must declare private static final long serialVersionUID = 1L.", lines[class_line - 1] if lines else "")
 
     if "org.mapstruct.Mapper" in text and "@Mapper" in text:
         mapper_line = next((i for i, item in enumerate(lines, start=1) if "@Mapper" in item), 1)
@@ -285,6 +339,15 @@ def scan_java(root: Path, path: Path, findings: list[Finding]):
 
     for index, line in enumerate(lines):
         line_no = index + 1
+        if is_domain_file(path) and re.search(r"^\s*import\s+.*\b(springframework|mybatis|redis|rocketmq|kafka|feign|okhttp|retrofit)\b", line):
+            add_finding(findings, "fail", "JAVA_DOMAIN_INFRA_DEPENDENCY", root, path, line_no, "Domain code must not depend on Spring infrastructure, MyBatis, Redis, MQ, or HTTP client libraries.", line)
+        if is_application_file(path) and re.search(r"\b(@Resource|@Autowired|private\s+(?:final\s+)?\w*Mapper\b|\w+Mapper\s+\w+\s*;)", line):
+            add_finding(findings, "warn", "JAVA_APPLICATION_DIRECT_MAPPER", root, path, line_no, "Application layer should not directly operate MyBatis mappers; use domain repository abstractions.", line)
+        if client_service_file and looks_like_contract_method(line):
+            if "ApiResponse" not in line:
+                add_finding(findings, "fail", "JAVA_PUBLIC_API_RESPONSE_WRAPPER", root, path, line_no, "Public client service methods must return ApiResponse<T>.", line)
+            if re.search(r"\b(Entity|DO|Domain|Infrastructure)\b", line):
+                add_finding(findings, "fail", "JAVA_PUBLIC_API_INTERNAL_TYPE_LEAK", root, path, line_no, "Public API contracts must not expose domain models, database entities, or infrastructure internals.", line)
         if re.search(r"@(Select|Update|Insert|Delete)\s*\(", line):
             add_finding(
                 findings,
@@ -302,6 +365,12 @@ def scan_java(root: Path, path: Path, findings: list[Finding]):
             add_finding(findings, "fail", "JAVA_MONEY_FLOAT", root, path, line_no, "Money fields must use BigDecimal; double/float is forbidden.", line)
         if SECRET_NAME_RE.search(line) and re.search(r"=\s*\"[^\"]{4,}\"", line):
             add_finding(findings, "fail", "JAVA_HARDCODED_SECRET", root, path, line_no, "Secret-like config must be externalized and auditable; hardcoded literal detected.", line)
+        if re.search(r"\blog\.(trace|debug|info|warn|error)\s*\(", line) and SENSITIVE_LOG_RE.search(line) and not re.search(r"(sanitize|mask|desensit|LogSanitizer)", line):
+            add_finding(findings, "fail", "JAVA_LOG_SENSITIVE_DATA", root, path, line_no, "Logs must sanitize sensitive fields before output.", line)
+        if re.search(r"\bApiResponse\.error\s*\([^;\n]*(?:exception|ex|e)\.getMessage\s*\(", line):
+            add_finding(findings, "fail", "JAVA_RAW_EXCEPTION_MESSAGE", root, path, line_no, "External error responses must not expose raw system exception messages.", line)
+        if "ordinal()" in line:
+            add_finding(findings, "fail", "JAVA_ENUM_ORDINAL", root, path, line_no, "Do not use enum ordinal() for externally visible or persisted business values; use name() or an explicit stable code.", line)
         if "PageHelper.startPage" in line:
             window = "\n".join(lines[index:index + 10]).lower()
             if not re.search(r"(order\s+by|\.orderby\s*\(|setorderby\s*\()", window):
@@ -359,6 +428,13 @@ def scan_java(root: Path, path: Path, findings: list[Finding]):
                 "Do not expose HashMap/Hashtable as database query result output; define DO/DTO and resultMap.",
                 line,
             )
+
+
+def scan_xml_config(root: Path, path: Path, findings: list[Finding]):
+    text = read_text(path)
+    for line_no, line in enumerate(text.splitlines(), start=1):
+        if "logback" in line.lower():
+            add_finding(findings, "fail", "JAVA_LOGBACK_DEPENDENCY", root, path, line_no, "Do not introduce logback dependencies or APIs; follow the project Log4j2 logging baseline.", line)
 
 
 def contains_mapper_sql(text: str, path: Path) -> bool:
@@ -500,7 +576,9 @@ def scan_files(root: Path, files: list[Path]) -> list[Finding]:
         if suffix in JAVA_EXTENSIONS:
             scan_java(root, path, findings)
         elif suffix in SQL_EXTENSIONS:
-            scan_sql(root, path, findings)
+            scan_xml_config(root, path, findings)
+            if path.name.lower() != "pom.xml":
+                scan_sql(root, path, findings)
         elif suffix in FRONTEND_EXTENSIONS:
             scan_frontend(root, path, findings)
     return findings

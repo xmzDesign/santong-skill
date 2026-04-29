@@ -37,7 +37,7 @@ LEGACY_TASK_FILE_NAME = "task.json"
 LEGACY_SESSION_CONTEXT_FILE_NAME = "session-context.json"
 LEGACY_SESSION_BOUNDARY_FILE_NAME = "session-boundary.json"
 LEGACY_TASK_CONTRACT_FILE_NAME = "TASK-HARNESS.md"
-LATEST_RUNTIME_VERSION = "2.3.3"
+LATEST_RUNTIME_VERSION = "2.3.5"
 RUNTIME_SCRIPT_NAMES = (
     "init.sh",
     "session_close.py",
@@ -110,6 +110,13 @@ RUNTIME_DOC_REL_PATHS = (
     "docs/golden-principles.md",
     "docs/sprint-workflow.md",
     "docs/java-dev-conventions.md",
+    "docs/java/rules/00-core.md",
+    "docs/java/rules/java-ddd.md",
+    "docs/java/rules/dubbo-api.md",
+    "docs/java/rules/logging-error.md",
+    "docs/java/rules/persistence-infra.md",
+    "docs/java/rules/testing-security.md",
+    "docs/java/rules/distributed-java-gate.md",
     "docs/frontend-dev-conventions.md",
     "docs/frontend/README.md",
     "docs/frontend/rules.md",
@@ -164,6 +171,8 @@ MIGRATIONS: dict[str, tuple[str, str]] = {
     "2.3.0": ("2.3.1", "migrate_runtime_versioning"),
     "2.3.1": ("2.3.2", "migrate_runtime_versioning"),
     "2.3.2": ("2.3.3", "migrate_runtime_versioning"),
+    "2.3.3": ("2.3.4", "migrate_runtime_versioning"),
+    "2.3.4": ("2.3.5", "migrate_runtime_versioning"),
 }
 
 
