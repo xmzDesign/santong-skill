@@ -187,6 +187,44 @@ def find_feature(features, feature_id: str):
     return None
 
 
+def repo_root_from_workspace(workspace_dir: Path) -> Path:
+    return workspace_dir.parent if workspace_dir.name == HARNESS_DIR_NAME else workspace_dir
+
+
+def resolve_artifact_path(workspace_dir: Path, raw_path: str) -> Path:
+    raw = str(raw_path or "").strip()
+    root = repo_root_from_workspace(workspace_dir)
+    if not raw:
+        return root / "__missing_artifact_path__"
+
+    path = Path(raw)
+    if path.is_absolute():
+        return path
+
+    candidates = [root / raw, workspace_dir / raw]
+    if raw.startswith(f"{HARNESS_DIR_NAME}/"):
+        stripped = raw[len(HARNESS_DIR_NAME) + 1 :]
+        candidates.append(workspace_dir / stripped)
+        candidates.append(root / stripped)
+
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return candidates[0]
+
+
+def missing_required_artifacts(workspace_dir: Path, feature) -> list[str]:
+    if not feature:
+        return []
+    errors = []
+    for field_name in ("spec_path", "contract_path"):
+        raw_path = str(feature.get(field_name, "")).strip()
+        artifact_path = resolve_artifact_path(workspace_dir, raw_path)
+        if not raw_path or not artifact_path.exists() or not artifact_path.is_file():
+            errors.append(f"{field_name} missing -> {raw_path or '(empty)'}")
+    return errors
+
+
 def sample_feature_ids(features, limit: int = 12):
     ids = []
     for feat in features:
@@ -388,6 +426,18 @@ def main():
         else:
             print("Available feature ids: none (task storage may be empty or misconfigured)")
         sys.exit(1)
+    if args.outcome == "pass" and features and feature is None:
+        print("Error: --feature-id is required when --outcome pass, so spec_path and contract_path can be verified.")
+        sys.exit(1)
+    if args.outcome == "pass" and feature:
+        artifact_errors = missing_required_artifacts(workspace_dir, feature)
+        if artifact_errors:
+            print("Error: cannot close session as pass before required artifacts exist.")
+            print(f"Feature: {feature.get('id', 'unknown')}")
+            for error in artifact_errors:
+                print(f"  - {error}")
+            print("Create/update the missing spec and contract, or close with --outcome in-progress/blocked.")
+            sys.exit(1)
 
     total = len(features)
     passed = sum(1 for feat in features if bool(feat.get("passes")))

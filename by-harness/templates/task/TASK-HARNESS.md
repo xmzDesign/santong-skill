@@ -27,12 +27,12 @@
 3. **build**：基于 spec + contract 实现并自检；所有新增/修改函数、方法必须补齐中文注释
 4. **qa（非阻塞）**：生成 `qa_report_path`，按 contract 逐条评分（用于质量跟踪，不阻塞流程）
 5. **fix**：若单元测试未通过，进入修复循环（最多 3 轮）
-6. **mark_pass**：单元测试通过即可将该 feature `passes=false -> true`
+6. **mark_pass**：单元测试通过，且 `spec_path` / `contract_path` 文件真实存在后，才可将该 feature `passes=false -> true`
 
 ## 任务清单修改规则
 
 - active bucket 对应任务文件（例如 `.harness/task-harness/features/backlog-core.json`）中仅允许修改：
-  - `passes: false -> true`（单元测试通过后）
+  - `passes: false -> true`（单元测试通过且 spec/contract 已落盘后）
 - 若存在 `.harness/feature_list.json`，其为兼容镜像，常规不直接手改（由脚本同步）
 - 禁止修改：
   - `id/category/priority/description/file/spec_path/contract_path/qa_report_path/steps/verification`
@@ -41,7 +41,7 @@
 ## 会话结束前必须完成
 
 1. 写入进度日志（`.harness/task-harness/progress/YYYY-MM.md`，并刷新 `.harness/task-harness/progress/latest.txt` 快照）
-2. 若该 feature 单元测试通过：更新 `passes=true`
+2. 若该 feature 单元测试通过且 `spec_path` / `contract_path` 文件存在：更新 `passes=true`
 3. 运行会话收口脚本：`python3 .harness/scripts/session_close.py --target-dir . --feature-id <feat-id>`
 4. 提交 git commit（建议一个 feature 一个 commit）
 5. 输出下一步建议（下一个 feature 或阻塞处理方案）

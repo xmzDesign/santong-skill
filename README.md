@@ -30,7 +30,8 @@ santong-skills/
 - 连续切任务：`.harness/scripts/task_switch.py`（当前分支自动续跑下个任务）
 - 持续拆任务：新任务增量写入 active bucket（仅当 legacy 项目已存在 `.harness/feature_list.json` 时才同步兼容镜像）
 - 每个任务闭环工件字段：`spec_path` / `contract_path` / `qa_report_path`
-- 门禁策略：单元测试通过即可 `passes=true`，QA 默认非阻塞
+- 门禁策略：单元测试通过且 spec/contract 已落盘后才可 `passes=true`，QA 默认非阻塞
+- Artifact Gate：已标记 `passes=true` 的 feature 必须存在 `spec_path` 与 `contract_path` 对应文件，否则 pre-completion hook 阻断完成
 - 注释准则：所有新增/修改函数、方法必须补齐中文注释（用途、参数、返回值、副作用）
 
 ### 任务索引与进度快照

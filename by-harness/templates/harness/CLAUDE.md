@@ -105,6 +105,7 @@
 
 - 先 spec 后代码。
 - 先 contract 后 build。
+- 先 artifact 后 pass：任何 feature 标记 `passes=true` 前，`spec_path` 与 `contract_path` 必须指向真实存在的文件。
 - 一次只做一个 sprint。
 - 会话切换策略由 `.harness/config/task.json` 的 `harness.session_control.mode` 控制：
   - `soft_reset`（默认）：feature 收口后自动切换 context epoch，继续会话时必须忽略旧 feature 上下文。
@@ -135,7 +136,7 @@
 
 1. 从 active bucket 任务文件（默认 `.harness/task-harness/features/backlog-core.json`）选择优先级最高且 `passes=false` 的 feature
 2. 严格执行 `plan -> contract -> build -> qa -> fix` 主流程
-3. 单元测试通过即可将该 feature 的 `passes` 置为 `true`
+3. 单元测试通过且 `spec_path` / `contract_path` 文件真实存在后，才可将该 feature 的 `passes` 置为 `true`
 4. 在 `.harness/task-harness/progress/latest.txt` 记录本轮实现、验证结果与下一步
 5. 若达到 3 轮仍失败，保持 `passes=false` 并继续下一个任务
 

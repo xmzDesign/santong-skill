@@ -112,7 +112,7 @@ python3 {{SKILL_PATH}}/scripts/rebalance_tasks.py --target-dir "<项目目录>"
 4. Build：只实现 contract 范围内的内容。
 5. QA：运行可用测试；QA 默认非阻塞，但失败要记录问题。
 6. Fix：单元测试失败时最多修 3 轮。
-7. Mark pass：单元测试通过即可把 `passes=false` 改为 `true`。
+7. Mark pass：单元测试通过，且 `spec_path` / `contract_path` 文件真实存在后，才可把 `passes=false` 改为 `true`。
 8. Session close：调用会话收口脚本，刷新最新进度。
 
 如果 3 轮后单元测试仍失败，保持 `passes=false`，记录原因、已尝试修复和下一步建议。
@@ -198,7 +198,8 @@ Java 后端采用 Java Gate：
 - `AGENTS.md` 是主契约，定义 Plan / Build / Verify / Fix。
 - `.harness/docs/TASK-HARNESS.md` 是任务层契约，不得覆盖主契约。
 - 常规任务只更新任务状态、进度和闭环工件，不随意改任务结构。
-- 单元测试通过即可 `passes=true`；QA 报告默认非阻塞，但必须记录结果。
+- 单元测试通过且 spec/contract 已落盘后才可 `passes=true`；QA 报告默认非阻塞，但必须记录结果。
+- 任何已标记 `passes=true` 的 feature，如果缺少 `spec_path` 或 `contract_path` 对应文件，pre-completion hook 必须阻断完成。
 - 所有新增或修改的函数、方法必须补齐中文注释，说明用途、关键参数、返回值和副作用。
 - 涉及 Java 时，完成前自检 Java Gate：Service 接口/实现、入口依赖接口、MapStruct ERROR、金额、分页、Redis、日志、配置密钥；同时自检 Distributed Java Gate，并运行 convention-check。
 - 涉及前端时，完成前自检 token、状态覆盖、响应式、可访问性、BYAI 参考页对齐和反例规避。

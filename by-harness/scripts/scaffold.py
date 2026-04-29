@@ -17,7 +17,7 @@ from datetime import date
 from pathlib import Path
 
 HARNESS_DIR_NAME = ".harness"
-HARNESS_RUNTIME_VERSION = "2.3.2"
+HARNESS_RUNTIME_VERSION = "2.3.3"
 FRONTEND_REFERENCE_FILES = (
     "docs/frontend/references/byai-ds-v/index.html",
     "docs/frontend/references/byai-ds-v/readme.html",
@@ -364,7 +364,7 @@ def main():
     print(f"  1. bash {HARNESS_DIR_NAME}/scripts/init.sh")
     print(f"  2. 阅读 AGENTS.md 与 {HARNESS_DIR_NAME}/docs/TASK-HARNESS.md")
     print("  3. 选择 passes=false 的 feature，执行 plan/build/qa 闭环")
-    print(f"  4. 单元测试通过即可更新 passes=true（QA 非阻塞），并写入 {HARNESS_DIR_NAME}/task-harness/progress/YYYY-MM.md")
+    print(f"  4. 单元测试通过且 spec/contract 已落盘后，才可更新 passes=true（QA 非阻塞），并写入 {HARNESS_DIR_NAME}/task-harness/progress/YYYY-MM.md")
     print(f"  5. 会话结束执行：python3 {HARNESS_DIR_NAME}/scripts/session_close.py --target-dir . --feature-id <feat-id>")
     print(f"  6. 自动续跑下个任务（当前分支）：python3 {HARNESS_DIR_NAME}/scripts/task_switch.py continue --target-dir .")
     print(f"  7. 配置并启用远程更新：编辑 {HARNESS_DIR_NAME}/config/update-policy.json")

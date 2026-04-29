@@ -47,4 +47,4 @@ argument-hint: 可选 - 指定要评估的 contract 或 spec
 
 说明：
 - QA 报告用于质量跟踪，默认不阻塞任务推进。
-- 是否标记 `passes=true` 以单元测试结果为准。
+- 是否标记 `passes=true` 以单元测试结果和 spec/contract 文件是否落盘为准。
