@@ -1,6 +1,6 @@
 ---
 name: by-harness
-description: 初始化、维护和执行 by-harness 工作流时必须使用本 skill。适用于用户提到 by-harness、harness、初始化、持续拆任务、执行 feat、plan/build/qa/fix、session_close、自动续跑、runtime 升级，或需要下发 Java/前端三层规范来约束模型编码的场景。本 skill 会生成独立闭环脚手架、分片任务存储、会话收口工具、运行时升级工具，并下发前端三层规范与 BYAI HTML 视觉参考；feature_list 仅作为 legacy 兼容镜像。
+description: 初始化、维护和执行 by-harness 工作流时必须使用本 skill。适用于用户提到 by-harness、harness、初始化、持续拆任务、执行 feat、plan/build/qa/fix、session_close、自动续跑、runtime 升级，或需要下发 Java Gate/前端三层规范来约束模型编码的场景。本 skill 会生成独立闭环脚手架、分片任务存储、会话收口工具、运行时升级工具，并下发 Java 硬规则门禁、前端三层规范与 BYAI HTML 视觉参考；feature_list 仅作为 legacy 兼容镜像。
 argument-hint: "[项目名称] [项目描述]"
 disable-model-invocation: false
 user-invocable: true
@@ -28,6 +28,7 @@ read task -> plan -> build -> qa -> fix -> mark_pass -> session_close
 | 会话收口 | “收口”“保存进度”“session_close” | 运行 `.harness/scripts/session_close.py` |
 | 自动续跑 | “继续下个任务”“自动续跑” | 运行 `.harness/scripts/task_switch.py continue --target-dir .` |
 | 老仓库升级 | “升级 harness”“同步 runtime”“更新脚手架” | 运行 `scripts/update_runtime.py`，优先备份与版本化迁移 |
+| Java 规范约束 | “Java 硬规则”“Service 接口实现”“MapStruct/金额/Redis/分页规则” | 使用 `.harness/docs/java-dev-conventions.md` 第 7 章 Java Gate 约束 plan/build/qa |
 | 前端规范约束 | “前端规范”“UI 约束”“按设计稿/参考页” | 使用已下发的前端三层规范和 BYAI HTML 参考约束实现 |
 
 如果缺少项目名、目标目录或任务 ID，能从当前仓库和 `.harness/task-harness/index.json` 推断时直接推断；推断风险高时再问一个简短问题。
@@ -171,6 +172,13 @@ python3 .harness/scripts/update_runtime.py --target-dir . --check-remote
 - 后端：`.harness/docs/java-dev-conventions.md`
 - 前端入口：`.harness/docs/frontend-dev-conventions.md`
 
+Java 后端采用 Java Gate：
+
+- Plan 阶段声明触发项：Service、入口依赖、MapStruct、中文注释、金额、分页、Redis、日志、配置密钥。
+- Build 阶段复述适用清单并按正反例实现。
+- QA 阶段对照 contract 和 convention-check 结果验收。
+- Stop hook 阶段自动拦截可机器识别的 fail/warn。
+
 前端采用三层结构：
 
 - 约束层：`.harness/docs/frontend/rules.md`
@@ -189,6 +197,7 @@ python3 .harness/scripts/update_runtime.py --target-dir . --check-remote
 - 常规任务只更新任务状态、进度和闭环工件，不随意改任务结构。
 - 单元测试通过即可 `passes=true`；QA 报告默认非阻塞，但必须记录结果。
 - 所有新增或修改的函数、方法必须补齐中文注释，说明用途、关键参数、返回值和副作用。
+- 涉及 Java 时，完成前自检 Java Gate：Service 接口/实现、入口依赖接口、MapStruct ERROR、金额、分页、Redis、日志、配置密钥，并运行 convention-check。
 - 涉及前端时，完成前自检 token、状态覆盖、响应式、可访问性、BYAI 参考页对齐和反例规避。
 - 不使用破坏性 git 命令，不覆盖用户已有修改，不在已有项目中默认 `--force`。
 
@@ -208,4 +217,5 @@ python3 .harness/scripts/update_runtime.py --target-dir . --check-remote
 - `执行 feat-03，严格按 read task -> plan -> build -> qa -> fix -> mark_pass`
 - `把当前会话收口，记录 qa 分数和下一步`
 - `升级这个项目里的 harness runtime`
+- `这个 Java 功能按 Java Gate 检查 Service、金额、Redis、分页和配置`
 - `这个前端页面按 BYAI 参考和三层规范重做`

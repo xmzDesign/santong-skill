@@ -39,6 +39,21 @@
 - **build**：编译/构建成功
 - **manual**：需要用户手动验证
 
+### Java Gate 检查（若适用）
+
+- [ ] 已读取 `.harness/docs/java-dev-conventions.md`
+- [ ] 已在 spec/build 中列出本次触发的 Java Gate
+- [ ] Service 为 `XxxAppService` 接口 + `XxxAppServiceImpl` 实现
+- [ ] Controller / Dubbo Provider / Job Handler 只依赖 Service 接口
+- [ ] MapStruct 已配置 `unmappedTargetPolicy = ReportingPolicy.ERROR`
+- [ ] 新增/修改函数与方法有中文注释（用途、关键参数、返回值、副作用）
+- [ ] 金额 Java 类型为 `BigDecimal`，数据库为 `DECIMAL(18,3)`，无 `double/float`
+- [ ] 分页使用 PageHelper，且具备稳定排序
+- [ ] Redis key 有统一命名空间，业务缓存写入有 TTL
+- [ ] Web 日志走 AOP；Dubbo 日志走 Filter；关键节点日志字段完整
+- [ ] 关键配置可审计、可回滚；无硬编码密钥
+- [ ] 已运行 convention-check，fail 已修复，warn 已修复或说明风险
+
 ### 前端三层规范检查（若适用）
 
 - [ ] 已读取 `.harness/docs/frontend-dev-conventions.md`

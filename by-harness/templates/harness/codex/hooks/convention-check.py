@@ -42,6 +42,18 @@ SQL_RULE_CARD = [
     "8. Foreign keys, cascade, and stored procedures are forbidden.",
 ]
 
+JAVA_RULE_CARD = [
+    "Java Gate guardrails:",
+    "1. App services must be interface + implementation: XxxAppService / XxxAppServiceImpl.",
+    "2. Controller / Dubbo Provider / Job Handler may depend on service interfaces only, never *Impl.",
+    "3. MapStruct mappers must set unmappedTargetPolicy = ReportingPolicy.ERROR.",
+    "4. New or changed methods need Chinese comments covering purpose, params, return value, and side effects.",
+    "5. Money must use BigDecimal in Java and DECIMAL(18,3) in DDL; double/float is forbidden.",
+    "6. PageHelper pagination must use stable ordering.",
+    "7. Redis keys need namespaces and business cache writes need TTL.",
+    "8. Secrets must come from managed config, never hardcoded literals.",
+]
+
 FRONTEND_RULE_CARD = [
     "Frontend guardrails:",
     "1. Business styles should use design tokens/theme variables; hardcoded colors are not allowed outside token/theme files.",
@@ -168,9 +180,98 @@ def add_finding(findings: list[Finding], severity: str, rule: str, root: Path, p
     )
 
 
+AMOUNT_NAME_RE = re.compile(
+    r"(amount|amt|price|fee|cost|money|balance|payment|refund|charge|pay|total|subtotal|discount)",
+    re.IGNORECASE,
+)
+SECRET_NAME_RE = re.compile(
+    r"(password|passwd|secret|token|access_?key|secret_?key|private_?key|ak|sk)",
+    re.IGNORECASE,
+)
+
+
+def java_class_line(text: str, class_name: str) -> int:
+    for index, line in enumerate(text.splitlines(), start=1):
+        if re.search(rf"\b(class|interface|enum)\s+{re.escape(class_name)}\b", line):
+            return index
+    return 1
+
+
+def is_java_entry_path(path: Path) -> bool:
+    lowered = str(path).replace("\\", "/").lower()
+    name = path.name.lower()
+    return (
+        any(part in lowered for part in ("/controller/", "/provider/", "/job/", "/handler/"))
+        or any(token in name for token in ("controller", "provider", "jobhandler", "handler"))
+    )
+
+
+def previous_comment_has_chinese(lines: list[str], index: int) -> bool:
+    start = max(0, index - 4)
+    previous = "\n".join(lines[start:index])
+    return bool(re.search(r"[\u4e00-\u9fff]", previous)) and ("/**" in previous or "//" in previous or "*" in previous)
+
+
+def looks_like_java_method(line: str) -> bool:
+    stripped = line.strip()
+    if not re.search(r"\b(public|protected|private)\s+", stripped):
+        return False
+    if re.search(r"\b(class|interface|enum)\b", stripped):
+        return False
+    if re.search(r"\b(if|for|while|switch|catch)\s*\(", stripped):
+        return False
+    if not re.search(r"\)\s*(\{|throws\b|$)", stripped):
+        return False
+    return bool(re.search(r"\b[\w<>\[\], ?]+\s+\w+\s*\(", stripped))
+
+
+def is_trivial_java_method(line: str) -> bool:
+    return bool(re.search(r"\b(get|set|is|equals|hashCode|toString)\w*\s*\(", line))
+
+
 def scan_java(root: Path, path: Path, findings: list[Finding]):
     text = read_text(path)
-    for line_no, line in enumerate(text.splitlines(), start=1):
+    lines = text.splitlines()
+    entry_file = is_java_entry_path(path)
+    class_match = re.search(r"\bclass\s+(\w+)", text)
+    if class_match:
+        class_name = class_match.group(1)
+        class_line = java_class_line(text, class_name)
+        if class_name.endswith("AppService") and not class_name.endswith("AppServiceImpl"):
+            add_finding(
+                findings,
+                "fail",
+                "JAVA_SERVICE_INTERFACE_REQUIRED",
+                root,
+                path,
+                class_line,
+                "AppService must be an interface; put implementation in XxxAppServiceImpl.",
+                lines[class_line - 1] if lines else "",
+            )
+        if class_name.endswith("AppServiceImpl"):
+            expected_interface = class_name[:-4]
+            if not re.search(rf"\bimplements\s+[^\{{;]*\b{re.escape(expected_interface)}\b", text):
+                add_finding(
+                    findings,
+                    "fail",
+                    "JAVA_SERVICE_IMPL_CONTRACT",
+                    root,
+                    path,
+                    class_line,
+                    f"{class_name} must implement {expected_interface}.",
+                    lines[class_line - 1] if lines else "",
+                )
+
+    if "org.mapstruct.Mapper" in text and "@Mapper" in text:
+        mapper_line = next((i for i, item in enumerate(lines, start=1) if "@Mapper" in item), 1)
+        mapper_snippet = lines[mapper_line - 1] if lines else ""
+        if "unmappedTargetPolicy" not in text:
+            add_finding(findings, "fail", "JAVA_MAPSTRUCT_UNMAPPED_POLICY", root, path, mapper_line, "MapStruct mapper must set unmappedTargetPolicy = ReportingPolicy.ERROR.", mapper_snippet)
+        elif not re.search(r"unmappedTargetPolicy\s*=\s*(?:ReportingPolicy\.)?ERROR\b", text):
+            add_finding(findings, "fail", "JAVA_MAPSTRUCT_UNMAPPED_POLICY", root, path, mapper_line, "MapStruct unmappedTargetPolicy must be ReportingPolicy.ERROR.", mapper_snippet)
+
+    for index, line in enumerate(lines):
+        line_no = index + 1
         if re.search(r"@(Select|Update|Insert|Delete)\s*\(", line):
             add_finding(
                 findings,
@@ -182,6 +283,25 @@ def scan_java(root: Path, path: Path, findings: list[Finding]):
                 "MyBatis SQL must be written in XML Mapper, not Java annotations.",
                 line,
             )
+        if entry_file and re.search(r"\b[A-Z]\w*AppServiceImpl\b", line):
+            add_finding(findings, "fail", "JAVA_ENTRY_DEPENDS_ON_IMPL", root, path, line_no, "Controller / Provider / Job Handler must depend on AppService interface, not AppServiceImpl.", line)
+        if re.search(r"\b(?:double|Double|float|Float)\s+\w*", line) and AMOUNT_NAME_RE.search(line):
+            add_finding(findings, "fail", "JAVA_MONEY_FLOAT", root, path, line_no, "Money fields must use BigDecimal; double/float is forbidden.", line)
+        if SECRET_NAME_RE.search(line) and re.search(r"=\s*\"[^\"]{4,}\"", line):
+            add_finding(findings, "fail", "JAVA_HARDCODED_SECRET", root, path, line_no, "Secret-like config must be externalized and auditable; hardcoded literal detected.", line)
+        if "PageHelper.startPage" in line:
+            window = "\n".join(lines[index:index + 10]).lower()
+            if not re.search(r"(order\s+by|\.orderby\s*\(|setorderby\s*\()", window):
+                add_finding(findings, "warn", "JAVA_PAGEHELPER_STABLE_ORDER", root, path, line_no, "PageHelper pagination must include stable ordering such as id desc or created_time desc.", line)
+        if re.search(r"(redisTemplate|stringRedisTemplate).+\.set\s*\(", line):
+            window = "\n".join(lines[index:index + 6])
+            if not re.search(r"(TimeUnit|Duration|expire\s*\(|setex|opsForValue\(\)\.set\s*\([^;\n]+,\s*[^;\n]+,\s*\d+\s*,)", window):
+                add_finding(findings, "fail", "JAVA_REDIS_TTL", root, path, line_no, "Business Redis cache writes must set TTL.", line)
+            string_keys = re.findall(r"\"([A-Za-z0-9_.-]{3,})\"", line)
+            if string_keys and all(":" not in item for item in string_keys):
+                add_finding(findings, "warn", "JAVA_REDIS_KEY_NAMESPACE", root, path, line_no, "Redis key should include a namespace, for example order:detail:{id}.", line)
+        if looks_like_java_method(line) and not is_trivial_java_method(line) and not previous_comment_has_chinese(lines, index):
+            add_finding(findings, "warn", "JAVA_METHOD_COMMENT", root, path, line_no, "New/changed methods need Chinese comments covering purpose, params, return value, and side effects.", line)
         if re.search(r"\bqueryForList\s*\([^;\n]+,\s*[^,\n]+,\s*[^)\n]+\)", line):
             add_finding(
                 findings,
@@ -240,6 +360,10 @@ def scan_sql(root: Path, path: Path, findings: list[Finding]):
             add_finding(findings, "fail", "SQL_STORED_PROCEDURE", root, path, line_no, "Stored procedures/functions are forbidden for business logic.", line)
         if re.search(r"\btruncate\s+table\b", lowered):
             add_finding(findings, "warn", "SQL_TRUNCATE_TABLE", root, path, line_no, "TRUNCATE TABLE is risky in application code; confirm approval, backup, and rollback path.", line)
+        if AMOUNT_NAME_RE.search(lowered) and re.search(r"\b(double|float)\b", lowered):
+            add_finding(findings, "fail", "SQL_MONEY_FLOAT", root, path, line_no, "Money columns must use DECIMAL(18,3); double/float is forbidden.", line)
+        if AMOUNT_NAME_RE.search(lowered) and re.search(r"\bdecimal\s*\((?!\s*18\s*,\s*3\s*\))", lowered):
+            add_finding(findings, "fail", "SQL_MONEY_DECIMAL_SCALE", root, path, line_no, "Money columns must use DECIMAL(18,3).", line)
         if re.search(r"\bsum\s*\(", lowered) and not re.search(r"\b(ifnull|coalesce)\s*\([^;\n]*sum\s*\(", lowered):
             add_finding(findings, "warn", "SQL_SUM_NULL_SAFE", root, path, line_no, "sum() can return NULL; wrap with IFNULL/COALESCE unless caller explicitly handles NULL.", line)
         if re.search(r"\bis\s+null\b|\bis\s+not\s+null\b", lowered):
@@ -354,7 +478,13 @@ def format_text(findings: list[Finding], files: list[Path], root: Path) -> str:
     fails = [item for item in findings if item.severity == "fail"]
     warns = [item for item in findings if item.severity == "warn"]
     lines = []
-    if any(item.rule.startswith(("SQL_", "JAVA_", "MYBATIS_", "IBATIS_", "MAP_")) for item in findings):
+    if any(item.rule.startswith("JAVA_") for item in findings):
+        lines.extend(JAVA_RULE_CARD)
+        lines.append("")
+    if any(
+        item.rule.startswith(("SQL_", "MYBATIS_", "IBATIS_", "MAP_")) or item.rule == "JAVA_ANNOTATION_SQL"
+        for item in findings
+    ):
         lines.extend(SQL_RULE_CARD)
         lines.append("")
     if any(item.rule.startswith("FE_") for item in findings):

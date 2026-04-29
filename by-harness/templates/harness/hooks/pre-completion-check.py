@@ -26,14 +26,15 @@ CHECKLIST = [
     "4. No debug artifacts left (console.log, TODO, temporary code)?",
     "5. Documentation updated if behavior changed?",
     "6. Do all newly added/modified functions and methods include clear Chinese comments?",
-    "7. If Java/MyBatis/SQL changed, convention-check.py --changed-only has no FAIL and WARN is fixed or explained?",
-    "8. If frontend/UI changed, frontend-dev-conventions + frontend three-layer rules were read and applied?",
-    "9. If frontend/UI changed, no hardcoded colors, unexplained inline style, naked global overrides, missing loading/empty/error/disabled/focus-visible states?",
+    "7. If Java changed, Java Gate was checked: Service interface/impl, entry dependency direction, MapStruct ERROR, money, PageHelper ordering, Redis TTL, logging/config/secrets?",
+    "8. If Java/MyBatis/SQL changed, convention-check.py --changed-only has no FAIL and WARN is fixed or explained?",
+    "9. If frontend/UI changed, frontend-dev-conventions + frontend three-layer rules were read and applied?",
+    "10. If frontend/UI changed, no hardcoded colors, unexplained inline style, naked global overrides, missing loading/empty/error/disabled/focus-visible states?",
 ]
 
 TASK_HARNESS_CHECKLIST = [
-    "10. If this sprint maps to active bucket task file, unit tests passed before passes=true?",
-    "11. QA report is recorded (non-blocking), and progress logs are updated?",
+    "11. If this sprint maps to active bucket task file, unit tests passed before passes=true?",
+    "12. QA report is recorded (non-blocking), and progress logs are updated?",
 ]
 
 

@@ -40,6 +40,9 @@
   - 适用页面类型（Dashboard / Table / Form / Settings / Agent / Data-viz / Login / Onboarding 等）
   - 本次采用的三层规范文件（约束层 / 示范层 / 视觉层）
   - 视觉与交互验收标准（可截图、可浏览器验证、可代码扫描）
+- 若需求涉及 Java/Spring Boot/Dubbo/XXL-Job/MyBatis/Redis/金额/分页/配置/日志，Plan 阶段必须先阅读 `.harness/docs/java-dev-conventions.md`，并在 spec 中补充 Java Gate：
+  - 本次触发的硬规则：Service 接口/实现、入口依赖方向、MapStruct、中文注释、金额、分页、Redis、日志、配置密钥
+  - 每条触发规则的实现方式、验收方式和可自动检查项
 - 保存路径：`.harness/docs/specs/<feature-name>.md`
 
 ### Build 契约
@@ -49,6 +52,7 @@
 - 若 contract 缺失，先基于 `.harness/docs/contracts/TEMPLATE.md` 创建再实现。
 - 只允许实现 contract 范围内内容。
 - 若项目技术栈包含 Java/Spring Boot，编码前必须先阅读 `.harness/docs/java-dev-conventions.md` 并完成其中前置闸门确认。
+- 若本次涉及 Java，实现前必须复述 Java Gate 清单：Service 接口/实现、Controller/Provider/Job 只依赖接口、MapStruct ERROR、中文注释、金额 BigDecimal + DECIMAL(18,3)、PageHelper 稳定排序、Redis namespace + TTL、日志 AOP/Filter、配置可审计可回滚且无硬编码密钥。
 - 若项目技术栈包含 React/Vue/TypeScript/Next.js，或本次任务涉及 UI/样式/交互，编码前必须先阅读 `.harness/docs/frontend-dev-conventions.md`，并按需阅读：
   - `.harness/docs/frontend/rules.md`
   - `.harness/docs/frontend/code-design.md`
@@ -60,6 +64,7 @@
   - 构建/编译通过
   - 测试通过（既有 + 新增）
   - 验收标准逐条核对
+  - 若涉及 Java：Java Gate 逐条核对；运行 convention-check；fail 必须修复，warn 必须修复或解释
   - 若涉及前端：三层前端规范逐条核对；无新增硬编码颜色、无裸全局样式、无无解释 inline style；loading / empty / error / disabled / focus-visible 覆盖完整
   - 新增/修改函数与方法的中文注释完整
   - 无调试残留
@@ -110,6 +115,8 @@
 ### Java 后端附加规则（适用时强制）
 
 - 若为 Java 项目：必须遵守 `.harness/docs/java-dev-conventions.md`。
+- 涉及 Java 实现时，必须在 plan/build/qa 中显式处理 Java Gate，不能只写“已阅读规范”。
+- 完成前运行 `.codex/hooks/convention-check.py --changed-only` 或 `.claude/hooks/convention-check.py --changed-only`。
 
 ### 前端附加规则（适用时强制）
 

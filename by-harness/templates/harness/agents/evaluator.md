@@ -60,6 +60,14 @@ color: red
 - 对照 `.harness/docs/frontend-dev-conventions.md`、`.harness/docs/frontend/` 三层规范和 `.harness/docs/frontend/references/byai-ds-v/` 对应 HTML 参考页，检查 token、密度、状态、可访问性、视觉一致性、反例规避、Agent 行为透明度
 - 至少覆盖桌面与一个窄屏视口；若无法运行浏览器，必须说明未验证风险
 
+**第 5 层：Java Gate（规范与 hook）**
+若功能涉及 Java/Spring Boot/Dubbo/XXL-Job/MyBatis/Redis/金额/分页/配置/日志：
+- 对照 `.harness/docs/java-dev-conventions.md` 第 7 章检查 Java Gate
+- 验证 Service 是否接口 + 实现，入口类是否只依赖接口
+- 验证 MapStruct、金额、分页、Redis、日志、配置密钥规则
+- 运行 `.codex/hooks/convention-check.py --changed-only` 或 `.claude/hooks/convention-check.py --changed-only`
+- fail 视为必须修复；warn 必须给出修复或明确风险说明
+
 ### 4. 按标准评分
 
 对 contract 中每条验收标准进行评分：

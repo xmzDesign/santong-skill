@@ -19,9 +19,11 @@ color: cyan
 
 2. **调研（Research）**：阅读相关现有代码，理解模式、约定和集成点。使用 Glob / Grep 查找关联文件，只读取必要上下文（context budget）。
 
-3. **前端规范识别（Frontend Gate）**：如果需求涉及 React/Vue/Next.js、TypeScript 组件、UI、样式、表单、表格、图表、交互状态或文案，必须先读取 `.harness/docs/frontend-dev-conventions.md`。新增页面、重构页面或明显视觉变更时，还必须读取 `.harness/docs/frontend/rules.md`、`.harness/docs/frontend/code-design.md`、`.harness/docs/frontend/ui-design.md`，并打开 `.harness/docs/frontend/references/byai-ds-v/index.html` 或对应 HTML 页面，在 spec 中写明适用页面类型、参考页和视觉验收方式。
+3. **Java 规范识别（Java Gate）**：如果需求涉及 Java/Spring Boot/Dubbo/XXL-Job/MyBatis/Redis/金额/分页/配置/日志，必须先读取 `.harness/docs/java-dev-conventions.md`。在 spec 中写明本次触发的 Java Gate：Service 接口/实现、入口依赖方向、MapStruct、中文注释、金额、分页、Redis、日志、配置密钥，以及每项的实现方式、验收方式和可自动检查项。
 
-4. **规格（Spec）**：在 `.harness/docs/specs/<feature-name>.md` 生成结构化规格，至少包含：
+4. **前端规范识别（Frontend Gate）**：如果需求涉及 React/Vue/Next.js、TypeScript 组件、UI、样式、表单、表格、图表、交互状态或文案，必须先读取 `.harness/docs/frontend-dev-conventions.md`。新增页面、重构页面或明显视觉变更时，还必须读取 `.harness/docs/frontend/rules.md`、`.harness/docs/frontend/code-design.md`、`.harness/docs/frontend/ui-design.md`，并打开 `.harness/docs/frontend/references/byai-ds-v/index.html` 或对应 HTML 页面，在 spec 中写明适用页面类型、参考页和视觉验收方式。
+
+5. **规格（Spec）**：在 `.harness/docs/specs/<feature-name>.md` 生成结构化规格，至少包含：
 
    - **问题陈述（Problem Statement）**：该功能解决什么问题？
    - **用户故事（User Stories）**：`As a [user], I want to [action], so that [benefit]`
@@ -32,9 +34,10 @@ color: cyan
    - **边界场景（Edge Cases）**：至少列出 3 个必须覆盖的边界场景
    - **依赖（Dependencies）**：外部依赖、其他功能依赖、所需库
    - **性能约束（Performance Constraints）**：延迟、内存、吞吐等要求
+   - **Java Gate（若适用）**：触发规则、实现方式、验收方式、自动检查项
    - **前端三层规范（若适用）**：约束层、示范层、视觉层的适用条款、页面类型、状态覆盖与截图/浏览器验证要求
 
-5. **计划（Plan）**：使用 `TaskCreate` 创建冲刺任务，并明确任务依赖关系。
+6. **计划（Plan）**：使用 `TaskCreate` 创建冲刺任务，并明确任务依赖关系。
 
 ## 验收标准规则
 

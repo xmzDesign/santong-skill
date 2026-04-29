@@ -72,18 +72,182 @@
 - 禁止：`application -> bootstrap`
 - 禁止：跨应用直接读写业务表，跨应用交互必须走 API/消息契约。
 
-## 7. Java 实现硬性规则
+## 7. Java Gate：实现硬性规则
 
-1. Service 必须“接口 + 实现”（`XxxAppService` / `XxxAppServiceImpl`）。
-2. Controller / Dubbo Provider / Job Handler 只能依赖 Service 接口。
-3. MapStruct 仅做结构映射，必须配置 `unmappedTargetPolicy = ERROR`。
-4. 新增/修改函数与方法必须有中文注释，至少说明用途、关键参数、返回值、副作用。
-5. 金额字段统一使用 `DECIMAL(18,3)`，禁止 `double/float` 表达金额。
-6. 查询默认单表优先；分页统一 PageHelper 且必须稳定排序。
-7. Redis key 必须统一命名空间，业务缓存必须设置 TTL。
-8. Web 日志统一 AOP；Dubbo 日志统一 Filter；关键节点日志必打。
-9. 关键配置必须可审计、可回滚，禁止硬编码密钥。
-10. 业务代码中的 JSON 序列化/反序列化统一走 `fastjson2` 封装。
+本章不是普通阅读材料。只要任务涉及 Java、Spring Boot、Dubbo、XXL-Job、MyBatis、Redis、配置、日志、金额、分页、MapStruct 或 Service/Controller 分层，就必须在 Plan、Build、QA、Stop hook 四个位置重复检查。
+
+### 7.1 触发条件
+
+出现以下任一情况，本章自动触发：
+
+- 新增或修改 `Controller`、Dubbo `Provider`、XXL-Job `Handler`。
+- 新增或修改 `AppService`、`ServiceImpl`、领域服务、应用编排逻辑。
+- 新增或修改 MapStruct mapper、DTO/DO/VO 转换。
+- 新增或修改金额字段、金额计算、表结构、SQL、Mapper XML。
+- 新增或修改分页查询、列表查询、导出查询。
+- 新增或修改 Redis 缓存、分布式锁、业务 key。
+- 新增或修改日志、配置、密钥、开关、灰度参数。
+
+### 7.2 Plan Gate：规格阶段必须声明
+
+Plan/spec 中必须新增 **Java Gate** 小节，逐项声明本次是否涉及：
+
+- Service 接口/实现拆分：是/否，涉及类名。
+- Controller / Provider / Job 依赖方向：是/否，入口类只能依赖接口。
+- MapStruct：是/否，mapper 名称与 `unmappedTargetPolicy = ERROR`。
+- 金额：是/否，Java 类型、数据库类型、精度与舍入口径。
+- 分页/查询：是/否，是否单表优先，PageHelper 与稳定排序字段。
+- Redis：是/否，key 命名空间、TTL、缓存失效方式。
+- 日志：是/否，Web AOP、Dubbo Filter、关键节点日志字段。
+- 配置/密钥：是/否，配置来源、审计、回滚、脱敏方式。
+
+如果 spec 没有 Java Gate，小范围任务也必须在 build 前补齐。
+
+### 7.3 Build Checklist：编码前必须复述
+
+编码前必须先列出本次适用清单：
+
+- [ ] Service 使用 `XxxAppService` 接口 + `XxxAppServiceImpl` 实现。
+- [ ] Controller / Dubbo Provider / Job Handler 只注入 `XxxAppService` 接口，禁止依赖 `Impl`。
+- [ ] MapStruct 只做结构映射，且 `unmappedTargetPolicy = ReportingPolicy.ERROR`。
+- [ ] 新增/修改函数与方法有中文注释，说明用途、关键参数、返回值、副作用。
+- [ ] 金额字段 Java 使用 `BigDecimal`，数据库使用 `DECIMAL(18,3)`，禁止 `double/float`。
+- [ ] 查询默认单表优先；分页统一 PageHelper，并有稳定排序。
+- [ ] Redis key 有统一命名空间；业务缓存写入必须设置 TTL。
+- [ ] Web 日志走 AOP；Dubbo 日志走 Filter；关键节点日志包含 `traceId/bizId/resultCode/costMs`。
+- [ ] 关键配置可审计、可回滚；密钥托管，禁止硬编码。
+- [ ] 业务 JSON 序列化/反序列化统一走 `fastjson2` 封装。
+
+### 7.4 正反例
+
+#### Service 接口与依赖方向
+
+禁止：
+
+```java
+@RestController
+public class OrderController {
+    @Resource
+    private OrderAppServiceImpl orderAppService;
+}
+```
+
+推荐：
+
+```java
+public interface OrderAppService {
+    /**
+     * 创建订单，完成参数校验与应用层编排。
+     *
+     * @param command 创建订单命令，包含用户、商品和金额信息
+     * @return 创建后的订单结果
+     */
+    OrderCreateResult createOrder(OrderCreateCommand command);
+}
+
+@Service
+public class OrderAppServiceImpl implements OrderAppService {
+    @Override
+    public OrderCreateResult createOrder(OrderCreateCommand command) {
+        // ...
+    }
+}
+
+@RestController
+public class OrderController {
+    @Resource
+    private OrderAppService orderAppService;
+}
+```
+
+#### MapStruct
+
+禁止：
+
+```java
+@Mapper(componentModel = "spring")
+public interface OrderConvert {
+}
+```
+
+推荐：
+
+```java
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.ERROR)
+public interface OrderConvert {
+}
+```
+
+#### 金额与分页
+
+禁止：
+
+```java
+private double payAmount;
+PageHelper.startPage(pageNo, pageSize);
+List<OrderDO> list = orderMapper.selectByCondition(query);
+```
+
+推荐：
+
+```java
+private BigDecimal payAmount;
+PageHelper.startPage(pageNo, pageSize).setOrderBy("id desc");
+List<OrderDO> list = orderMapper.selectByCondition(query);
+```
+
+DDL 金额列必须使用：
+
+```sql
+pay_amount DECIMAL(18,3) NOT NULL DEFAULT 0.000 COMMENT '支付金额'
+```
+
+#### Redis
+
+禁止：
+
+```java
+redisTemplate.opsForValue().set("orderCache", value);
+```
+
+推荐：
+
+```java
+String key = "order:detail:" + orderId;
+redisTemplate.opsForValue().set(key, value, 10, TimeUnit.MINUTES);
+```
+
+#### 配置与密钥
+
+禁止：
+
+```java
+private static final String SECRET_KEY = "abc123";
+```
+
+推荐：
+
+```java
+@Value("${payment.secret-key}")
+private String secretKey;
+```
+
+### 7.5 自动检查映射
+
+`convention-check.py` 会尽量自动拦截可机器识别的问题：
+
+- Controller / Provider / Job 依赖 `*AppServiceImpl`：fail。
+- `XxxAppServiceImpl` 未实现 `XxxAppService`：fail。
+- `XxxAppService` 被写成 class 而不是 interface：fail。
+- MapStruct `@Mapper` 缺少 `unmappedTargetPolicy = ReportingPolicy.ERROR`：fail。
+- 金额字段使用 `double/float`：fail。
+- SQL 金额列使用 `double/float` 或非 `DECIMAL(18,3)`：fail。
+- `PageHelper.startPage` 附近缺少稳定排序：warn。
+- Redis 业务缓存写入缺少 TTL：fail。
+- 疑似硬编码密钥：fail。
+- 新增/修改方法缺少中文注释：warn。
+
+机器无法完全判断 Web AOP、Dubbo Filter、关键配置审计回滚等架构性要求，必须在 spec/contract/QA 报告中显式说明。
 
 ## 8. 数据库与 MyBatis 规范
 

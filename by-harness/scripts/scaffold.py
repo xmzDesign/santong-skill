@@ -17,7 +17,7 @@ from datetime import date
 from pathlib import Path
 
 HARNESS_DIR_NAME = ".harness"
-HARNESS_RUNTIME_VERSION = "2.3.0"
+HARNESS_RUNTIME_VERSION = "2.3.1"
 FRONTEND_REFERENCE_FILES = (
     "docs/frontend/references/byai-ds-v/index.html",
     "docs/frontend/references/byai-ds-v/readme.html",
