@@ -68,6 +68,13 @@ color: red
 - 运行 `.codex/hooks/convention-check.py --changed-only` 或 `.claude/hooks/convention-check.py --changed-only`
 - fail 视为必须修复；warn 必须给出修复或明确风险说明
 
+**第 6 层：Distributed Java Gate（分布式编码规范）**
+若存在任何 Java 改动：
+- 检查 spec/contract 是否声明 Distributed Java Gate；未声明则标记为 FAIL
+- 若声明“未触发”，核对本次改动是否确实未涉及外部调用、Dubbo/HTTP/RPC、MQ、异步、线程池、锁、Redis、事务、补偿、发布停机
+- 若触发第 14 章，逐项验证资源隔离、超时/重试/幂等、锁、最终一致性、缓存、消息、批量异步、容错降级、可观测性、配置安全、发布回滚/优雅停机
+- 对机器无法直接验证的补偿路径、人工接管、发布回滚方案，要求报告中列出证据或人工确认项
+
 ### 4. 按标准评分
 
 对 contract 中每条验收标准进行评分：
@@ -121,6 +128,14 @@ color: red
 - 可访问性与键盘：PASS / FAIL / PARTIAL
 - 响应式与截图：PASS / FAIL / PARTIAL
 - 反例规避：PASS / FAIL / PARTIAL
+
+### Java 规范检查（若适用）
+
+- Java Gate：PASS / FAIL / PARTIAL
+- Distributed Java Gate：未触发 / PASS / FAIL / PARTIAL
+- 第 14 章触发条款：14.x 列表或不适用理由
+- convention-check：PASS / FAIL / WARN
+- 人工确认项：补偿/降级/发布停机/配置审计等
 
 ### 失败详情
 

@@ -54,6 +54,17 @@ JAVA_RULE_CARD = [
     "8. Secrets must come from managed config, never hardcoded literals.",
 ]
 
+DISTRIBUTED_JAVA_RULE_CARD = [
+    "Distributed Java Gate guardrails:",
+    "1. Every Java change must declare Distributed Java Gate: not triggered with reason, or triggered with chapter 14 clauses.",
+    "2. External calls need timeout, bounded retry, idempotency premise, and backoff strategy.",
+    "3. Thread pools, queues, and workers need business naming, capacity limits, isolation, and rejection strategy.",
+    "4. Distributed locks need namespaced keys, wait/lease timeout, finally release, and owner validation.",
+    "5. Transactions must be short; cross-service consistency needs Outbox/Saga/TCC/compensation.",
+    "6. Messages need traceId/messageId/business key, idempotent consumers, and retry/dead-letter/compensation path.",
+    "7. Async boundaries must propagate and clear MDC/ThreadLocal; key paths need logs, metrics, and traces.",
+]
+
 FRONTEND_RULE_CARD = [
     "Frontend guardrails:",
     "1. Business styles should use design tokens/theme variables; hardcoded colors are not allowed outside token/theme files.",
@@ -188,6 +199,8 @@ SECRET_NAME_RE = re.compile(
     r"(password|passwd|secret|token|access_?key|secret_?key|private_?key|ak|sk)",
     re.IGNORECASE,
 )
+MESSAGE_SEND_RE = re.compile(r"(rocketMQTemplate|kafkaTemplate|rabbitTemplate|jmsTemplate)\s*\.\s*(send|convertAndSend|syncSend|asyncSend)")
+ASYNC_BOUNDARY_RE = re.compile(r"(@Async\b|CompletableFuture\.(runAsync|supplyAsync)|new\s+Thread\s*\()")
 
 
 def java_class_line(text: str, class_name: str) -> int:
@@ -300,6 +313,28 @@ def scan_java(root: Path, path: Path, findings: list[Finding]):
             string_keys = re.findall(r"\"([A-Za-z0-9_.-]{3,})\"", line)
             if string_keys and all(":" not in item for item in string_keys):
                 add_finding(findings, "warn", "JAVA_REDIS_KEY_NAMESPACE", root, path, line_no, "Redis key should include a namespace, for example order:detail:{id}.", line)
+        if re.search(r"Executors\.newCachedThreadPool\s*\(|new\s+LinkedBlocking(?:Queue|Deque)\s*<[^>]*>\s*\(\s*\)", line):
+            add_finding(findings, "fail", "DIST_JAVA_UNBOUNDED_EXECUTOR", root, path, line_no, "Distributed Java Gate: thread pools and queues must be bounded, named, isolated, and have rejection strategy.", line)
+        if re.search(r"\.lock\s*\(\s*\)", line):
+            add_finding(findings, "warn", "DIST_JAVA_LOCK_WITHOUT_TIMEOUT", root, path, line_no, "Distributed Java Gate: locks need wait timeout, lease timeout, finally release, and owner validation.", line)
+        if re.search(r"\.tryLock\s*\(\s*\)", line):
+            add_finding(findings, "warn", "DIST_JAVA_LOCK_TRYLOCK_NO_TIMEOUT", root, path, line_no, "Distributed Java Gate: tryLock should include bounded wait/lease time when used for distributed or cross-thread coordination.", line)
+        if re.search(r"new\s+(?:[A-Za-z0-9_.]+\.)?(RestTemplate|OkHttpClient)\s*\(\s*\)", line):
+            add_finding(findings, "warn", "DIST_JAVA_EXTERNAL_CLIENT_TIMEOUT", root, path, line_no, "Distributed Java Gate: external clients must declare connection/read timeout and retry boundaries.", line)
+        if "@Transactional" in text and re.search(r"(restTemplate|webClient|Feign|Dubbo|rocketMQTemplate|kafkaTemplate|rabbitTemplate|jmsTemplate).*\.(get|post|exchange|invoke|send|convertAndSend|syncSend|asyncSend)\s*\(", line, re.IGNORECASE):
+            add_finding(findings, "warn", "DIST_JAVA_TRANSACTION_EXTERNAL_CALL", root, path, line_no, "Distributed Java Gate: avoid RPC/MQ/external calls inside long transactions; define boundary and compensation path.", line)
+        if MESSAGE_SEND_RE.search(line):
+            window = "\n".join(lines[max(0, index - 4):index + 6])
+            if not re.search(r"\b(traceId|messageId)\b", window):
+                add_finding(findings, "warn", "DIST_JAVA_MESSAGE_CONTEXT", root, path, line_no, "Distributed Java Gate: messages must carry traceId, messageId, and business key for idempotency and replay.", line)
+        if ASYNC_BOUNDARY_RE.search(line):
+            window = "\n".join(lines[max(0, index - 4):index + 8])
+            if not re.search(r"\b(MDC|traceId|Trace|TransmittableThreadLocal|TTL)\b", window):
+                add_finding(findings, "warn", "DIST_JAVA_ASYNC_CONTEXT", root, path, line_no, "Distributed Java Gate: async boundaries must propagate and clear trace/MDC/ThreadLocal context.", line)
+        if re.search(r"\bcatch\s*\(", line):
+            block = "\n".join(lines[index:index + 8])
+            if re.search(r"\blog\.(warn|error)\s*\(", block) and not re.search(r"(throw|return|compensat|retry|dead.?letter|alarm|alert|fail)", block, re.IGNORECASE):
+                add_finding(findings, "warn", "DIST_JAVA_CATCH_ONLY_LOG", root, path, line_no, "Distributed Java Gate: failures must be traceable and recoverable; catch blocks cannot only log and continue.", line)
         if looks_like_java_method(line) and not is_trivial_java_method(line) and not previous_comment_has_chinese(lines, index):
             add_finding(findings, "warn", "JAVA_METHOD_COMMENT", root, path, line_no, "New/changed methods need Chinese comments covering purpose, params, return value, and side effects.", line)
         if re.search(r"\bqueryForList\s*\([^;\n]+,\s*[^,\n]+,\s*[^)\n]+\)", line):
@@ -480,6 +515,9 @@ def format_text(findings: list[Finding], files: list[Path], root: Path) -> str:
     lines = []
     if any(item.rule.startswith("JAVA_") for item in findings):
         lines.extend(JAVA_RULE_CARD)
+        lines.append("")
+    if any(item.rule.startswith("DIST_JAVA_") for item in findings):
+        lines.extend(DISTRIBUTED_JAVA_RULE_CARD)
         lines.append("")
     if any(
         item.rule.startswith(("SQL_", "MYBATIS_", "IBATIS_", "MAP_")) or item.rule == "JAVA_ANNOTATION_SQL"

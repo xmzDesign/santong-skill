@@ -14,6 +14,9 @@ argument-hint: 功能描述（1-4 句话）
 调用 `planner` 智能体，`planner` 会：
 - 澄清歧义（先向用户提问）
 - 调研代码库
+- 识别 Java/前端/项目局部规范源，并在 spec 中写入 Norm References
+- 若涉及 Java，写入 Java Gate 与 Distributed Java Gate；所有 Java 改动都必须声明分布式影响
+- 若涉及前端，写入 Frontend Gate、三层规范与 BYAI 参考页
 - 在 `.harness/docs/specs/<feature-name>.md` 产出规格说明
 - 创建冲刺任务
 
@@ -25,6 +28,8 @@ argument-hint: 功能描述（1-4 句话）
 - 从规格中提取验收标准
 - 明确范围（In Scope / Out of Scope）
 - 为每条标准指定验证方法
+- 若涉及 Java，将 Java Gate 与 Distributed Java Gate 转成可验收清单
+- 若涉及前端，将 Frontend Gate 与 BYAI 参考转成可验收清单
 - 设置执行门禁：单元测试必须通过（QA 报告非阻塞）
 - 设置最大迭代：`3`
 

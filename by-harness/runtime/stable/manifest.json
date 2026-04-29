@@ -1,7 +1,7 @@
 {
   "skill": "by-harness",
   "channel": "stable",
-  "version": "2.3.1",
+  "version": "2.3.2",
   "min_compatible_version": "1.0.0",
   "files": [
     {
@@ -22,7 +22,7 @@
     {
       "path": "scripts/update_runtime.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/scripts/update_runtime.py",
-      "sha256": "304264a7e760ffbf2535a02d2aae9076b4466363a5ac1a47cb64e0274b820002"
+      "sha256": "7d2ff93f1285beb45f93ef09d592192bafed19a075c340621a0ca9324cdd1567"
     },
     {
       "path": "scripts/init.sh",
@@ -57,12 +57,12 @@
     {
       "path": "docs/java-dev-conventions.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/java-dev-conventions.md",
-      "sha256": "c1a02ad363beb126059624987c8955e28c0f24ec21917ca9f3fb62d0c9eb01e6"
+      "sha256": "46a20a99854185448eb507ccef358e4e8f747378e6637139dcb3b26dfef5d735"
     },
     {
       "path": "docs/contracts/TEMPLATE.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/contracts/TEMPLATE.md",
-      "sha256": "1b92297b8fbff68b0094dc1e2e142d2b3499ff8f133f88f742535b8a8bbed01d"
+      "sha256": "94cad43cc081707c35f35e71b8bb74bc8ba300bdcdd3d26eff1222e34246a9b5"
     },
     {
       "path": "docs/frontend-dev-conventions.md",
@@ -267,13 +267,13 @@
     {
       "path": "root/AGENTS.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/AGENTS.md",
-      "sha256": "e8bf3daf1fb28c8e728b1871e238882f7e3ad791142bc55c96cd770d70d39e7e",
+      "sha256": "842c88e2a46453b72e4006aaa5352d01457fec6c1b92da5d006961e43adbc7ec",
       "render_project_context": true
     },
     {
       "path": "root/CLAUDE.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/CLAUDE.md",
-      "sha256": "ba6e275a1f46825a849879315edb35996beb1eb29abb6547492cd3fffc3c3dd9",
+      "sha256": "ee981928b1b95731912d97d7fa6246700b8fc7cf45d3525afcc2e181a2b83f36",
       "render_project_context": true
     },
     {
@@ -300,12 +300,12 @@
     {
       "path": "root/.codex/hooks/pre-completion-check.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/codex/hooks/pre-completion-check.py",
-      "sha256": "3bb5daa975069e0c2e6133000cad9ef412218a8bd8be2c863c8f30dfad24f9e3"
+      "sha256": "cc2036f26bd870a57bd97211ed625dc84de565ae0dcfcd31e8eb8d35d4d58fe6"
     },
     {
       "path": "root/.codex/hooks/convention-check.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/codex/hooks/convention-check.py",
-      "sha256": "8ff40b2c26312ba82650537e6b2c6cdacdffe950e6d7ddd64f3cd4c2827e39b4"
+      "sha256": "00db9199b70faabe10706cccaddffb119f13bbf69c2d795a738174051280c33c"
     },
     {
       "path": "root/.claude/settings.json",
@@ -326,27 +326,27 @@
     {
       "path": "root/.claude/hooks/pre-completion-check.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/hooks/pre-completion-check.py",
-      "sha256": "62e0e667362596be637f22daee04df3404ca06e911cd32f03763135b6948ae86"
+      "sha256": "9ae5558568493148b9abdaf413755e22c7ac5efcf398e2bb247ce3dc34cb2f74"
     },
     {
       "path": "root/.claude/hooks/convention-check.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/hooks/convention-check.py",
-      "sha256": "cadf0884a8afa42dc795dd57a46fd22addba00147a30e2aa1c54c9c7e168b127"
+      "sha256": "5e103114cc51f2e81f4cb669f550b0e3c03e147087959f37c417539fabff4af0"
     },
     {
       "path": "root/.claude/agents/planner.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/agents/planner.md",
-      "sha256": "d14db30f2941eec63ddbae5d9208e3a9acc9f6a9358b4b7df4df50b4105b379a"
+      "sha256": "a1f81bd652d25d327ffcbee63978747b68098bf80c4202d3d7db87b3849d8073"
     },
     {
       "path": "root/.claude/agents/generator.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/agents/generator.md",
-      "sha256": "311a05572dc8eadc023e08e669013a9cca7c4f9d700af27d9fc2218e69829663"
+      "sha256": "fa5ccc1464b7fea32b00fe1191192fc10ba7581f93a385bec932022171976473"
     },
     {
       "path": "root/.claude/agents/evaluator.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/agents/evaluator.md",
-      "sha256": "e5be09215c08e02df8b047aee3eb46a3a24293f1afeaa009d3a7ac8c0a01942f"
+      "sha256": "8b96ec39f82fb08b9cdc13a7cd349a833af19c1d6e34873e7a0395d894b3ed2d"
     },
     {
       "path": "root/.claude/agents/doc-gardener.md",
@@ -356,22 +356,22 @@
     {
       "path": "root/.claude/commands/plan.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/commands/plan.md",
-      "sha256": "652f27f3a8c8d952560972449b6e4051d5de2f72792aee4b3615dd5048c41d4c"
+      "sha256": "ed2725c34e5bc0935098463b558c23180184911dba839a8ffd5d68e7f52b0cda"
     },
     {
       "path": "root/.claude/commands/build.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/commands/build.md",
-      "sha256": "84af9d214a5c4308d58c5ee6671f950df725def1b10efcff65023d9520a41716"
+      "sha256": "0e6e611ac706a5e125f02626efcedca8f56ea6207d664a9cb6a204063e9965ef"
     },
     {
       "path": "root/.claude/commands/qa.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/commands/qa.md",
-      "sha256": "94b17e4f99e0d1621e3110a8a00f1b87e4d885b7432fb8662796ddb4e0697a0a"
+      "sha256": "fe77cf51bb83832f949a05cdd22bf98765b6e8feb49c8b430810acca8a04a259"
     },
     {
       "path": "root/.claude/commands/sprint.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/commands/sprint.md",
-      "sha256": "5136e4e6dfb21f9ef3c21cc8af9294773f407d2230a8747c8d1be26044e2aa9b"
+      "sha256": "bcc5992f0552347b0b91d04582e363c57c8df5fa643b6bc1b3d8205b6bb30c3b"
     }
   ]
 }

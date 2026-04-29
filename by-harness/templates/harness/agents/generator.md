@@ -20,8 +20,10 @@ color: green
 
 - 阅读 spec，理解要构建什么
 - 阅读 sprint contract，明确“完成”的定义
+- 检查 spec/contract 是否包含本次适用的规范引用、Java Gate、Distributed Java Gate、Frontend Gate；若缺失，先补齐 contract 或向用户说明需回到 plan，不得直接编码。
 - 如果当前仓库是 Java/Spring/MyBatis 项目，必须读取 `.harness/docs/java-dev-conventions.md`，并把其中与本次改动相关的硬约束纳入实现计划。
 - 如果本次改动涉及 Java/Spring Boot/Dubbo/XXL-Job/Redis/金额/分页/配置/日志，编码前必须列出 Java Gate 清单，至少覆盖：Service 接口/实现、入口只依赖接口、MapStruct `unmappedTargetPolicy = ReportingPolicy.ERROR`、中文注释、金额 BigDecimal + `DECIMAL(18,3)`、PageHelper 稳定排序、Redis namespace + TTL、日志 AOP/Filter、配置可审计可回滚且无硬编码密钥。
+- 所有 Java 改动编码前必须列出 Distributed Java Gate：声明未触发并说明理由，或逐项覆盖 `.harness/docs/java-dev-conventions.md` 第 14 章中的外部调用超时/重试/幂等、资源隔离、锁、事务与最终一致性、缓存治理、消息幂等与补偿、异步上下文、容错降级、可观测性、配置安全、发布回滚/优雅停机。
 - 如果本次改动包含 Mapper XML、SQL、DAO/Repository、分页查询或数据更新，编码前必须先列出本次适用的 SQL/ORM 规则，至少覆盖：禁止注解 SQL、禁止 `select *`、禁止 `${}`、强制 `resultMap`、`count(*)`、`sum` NULL 兜底、更新 `update_time`、禁止外键/级联/存储过程。
 - 如果当前仓库是前端项目，或本次改动包含 UI、样式、React/Vue/Next.js、TypeScript 组件、表单、表格、图表、交互状态或文案，必须读取 `.harness/docs/frontend-dev-conventions.md`，并按任务类型读取 `.harness/docs/frontend/rules.md`、`.harness/docs/frontend/code-design.md`、`.harness/docs/frontend/ui-design.md`。新增页面、重构页面或明显视觉变更时，还必须打开 `.harness/docs/frontend/references/byai-ds-v/index.html` 或对应 HTML 页面。编码前必须列出本次适用的 token、状态覆盖、布局密度、组件库/Antd、视觉类型与反例规避清单。
 - 阅读相关现有代码（只读必要部分，控制上下文预算）
@@ -46,9 +48,10 @@ color: green
 4. **验收标准检查**：逐条对照 contract 验证是否达成。
 5. **中文注释检查**：确认所有新增/修改函数、方法均有清晰中文注释。
 6. **Java Gate 检查**：若涉及 Java，逐条核对 Service 接口/实现、入口依赖方向、MapStruct ERROR、中文注释、金额、分页、Redis、日志、配置密钥，并运行 `.codex/hooks/convention-check.py --changed-only` 或 `.claude/hooks/convention-check.py --changed-only`；fail 必须修复，warn 必须修复或解释。
-7. **SQL/ORM 规范检查**：若涉及 Java/MyBatis/SQL，运行 `.codex/hooks/convention-check.py --changed-only` 或 `.claude/hooks/convention-check.py --changed-only`；fail 必须修复，warn 必须修复或解释。
-8. **前端规范检查**：若涉及前端，确认无新增硬编码颜色、裸全局样式、无解释 inline style；loading / empty / error / disabled / focus-visible 覆盖完整；桌面和窄屏无文本溢出或重叠；必要时运行 `.codex/hooks/convention-check.py --changed-only` 或 `.claude/hooks/convention-check.py --changed-only`。
-9. **调试残留检查**：移除 `console.log/print`、`TODO`、临时代码等。
+7. **Distributed Java Gate 检查**：所有 Java 改动都必须核对 Distributed Java Gate；未触发需说明理由，触发时逐条核对第 14 章适用条款，并说明机器无法判断的补偿、降级、发布停机、人工接管项。
+8. **SQL/ORM 规范检查**：若涉及 Java/MyBatis/SQL，运行 `.codex/hooks/convention-check.py --changed-only` 或 `.claude/hooks/convention-check.py --changed-only`；fail 必须修复，warn 必须修复或解释。
+9. **前端规范检查**：若涉及前端，确认无新增硬编码颜色、裸全局样式、无解释 inline style；loading / empty / error / disabled / focus-visible 覆盖完整；桌面和窄屏无文本溢出或重叠；必要时运行 `.codex/hooks/convention-check.py --changed-only` 或 `.claude/hooks/convention-check.py --changed-only`。
+10. **调试残留检查**：移除 `console.log/print`、`TODO`、临时代码等。
 
 不要跳过此步骤。跳过自检会显著降低交付质量。
 
@@ -58,6 +61,7 @@ color: green
 - 实现了什么
 - 如何完成自检
 - 若涉及 Java，必须包含“Java Gate 自检结果”，逐项说明 Service、入口依赖、MapStruct、注释、金额、分页、Redis、日志、配置密钥是否满足，以及 convention-check 结果
+- 若涉及 Java，必须包含“Distributed Java Gate 自检结果”，说明未触发理由或第 14 章触发条款、实现证据、人工确认项和剩余风险
 - 若涉及 Java/MyBatis/SQL，必须包含“SQL/ORM 规范自检结果”，说明 convention-check 是否通过、warn 是否已处理或解释
 - 若涉及前端，必须包含“前端三层规范自检结果”，说明读取了哪些规范、适用的页面类型、状态覆盖、视觉/响应式验证和 convention-check 结果
 - 需要 evaluator 重点关注什么
