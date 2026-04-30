@@ -21,23 +21,23 @@ HARNESS_DIR_NAME = ".harness"
 
 
 CHECKLIST = [
-    "1. Code compiles/builds without errors?",
-    "2. All tests pass (both existing and new)?",
-    "3. All acceptance criteria from the contract are met?",
-    "4. If this sprint maps to a feature, spec_path and contract_path both exist before passes=true?",
-    "5. No debug artifacts left (console.log, TODO, temporary code)?",
-    "6. Documentation updated if behavior changed?",
-    "7. Do all newly added/modified functions and methods include clear Chinese comments?",
-    "8. If Java changed, Java Gate was checked: Service interface/impl, entry dependency direction, MapStruct ERROR, money, PageHelper ordering, Redis TTL, logging/config/secrets?",
-    "9. If Java changed, Distributed Java Gate was declared and checked: not triggered with reason, or chapter 14 clauses verified?",
-    "10. If Java/MyBatis/SQL changed, convention-check.py --changed-only has no FAIL and WARN is fixed or explained?",
-    "11. If frontend/UI changed, frontend-dev-conventions + frontend three-layer rules were read and applied?",
-    "12. If frontend/UI changed, no hardcoded colors, unexplained inline style, naked global overrides, missing loading/empty/error/disabled/focus-visible states?",
+    "1. 代码是否能无错误编译/构建？",
+    "2. 既有测试和新增测试是否全部通过？",
+    "3. contract 中的验收标准是否已逐条核对？",
+    "4. 若本轮映射到 feature，passes=true 前 spec_path 和 contract_path 是否都真实存在？",
+    "5. 是否已清理 console.log/TODO/临时代码等调试残留？",
+    "6. 行为变化时，相关文档是否已更新？",
+    "7. 所有新增/修改函数和方法是否都有清晰中文注释？",
+    "8. 若修改 Java，Java 总门禁与触发维度核心门禁是否已逐条核对？",
+    "9. 若修改 Java，分布式 Java 门禁是否已声明未触发理由，或已核对触发条款？",
+    "10. 若修改 Java/MyBatis/SQL，convention-check.py --changed-only 是否无 FAIL，WARN 是否已修复或解释？",
+    "11. 若修改前端/UI，是否已读取并应用 frontend-dev-conventions 与三层规范？",
+    "12. 若修改前端/UI，是否无硬编码颜色、无无解释 inline style、无裸全局覆盖，并覆盖 loading/empty/error/disabled/focus-visible 状态？",
 ]
 
 TASK_HARNESS_CHECKLIST = [
-    "13. If this sprint maps to active bucket task file, unit tests passed before passes=true?",
-    "14. QA report is recorded (non-blocking), and progress logs are updated?",
+    "13. 若本轮映射到 active bucket 任务，passes=true 前单元测试是否已通过？",
+    "14. QA 报告是否已记录（非阻塞），进度日志是否已更新？",
 ]
 
 

@@ -1,125 +1,122 @@
-# Java 后端编码规范入口（Harness 分片版）
+# Java 后端编码规范入口（分片版）
 
-本文件是 Java 规范入口，不承载全部细则。开始 Java 任务时先读本文件，再按触发项读取 `.harness/docs/java/rules/` 下的对应规则，避免一次性加载过长上下文导致遗漏或幻觉。
+本文件只做入口、路由和总门禁，不承载全部细则。每次 Java 修改都必须先读本文件，再按本次触发的维度读取 `.harness/docs/java/rules/` 下的分片规则。不要默认加载全部分片，避免上下文过长导致遗漏和幻觉。
 
 版本信息：
-- Version: `1.4`
+- Version: `1.5`
 - Last Updated: `2026-04-29`
 
-## 1. 适用范围
+## 1. 执行顺序
 
-- Java / Spring Boot / Dubbo / XXL-Job / MyBatis / Redis / MQ 后端项目。
-- 涉及分布式调用、缓存、消息、并发控制、事务一致性、发布停机的业务系统。
-- 需要 AI 辅助编码且必须可审计、可回滚、可验收的工程场景。
+1. 读取当前任务 `spec/contract`、仓库入口 `AGENTS.md` / `CLAUDE.md`。
+2. 读取本入口文件，确认本次触发哪些规范维度。
+3. 只读取触发维度对应的分片规则。
+4. 检查被修改区域的既有实现、测试、配置、命名和本地约定。
+5. 在 spec/contract/build/qa 中记录已读取的规则、触发原因、验收方式和未触发理由。
 
-## 2. 规则级别
+## 2. 规范维度路由
 
-- MUST：必须遵守，违反即不允许合并。
-- SHOULD：强烈建议，偏离必须说明理由并经评审确认。
-- MUST NOT：明确禁止，违反视为高风险缺陷，必须整改后再发布。
+| 维度 | 触发场景 | 必读分片 |
+|---|---|---|
+| 通用工程 | 任意 Java 代码、配置、SQL、脚手架改动 | `.harness/docs/java/rules/00-core.md` |
+| 分层与 DDD | 包结构、Service、Domain、Repository、Adapter、Converter、MapStruct | `.harness/docs/java/rules/java-ddd.md` |
+| Dubbo 与公共 API | Dubbo 接口、`ApiResponse<T>`、client/api DTO、公共枚举、RPC Filter | `.harness/docs/java/rules/dubbo-api.md` |
+| 日志与异常 | 日志、TraceId、MDC、脱敏、错误码、异常转换、外部错误响应 | `.harness/docs/java/rules/logging-error.md` |
+| 持久化与基础设施 | MyBatis、SQL、数据库、Redis、锁、MQ、XXL-Job、配置、HTTP/RPC 适配 | `.harness/docs/java/rules/persistence-infra.md` |
+| 测试安全运维 | 测试、鉴权、限流、监控、部署、回滚、文档 | `.harness/docs/java/rules/testing-security.md` |
+| 分布式契约 | 外部调用、重试、幂等、线程池、锁、事务、消息、缓存一致性、停机 | `.harness/docs/java/rules/distributed-java-gate.md` |
 
-## 3. 必读顺序
+## 3. 总门禁（每次 Java 修改必须满足）
 
-1. 读取当前任务 `spec/contract` 与仓库入口 `AGENTS.md` / `CLAUDE.md`。
-2. 读取本入口文件。
-3. 按下方 Rule Loading Map 只读取与任务相关的规则文件。
-4. 检查被触碰代码区域的既有实现、测试、配置和命名。
-5. 只有当分片规则不足以判断时，再读取仓库本地更详细的标准文档或历史 ADR。
+所有 Java 修改都必须在 build 前复述并在 qa 中核对以下 5 条总门禁：
 
-## 4. Rule Loading Map
+1. **先契约后实现**：必须先有 spec/contract；若缺少 Java 总门禁、触发分片规则或分布式 Java 门禁声明，先补齐再编码。
+2. **先本地后通用**：先看本地已有实现和约定，优先复用已有工具、异常、响应包装、转换器、配置和命名。
+3. **边界不被突破**：入口层只依赖应用接口，Application 不直连 Mapper，Domain 不依赖基础设施，对外契约不暴露内部模型。
+4. **风险显式落地**：公共 API、SQL、缓存、消息、事务、配置、发布、回滚、安全影响必须写入 spec/contract 验收项。
+5. **验证可追溯**：必须运行可用测试和 `convention-check`；无法运行时写明阻塞原因和最小建议验证命令。
 
-| 触发项 | 必读规则 |
-|---|---|
-| 通用工程约束、前置闸门、技术栈、完成口径 | `.harness/docs/java/rules/00-core.md` |
-| Java 包职责、DDD 分层、命名、依赖注入、MapStruct、应用服务接口实现 | `.harness/docs/java/rules/java-ddd.md` |
-| Dubbo、`ApiResponse<T>`、client/api DTO、公共 API、兼容性、RPC filter | `.harness/docs/java/rules/dubbo-api.md` |
-| 日志、TraceId、MDC、脱敏、异常模型、错误响应 | `.harness/docs/java/rules/logging-error.md` |
-| MyBatis、SQL、数据库、Redis、锁、MQ、XXL-Job、配置、基础设施 | `.harness/docs/java/rules/persistence-infra.md` |
-| 安全、测试、监控、部署、文档、质量门禁 | `.harness/docs/java/rules/testing-security.md` |
-| 外部调用、幂等、重试、锁、事务、消息、缓存一致性、异步、发布停机 | `.harness/docs/java/rules/distributed-java-gate.md` |
+## 4. 维度核心门禁（按触发维度追加）
 
-## 5. Java Gate 触发条件
+### 4.1 通用工程门禁
 
-出现以下任一情况，必须在 plan/build/qa 中显式处理 Java Gate：
+1. 最小安全变更，不无依据扩范围。
+2. 保持公共契约兼容，破坏性变更必须由任务明确要求。
+3. 不重复造工具类、异常类、转换器、响应包装或框架胶水。
+4. 新增/修改方法必须有中文注释，说明用途、参数、返回值和副作用。
+5. 交付摘要必须记录读取的分片、验证命令和剩余风险。
 
-- 新增或修改 `Controller`、Dubbo `Provider`、XXL-Job `Handler`。
-- 新增或修改 `AppService`、`ServiceImpl`、领域服务、应用编排逻辑。
-- 新增或修改 Dubbo 接口、公共 API、`ApiResponse`、request/response DTO、公共枚举或 client/api 包。
-- 新增或修改 MapStruct mapper、DTO/DO/VO 转换。
-- 新增或修改金额字段、金额计算、表结构、SQL、Mapper XML。
-- 新增或修改分页查询、列表查询、导出查询。
-- 新增或修改 Redis 缓存、分布式锁、业务 key。
-- 新增或修改日志、TraceId、MDC、异常转换、错误码、配置、密钥、开关、灰度参数。
-- 新增或修改测试、安全、鉴权、限流、监控指标、部署配置或文档化运行行为。
-- 新增或修改外部调用、Dubbo/HTTP/RPC 客户端、MQ、异步任务、线程池、批量处理、事务边界、补偿逻辑、发布停机相关逻辑。
+### 4.2 分层与 DDD 门禁
 
-## 6. Plan Gate
+1. Controller / Provider / Job 只能依赖应用服务接口，不能注入 `Impl`。
+2. `XxxAppService` 必须是接口，`XxxAppServiceImpl` 必须实现对应接口。
+3. Domain 不依赖 Spring、MyBatis、Redis、MQ、HTTP Client 或数据库 Entity。
+4. Application 不直接操作 MyBatis Mapper；通过 Domain Repository/Adapter 抽象访问。
+5. MapStruct 必须设置 `unmappedTargetPolicy = ReportingPolicy.ERROR`。
 
-Spec 中必须新增 **Java Gate** 小节，逐项声明本次是否涉及：
+### 4.3 Dubbo 与公共 API 门禁
 
-- Service 接口/实现：是/否，涉及类名。
-- Controller / Provider / Job 依赖方向：是/否，入口类只能依赖接口。
-- MapStruct：是/否，mapper 名称与 `unmappedTargetPolicy = ERROR`。
-- 金额：是/否，Java 类型、数据库类型、精度与舍入口径。
-- 分页/查询：是/否，是否单表优先，PageHelper 与稳定排序字段。
-- Redis：是/否，key 命名空间、TTL、缓存失效方式。
-- 日志异常：是/否，TraceId/MDC、LogSanitizer、错误码、异常转换边界。
-- 配置/密钥：是/否，配置来源、审计、回滚、脱敏方式。
-- 公共 API/Dubbo：是/否，`ApiResponse<T>`、DTO 序列化、枚举序列化、兼容性策略。
-- DDD 分层：是/否，涉及模块、依赖方向、Repository/Adapter/Converter 落位。
-- 测试安全监控：是/否，鉴权/限流/输入校验/输出脱敏、测试覆盖、指标与告警影响。
-- Distributed Java Gate：必须声明“未触发”或列出 `.harness/docs/java/rules/distributed-java-gate.md` 的触发条款。
+1. 公共 client/api service 方法统一返回 `ApiResponse<T>`。
+2. Public DTO 必须实现 `Serializable` 并声明 `serialVersionUID`。
+3. 公共枚举对外使用 `name()` 或稳定 code，禁止使用 `ordinal()`。
+4. 公共 API 不暴露 Domain、Entity、DO、Mapper、Infrastructure 内部类型。
+5. 非幂等核心写接口必须明确 `retries = 0` 或记录项目既有策略。
 
-如果 spec 缺少 Java Gate 或 Distributed Java Gate，小范围任务也必须在 build 前补齐；不能用“改动很小”跳过。
+### 4.4 日志与异常门禁
 
-## 7. Build Checklist
+1. Web/Dubbo/MQ/异步入口必须生成或传递 TraceId，并在结束时清理 MDC。
+2. 日志必须脱敏，禁止输出 token、密码、密钥、签名、授权头等敏感值。
+3. ERROR 日志必须带异常堆栈和业务上下文。
+4. 外部错误响应不得暴露原始系统异常、SQL、堆栈或第三方原始错误。
+5. 业务异常使用项目统一异常和错误码，不新增随意的异常体系。
 
-编码前必须复述本次适用清单：
+### 4.5 持久化与基础设施门禁
 
-- [ ] 已读取本入口文件与任务触发的分片规则。
-- [ ] Service 使用 `XxxAppService` 接口 + `XxxAppServiceImpl` 实现。
-- [ ] Controller / Dubbo Provider / Job Handler 只注入接口，禁止依赖 `Impl`。
-- [ ] MapStruct 只做结构映射，且 `unmappedTargetPolicy = ReportingPolicy.ERROR`。
-- [ ] 新增/修改函数与方法有中文注释，说明用途、关键参数、返回值、副作用。
-- [ ] 金额字段 Java 使用 `BigDecimal`，数据库使用 `DECIMAL(18,3)`，禁止 `double/float`。
-- [ ] 查询默认单表优先；分页统一 PageHelper，并有稳定排序。
-- [ ] Redis key 有统一命名空间；业务缓存写入必须设置 TTL。
-- [ ] Web 日志走 AOP；Dubbo 日志走 Filter；关键节点日志包含 `traceId/bizId/resultCode/costMs`。
-- [ ] 公共 client/api service 方法统一返回 `ApiResponse<T>`，Public DTO 实现 `Serializable` 并声明 `serialVersionUID`。
-- [ ] 公共枚举外部序列化使用 `name()`，禁止 `ordinal()`。
-- [ ] 对外契约不暴露 Domain 模型、数据库 Entity 或 Infrastructure 内部类型。
-- [ ] 关键配置可审计、可回滚；密钥托管，禁止硬编码。
-- [ ] 已声明 Distributed Java Gate：未触发需说明原因；触发时逐条对照分布式规则。
+1. MyBatis SQL 必须写在 XML Mapper，禁止注解内联 SQL。
+2. SQL 禁止 `select *`、`${}`、`resultClass`，统计行数使用 `count(*)`。
+3. 金额使用 Java `BigDecimal` 和数据库 `DECIMAL(18,3)`，更新记录必须维护 `update_time`。
+4. 分页必须稳定排序；count 为 0 时不继续查明细。
+5. Redis key 必须有命名空间，业务缓存必须设置 TTL；锁必须有超时和持有者校验释放。
 
-## 8. 自动检查映射
+### 4.6 测试安全运维门禁
 
-`.codex/hooks/convention-check.py` 与 `.claude/hooks/convention-check.py` 会尽量自动拦截可机器识别的问题：
+1. 不得硬编码或提交任何密码、token、API key、私钥、签名密钥。
+2. 受保护操作必须有鉴权、输入校验和必要的限流/审计。
+3. 核心业务逻辑和公共 API 变更必须补充正常/异常路径测试。
+4. 监控指标必须控制标签基数，不使用 raw ID 作为高基数 label。
+5. 生产影响变更必须写明发布验证、灰度、回滚或人工确认方案。
+
+### 4.7 分布式契约门禁
+
+1. 所有 Java 改动必须声明分布式 Java 门禁：未触发要说明理由，触发要列条款。
+2. 外部调用必须有超时、重试上限、退避策略和幂等前提。
+3. 线程池、队列、锁必须有业务命名、容量/超时限制和拒绝/失败策略。
+4. 跨服务一致性必须有事务边界、补偿路径、终止条件和人工接管方案。
+5. MQ/异步/缓存/停机必须可观测、可重放或可降级，并能处理在途任务。
+
+## 5. Plan / Build / QA 要求
+
+- **Plan**：spec 必须列出触发维度、读取分片、每条门禁的实现方式、验收方式和自动检查项。
+- **Build**：编码前必须复述总门禁和触发维度门禁；缺失 contract 验收项时先补 contract。
+- **QA**：逐项核对总门禁、触发维度门禁、`convention-check` 输出和测试结果；fail 必须修复，warn 必须解释或修复。
+
+## 6. 自动检查映射
+
+`.codex/hooks/convention-check.py` 与 `.claude/hooks/convention-check.py` 会拦截可机器识别的问题：
 
 - Controller / Provider / Job 依赖 `*AppServiceImpl`：fail。
 - `XxxAppServiceImpl` 未实现 `XxxAppService`：fail。
 - `XxxAppService` 被写成 class 而不是 interface：fail。
-- MapStruct `@Mapper` 缺少 `unmappedTargetPolicy = ReportingPolicy.ERROR`：fail。
+- MapStruct 缺少 `unmappedTargetPolicy = ReportingPolicy.ERROR`：fail。
 - 金额字段使用 `double/float`：fail。
 - SQL 金额列使用 `double/float` 或非 `DECIMAL(18,3)`：fail。
-- `PageHelper.startPage` 附近缺少稳定排序：warn。
+- PageHelper 附近缺少稳定排序：warn。
 - Redis 业务缓存写入缺少 TTL：fail。
-- 疑似硬编码密钥：fail。
-- 新增/修改方法缺少中文注释：warn。
-- MyBatis 注解内联 SQL、`select *`、`${}`、`resultClass`、非 `count(*)` 统计：fail。
+- MyBatis 注解 SQL、`select *`、`${}`、`resultClass`、非 `count(*)`：fail。
 - Public DTO 缺少 `Serializable` 或 `serialVersionUID`：fail。
 - 公共 API 方法未返回 `ApiResponse<T>`：fail。
-- `ordinal()` 用于外部可见枚举语义：fail。
-- 日志中直接输出敏感字段、请求头或 token/password/secret：fail。
+- 外部可见枚举使用 `ordinal()`：fail。
+- 疑似硬编码密钥或敏感日志：fail。
 - 新增 `logback` 依赖链：fail。
-- 无界线程池、无容量队列、无超时锁、事务中疑似外部调用、消息缺少 `traceId/messageId`：warn/fail。
 
-机器无法完全判断 Web AOP、Dubbo Filter、关键配置审计回滚、补偿路径、发布停机方案等架构性要求，必须在 spec/contract/QA 报告中显式说明。
-
-## 9. 完成前摘要
-
-交付摘要必须写明：
-
-- 本次读取或适用的 Java 分片规则。
-- 本次未适用的高风险分片及理由。
-- Java Gate 与 Distributed Java Gate 的触发结论。
-- 实际运行的验证命令，或无法运行时的最小建议验证命令。
+机器无法完全判断补偿、降级、人工接管、发布停机等架构性要求，必须在 spec/contract/QA 中人工确认。

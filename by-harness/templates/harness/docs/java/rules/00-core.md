@@ -1,69 +1,66 @@
-# Core AI Coding Rules
+# Java 通用工程规则
 
-Use this file for rules that apply to every Java backend task. Load topic-specific rule files only when the task touches that area.
+本文件适用于所有 Java 后端任务。每次 Java 修改都必须读取本文件；只有触发具体领域时，才继续读取其他分片规则。
 
-## Always Do
+## 1. 适用场景
 
-- Read the current task `spec/contract` before coding.
-- Make the smallest safe change that satisfies the request.
-- Inspect existing code before introducing new patterns.
-- Reuse existing utilities, converters, exception types, response wrappers, configs, and naming conventions.
-- Preserve public API compatibility unless the task explicitly requests an API change.
-- Keep changes within the correct DDD layer.
-- Validate with the smallest relevant test, build, static check, or manual verification.
-- Before code/config/SQL changes, define impact scope, rollback path, and acceptance criteria.
+- 修改 Java 业务代码、配置、SQL、脚本、依赖或工程结构。
+- 调整公共接口、异常、日志、缓存、任务、消息或基础设施接入。
+- 新增测试、修复缺陷、重构局部实现或迁移既有逻辑。
 
-## Never Do
+## 2. 核心门禁（每次 Java 修改必须满足）
 
-- Do not duplicate framework glue, utility classes, mappers, converters, or exception classes.
-- Do not bypass domain services from application services when business rules already exist.
-- Do not put infrastructure annotations or mapper access into domain models or domain services.
-- Do not expose raw system exception messages to external callers.
-- Do not log secrets, tokens, passwords, signatures, credentials, private keys, or authorization values.
-- Do not serialize enums with `ordinal()`.
-- Do not expand scope without evidence.
-- Do not skip verification and directly deliver.
+1. **先读契约再编码**：编码前必须读取当前任务的 `spec/contract`、仓库入口约束和本 Java 规范入口。
+2. **先看本地实现**：新增模式前必须查看同层已有实现，优先复用已有工具、转换器、异常、响应包装、配置和命名。
+3. **最小安全改动**：只修改完成任务所需的最小范围，不顺手重构无关模块，不扩大公共契约影响。
+4. **风险写入验收**：公共 API、SQL、缓存、事务、消息、配置、安全、发布或回滚影响必须进入 contract 验收项。
+5. **验证结果可追溯**：交付前必须记录测试、构建、静态检查或人工验证结果；无法运行时写明原因和建议命令。
 
-## Pre-Change Gate
+## 3. 变更前确认
 
-Before any code, scaffold, config, or SQL change, explicitly confirm:
+编码、配置、SQL、脚手架变更前，按下面顺序确认：
 
-1. Current `spec/contract` and repository constraints are read.
-2. Relevant Java rule slices are loaded from `.harness/docs/java/rules/`.
-3. Public contract impact is known: Dubbo/HTTP/API, DTOs, enums, response wrappers, compatibility.
-4. DDD layer placement is known: package responsibility, dependency direction, Service/Repository/Adapter/Converter location.
-5. Logging and exception boundaries are known: TraceId/MDC, masking, error codes, safe external responses.
-6. SQL location is known: MyBatis SQL belongs in XML Mapper, not Java annotations.
-7. SQL semantics are checked: count, NULL, pagination, table aliases, correction scripts.
-8. ORM mapping is checked: explicit fields, `resultMap`, parameter binding, update field range, `update_time`.
-9. Scheduling is checked: scheduled tasks use XXL-Job, no ad-hoc scheduler.
-10. Migration is checked: application migration is not required by default unless the task explicitly asks for schema changes.
-11. Distributed impact is declared: every Java change states whether Distributed Java Gate is triggered.
+1. 当前 `spec/contract` 已覆盖本次 Java 总门禁与触发的分片规则。
+2. 本次公共契约影响已明确：Dubbo、HTTP、API、DTO、枚举、响应包装、兼容性。
+3. 本次分层位置已明确：包职责、依赖方向、Service、Repository、Adapter、Converter。
+4. 日志与异常边界已明确：TraceId/MDC、脱敏、错误码、安全外部响应。
+5. SQL 位置已明确：MyBatis SQL 写在 XML Mapper，禁止写进 Java 注解。
+6. SQL 语义已检查：count、NULL、分页、表别名、数据订正和回滚。
+7. ORM 映射已检查：显式字段、`resultMap`、参数绑定、更新字段范围、`update_time`。
+8. 定时任务已检查：调度任务使用 XXL-Job，不新增临时本地 Scheduler。
+9. 数据迁移已检查：默认不做应用启动迁移，除非任务明确要求 schema 变更。
+10. 分布式影响已声明：所有 Java 改动都要说明分布式 Java 门禁未触发或已触发。
 
-## Technology Baseline
+## 4. 技术基线
 
-- JDK: `1.8`.
-- Build: Maven, including multi-module projects.
+- JDK 使用 `1.8`。
+- 构建使用 Maven，支持多模块项目。
+- 业务 JSON 入口遵循项目既有标准，不新增并行业务序列化体系。
 
-## Forbidden Dependencies
+## 5. 禁止项
 
-- MUST NOT add `gson` as the business JSON entry.
-- MUST NOT add a parallel handwritten `jackson` business serialization entry, except Spring Web's default message conversion chain.
-- MUST NOT add `logback` dependency chains or APIs.
+- 禁止新增 `gson` 作为业务 JSON 入口。
+- 禁止手写一套并行 `jackson` 业务序列化入口；Spring Web 默认消息转换链除外。
+- 禁止新增 `logback` 依赖链或直接使用 `logback` API。
+- 禁止重复造框架胶水、工具类、Mapper、Converter、异常类或响应包装。
+- 禁止在 Domain 中放入基础设施注解、Mapper 访问、Redis、MQ、HTTP Client 或数据库 Entity。
+- 禁止把原始系统异常、SQL、堆栈、第三方原始错误直接返回给外部调用方。
+- 禁止记录密码、token、密钥、签名、授权头、私钥等敏感数据。
+- 禁止使用枚举 `ordinal()` 作为外部可见值、持久化值或消息值。
 
-## Done Criteria
+## 6. 完成标准
 
-A Java task is complete only when:
+Java 任务只有同时满足下面条件，才算完成：
 
-- The implementation follows the correct layer boundaries.
-- Public contracts are intentionally unchanged or explicitly updated with compatibility notes.
-- Sensitive data is protected in logs, config, tests, and docs.
-- Exceptions and responses follow project conventions.
-- Java Gate and Distributed Java Gate are recorded in spec/contract/build/qa.
-- Validation commands and results are recorded.
+- 实现位于正确分层，依赖方向没有被突破。
+- 公共契约保持兼容；若需要破坏性变更，必须由任务明确要求并写入 contract。
+- 日志、配置、测试、文档中没有敏感信息泄露。
+- 异常、错误码、响应包装遵循项目统一约定。
+- Java 总门禁、触发维度门禁、分布式 Java 门禁都已记录在 spec/contract/build/qa。
+- 可用测试和 `convention-check` 已执行；失败项已修复，警告项已修复或解释。
 
-## Relationship With Local Contracts
+## 7. 与本地规则的关系
 
-- User instructions and repository-local rules take precedence when stricter.
-- This rule set is the default floor; local rules may tighten but not loosen it without explicit project decision.
-- Conflicts must be recorded in task `spec/contract` with the decision and effective scope.
+- 用户指令和仓库本地规则优先；更严格的规则优先。
+- 本规则集是默认底线，本地规则可以收紧，不能在没有明确项目决策时放松。
+- 若规则冲突，必须在 `spec/contract` 中记录冲突、决策和生效范围。

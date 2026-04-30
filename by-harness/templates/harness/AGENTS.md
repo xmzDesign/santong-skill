@@ -41,11 +41,11 @@
   - 适用页面类型（Dashboard / Table / Form / Settings / Agent / Data-viz / Login / Onboarding 等）
   - 本次采用的三层规范文件（约束层 / 示范层 / 视觉层）
   - 视觉与交互验收标准（可截图、可浏览器验证、可代码扫描）
-- 若需求涉及 Java/Spring Boot/Dubbo/XXL-Job/MyBatis/Redis/金额/分页/配置/日志，Plan 阶段必须先阅读 `.harness/docs/java-dev-conventions.md` 入口，再按触发项读取 `.harness/docs/java/rules/` 下的分片规则，并在 spec 的规范引用、Java Gate 和 Distributed Java Gate 中补充：
-  - 本次触发的硬规则：Service 接口/实现、入口依赖方向、MapStruct、中文注释、金额、分页、Redis、日志、配置密钥
-  - 本次触发的真实项目规则：DDD 包职责、Dubbo/API 契约、`ApiResponse<T>`、DTO 序列化、enum `name()`、日志脱敏、异常安全响应、MyBatis XML、测试/安全/监控/部署影响
-  - 每条触发规则的实现方式、验收方式和可自动检查项
-  - Distributed Java Gate：所有 Java 改动都必须声明“未触发/触发”；触发外部调用、Dubbo/HTTP/RPC、MQ、异步、线程池、锁、Redis、事务、补偿、发布停机时，必须列出 `.harness/docs/java/rules/distributed-java-gate.md` 对应条款、实现方案、验收方法和人工确认项
+- 若需求涉及 Java/Spring Boot/Dubbo/XXL-Job/MyBatis/Redis/金额/分页/配置/日志，Plan 阶段必须先阅读 `.harness/docs/java-dev-conventions.md` 入口，再按触发维度读取 `.harness/docs/java/rules/` 下的分片规则，并在 spec 的规范引用、Java 总门禁、维度核心门禁和分布式 Java 门禁中补充：
+  - Java 总门禁 5 条：先契约后实现、先本地后通用、边界不被突破、风险显式落地、验证可追溯
+  - 触发维度核心门禁：通用工程、分层与 DDD、Dubbo 与公共 API、日志与异常、持久化与基础设施、测试安全运维、分布式 Java 门禁；每个触发维度按入口文件列出的 5 条核心规则落地
+  - 每条触发门禁的实现方式、验收方式、自动检查项和人工确认项
+  - 分布式 Java 门禁：所有 Java 改动都必须声明“未触发/触发”；触发外部调用、Dubbo/HTTP/RPC、MQ、异步、线程池、锁、Redis、事务、补偿、发布停机时，必须列出 `.harness/docs/java/rules/distributed-java-gate.md` 对应条款、实现证据、验收方法和人工确认项
 - 保存路径：`.harness/docs/specs/<feature-name>.md`
 
 ### Build 契约
@@ -53,12 +53,12 @@
 - 从 `.harness/docs/specs/` 读取目标 spec。
 - 从 `.harness/docs/contracts/` 读取目标 contract。
 - 若 contract 缺失，先基于 `.harness/docs/contracts/TEMPLATE.md` 创建再实现。
-- 若 spec/contract 缺少本次适用的 Java Gate、Distributed Java Gate 或 Frontend Gate，先补齐 contract，再开始实现。
+- 若 spec/contract 缺少本次适用的 Java 总门禁、触发维度核心门禁、分布式 Java 门禁或 Frontend Gate，先补齐 contract，再开始实现。
 - 只允许实现 contract 范围内内容。
-- 若项目技术栈包含 Java/Spring Boot，编码前必须先阅读 `.harness/docs/java-dev-conventions.md` 入口，并按任务触发项读取 `.harness/docs/java/rules/` 分片规则，完成前置闸门确认。
-- 若本次涉及 Java，实现前必须复述 Java Gate 清单：Service 接口/实现、Controller/Provider/Job 只依赖接口、MapStruct ERROR、中文注释、金额 BigDecimal + DECIMAL(18,3)、PageHelper 稳定排序、Redis namespace + TTL、日志 AOP/Filter、配置可审计可回滚且无硬编码密钥。
-- 若本次涉及 Java，实现前必须复述真实项目落地清单：DDD 依赖方向、Dubbo/API `ApiResponse<T>`、Public DTO `Serializable + serialVersionUID`、enum 不用 `ordinal()`、不暴露 Entity/Domain/Internal 类型、日志脱敏、异常统一转换、输入校验与安全响应。
-- 若本次涉及 Java，实现前必须复述 Distributed Java Gate：声明未触发或逐项覆盖外部调用超时/重试/幂等、资源隔离、锁、事务与最终一致性、缓存治理、消息幂等与补偿、异步上下文、容错降级、可观测性、配置安全、发布回滚/优雅停机。
+- 若项目技术栈包含 Java/Spring Boot，编码前必须先阅读 `.harness/docs/java-dev-conventions.md` 入口，并按任务触发维度读取 `.harness/docs/java/rules/` 分片规则，完成前置闸门确认。
+- 若本次涉及 Java，实现前必须复述 Java 总门禁 5 条，并列出本次触发的维度核心门禁。未触发的维度要写明理由，触发的维度必须按入口文件中的 5 条核心规则逐项落地。
+- 若本次涉及 Java，实现前必须确认 contract 已包含触发维度的验收项，至少覆盖分层与 DDD、Dubbo/API、日志异常、持久化基础设施、测试安全运维中的实际触发项。
+- 若本次涉及 Java，实现前必须声明分布式 Java 门禁：未触发需说明理由；触发时逐项覆盖外部调用边界、资源隔离、一致性恢复、失败可追踪可降级、发布停机不丢数据。
 - 若项目技术栈包含 React/Vue/TypeScript/Next.js，或本次任务涉及 UI/样式/交互，编码前必须先阅读 `.harness/docs/frontend-dev-conventions.md`，并按需阅读：
   - `.harness/docs/frontend/rules.md`
   - `.harness/docs/frontend/code-design.md`
@@ -70,7 +70,7 @@
   - 构建/编译通过
   - 测试通过（既有 + 新增）
   - 验收标准逐条核对
-  - 若涉及 Java：Java Gate 与 Distributed Java Gate 逐条核对；运行 convention-check；fail 必须修复，warn 必须修复或解释
+- 若涉及 Java：Java 总门禁、触发维度核心门禁、分布式 Java 门禁逐条核对；运行 convention-check；fail 必须修复，warn 必须修复或解释
   - 若涉及前端：三层前端规范逐条核对；无新增硬编码颜色、无裸全局样式、无无解释 inline style；loading / empty / error / disabled / focus-visible 覆盖完整
   - 新增/修改函数与方法的中文注释完整
   - 无调试残留
@@ -121,10 +121,10 @@
 
 ### Java 后端附加规则（适用时强制）
 
-- 若为 Java 项目：必须遵守 `.harness/docs/java-dev-conventions.md`。
-- 涉及 Java 实现时，必须在 plan/build/qa 中显式处理 Java Gate，不能只写“已阅读规范”。
-- 读取 Java 规范时使用按需路由：通用规则看 `.harness/docs/java/rules/00-core.md`，日志/异常看 `logging-error.md`，Dubbo/API/DTO 看 `dubbo-api.md`，DDD/命名/Converter 看 `java-ddd.md`，数据库/MyBatis/Redis/锁/MQ/配置看 `persistence-infra.md`，安全/测试/监控/部署看 `testing-security.md`。
-- 所有 Java 改动必须显式处理 Distributed Java Gate：未触发需写明理由；触发 `.harness/docs/java/rules/distributed-java-gate.md` 任一条款时必须进入 spec、contract、build 自检和 QA 报告。
+- 若为 Java 项目：必须先读 `.harness/docs/java-dev-conventions.md`，再按触发维度读取 `.harness/docs/java/rules/` 分片。
+- 涉及 Java 实现时，必须在 plan/build/qa 中显式处理 Java 总门禁和触发维度核心门禁，不能只写“已阅读规范”。
+- 读取 Java 规范时使用按需路由：通用工程看 `00-core.md`，分层与 DDD 看 `java-ddd.md`，Dubbo/API/DTO 看 `dubbo-api.md`，日志/异常看 `logging-error.md`，数据库/MyBatis/Redis/锁/MQ/配置看 `persistence-infra.md`，安全/测试/监控/部署看 `testing-security.md`，分布式影响看 `distributed-java-gate.md`。
+- 所有 Java 改动必须显式处理分布式 Java 门禁：未触发需写明理由；触发 `.harness/docs/java/rules/distributed-java-gate.md` 任一条款时必须进入 spec、contract、build 自检和 QA 报告。
 - 完成前运行 `.codex/hooks/convention-check.py --changed-only` 或 `.claude/hooks/convention-check.py --changed-only`。
 
 ### 前端附加规则（适用时强制）
@@ -172,7 +172,7 @@
 - `.harness/docs/contracts/`：冲刺契约
 - `.harness/docs/plans/`：计划产物
 - `.harness/docs/java-dev-conventions.md`：Java 后端编码规范入口（Java 项目先读）
-- `.harness/docs/java/rules/`：Java 分片规则（按任务触发项读取）
+- `.harness/docs/java/rules/`：Java 分片规则（按任务触发维度读取）
 - `.harness/docs/frontend-dev-conventions.md`：前端工程级编码规范（前端项目必读）
 - `.harness/docs/frontend/`：前端三层规范（约束层、示范层、视觉层）
 - `.harness/docs/frontend/references/byai-ds-v/`：BYAI HTML 视觉参考页与 token 快照

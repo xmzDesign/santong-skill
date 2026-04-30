@@ -14,9 +14,9 @@ argument-hint: 可选 - 指定 .harness/docs/specs/ 中要实现的 spec 文件
 ### 1. 读取规格
 
 从 `.harness/docs/specs/` 读取目标规格。若未传参数，自动选择最近修改的 spec 文件。
-若本次任务涉及 Java/Spring Boot/Dubbo/XXL-Job/MyBatis/Redis/金额/分页/配置/日志，先读取 `.harness/docs/java-dev-conventions.md` 入口，再按触发项读取 `.harness/docs/java/rules/` 分片规则，实现前列出 Java Gate 清单，并确认 contract 中已有 Java Gate 检查项。
-若本次任务涉及 Java，实现前还必须列出真实项目规则清单：DDD 依赖方向、Dubbo/API `ApiResponse<T>`、Public DTO `Serializable + serialVersionUID`、enum 不用 `ordinal()`、不暴露 Entity/Domain/Internal 类型、日志脱敏、异常统一转换、输入校验与安全响应。
-所有 Java 改动都必须确认 spec/contract 中已有 Distributed Java Gate；若缺失，先补齐 contract 或回到 plan。实现前声明未触发理由，或列出 `.harness/docs/java/rules/distributed-java-gate.md` 触发条款：外部调用超时/重试/幂等、资源隔离、锁、事务与最终一致性、缓存、消息、批量异步、容错降级、可观测性、配置安全、发布回滚/优雅停机。
+若本次任务涉及 Java/Spring Boot/Dubbo/XXL-Job/MyBatis/Redis/金额/分页/配置/日志，先读取 `.harness/docs/java-dev-conventions.md` 入口，再按触发维度读取 `.harness/docs/java/rules/` 分片规则，实现前列出 Java 总门禁和触发维度核心门禁，并确认 contract 中已有对应验收项。
+若本次任务涉及 Java，实现前必须列出触发维度清单：通用工程、分层与 DDD、Dubbo 与公共 API、日志与异常、持久化与基础设施、测试安全运维；每个触发维度按入口文件中的 5 条核心门禁执行。
+所有 Java 改动都必须确认 spec/contract 中已有分布式 Java 门禁；若缺失，先补齐 contract 或回到 plan。实现前声明未触发理由，或列出 `.harness/docs/java/rules/distributed-java-gate.md` 触发条款：外部调用边界、资源隔离、一致性恢复、失败可追踪可降级、发布停机不丢数据。
 若本次任务涉及前端/UI/样式，先读取 `.harness/docs/frontend-dev-conventions.md`；新增页面、组件重构或明显视觉变更时继续读取 `.harness/docs/frontend/rules.md`、`.harness/docs/frontend/code-design.md`、`.harness/docs/frontend/ui-design.md`，并打开 `.harness/docs/frontend/references/byai-ds-v/` 中的对应 HTML 参考页。
 
 ### 2. 冲刺契约（Sprint Contract）
@@ -27,7 +27,7 @@ argument-hint: 可选 - 指定 .harness/docs/specs/ 中要实现的 spec 文件
   - 本次冲刺的具体范围是什么？
   - 需要验证哪些验收标准？
   - 每条标准采用什么验证方式？
-  - 若涉及 Java，Java Gate 与 Distributed Java Gate 是否都有可验收条目？
+  - 若涉及 Java，Java 总门禁、触发维度核心门禁、分布式 Java 门禁是否都有可验收条目？
   - 若涉及前端，Frontend Gate 与 BYAI 参考是否都有可验收条目？
 
 ### 3. 构建循环
@@ -37,9 +37,9 @@ argument-hint: 可选 - 指定 .harness/docs/specs/ 中要实现的 spec 文件
 1. **Build**：调用 `generator` 实现本轮冲刺。
 2. **Self-verify**：`generator` 先自检。
    - 检查所有新增/修改函数、方法是否补齐中文注释（用途、参数、返回值、副作用）。
-   - 若涉及 Java，逐项检查 Java Gate，并运行 `.codex/hooks/convention-check.py --changed-only` 或 `.claude/hooks/convention-check.py --changed-only`。
-   - 若涉及 Java，逐项检查 DDD/Dubbo/API/DTO/枚举/日志异常/安全测试监控部署真实项目规则。
-   - 若涉及 Java，逐项检查 Distributed Java Gate；未触发需说明理由，触发时必须给出分布式规则实现证据与人工确认项。
+   - 若涉及 Java，逐项检查 Java 总门禁和触发维度核心门禁，并运行 `.codex/hooks/convention-check.py --changed-only` 或 `.claude/hooks/convention-check.py --changed-only`。
+   - 若涉及 Java，逐项检查通用工程、分层与 DDD、Dubbo 与公共 API、日志与异常、持久化与基础设施、测试安全运维等触发维度。
+   - 若涉及 Java，逐项检查分布式 Java 门禁；未触发需说明理由，触发时必须给出实现证据与人工确认项。
    - 若涉及前端，检查三层前端规范：无硬编码颜色、无裸全局样式、无无解释 inline style，状态覆盖完整，视觉/响应式已验证。
 3. **Evaluate**：调用 `evaluator` 按契约测试。
 4. **Gate**：检查单元测试是否通过。

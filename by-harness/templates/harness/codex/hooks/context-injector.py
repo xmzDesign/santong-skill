@@ -16,16 +16,16 @@ SQL_ORM_SPECIFIC_RE = re.compile(r"(mapper|mybatis|sql|dao|repository|分页|更
 CODE_TRIGGER_RE = re.compile(r"(build|implement|code|编码|实现)", re.IGNORECASE)
 SQL_ORM_RULE_CARD = "\n".join(
     [
-        "SQL/ORM guardrails for this coding turn:",
-        "- Read .harness/docs/java-dev-conventions.md before Java/Spring/MyBatis edits.",
-        "- SQL must be in XML Mapper; @Select/@Update/@Insert/@Delete are forbidden.",
-        "- Query columns must be explicit; select * is forbidden.",
-        "- XML parameters must use #{}; ${} is forbidden.",
-        "- Use resultMap; resultClass is forbidden.",
-        "- Row count must use count(*); sum() must be NULL-safe with IFNULL/COALESCE.",
-        "- Updated records must maintain update_time.",
-        "- Foreign keys, cascade actions, and stored procedures are forbidden.",
-        "- Run .codex/hooks/convention-check.py --changed-only before claiming completion.",
+        "本轮 SQL/ORM 门禁：",
+        "- Java/Spring/MyBatis 改动前先读取 .harness/docs/java-dev-conventions.md。",
+        "- SQL 必须写在 XML Mapper，禁止 @Select/@Update/@Insert/@Delete 注解 SQL。",
+        "- 查询列必须显式列出，禁止 select *。",
+        "- XML 参数必须使用 #{}，禁止 ${}。",
+        "- 必须使用 resultMap，禁止 resultClass。",
+        "- 行数统计必须使用 count(*)；sum() 必须用 IFNULL/COALESCE 兜底 NULL。",
+        "- 更新记录必须维护 update_time。",
+        "- 禁止外键、级联和存储过程承载业务逻辑。",
+        "- 声称完成前运行 .codex/hooks/convention-check.py --changed-only。",
     ]
 )
 

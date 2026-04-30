@@ -60,19 +60,19 @@ color: red
 - 对照 `.harness/docs/frontend-dev-conventions.md`、`.harness/docs/frontend/` 三层规范和 `.harness/docs/frontend/references/byai-ds-v/` 对应 HTML 参考页，检查 token、密度、状态、可访问性、视觉一致性、反例规避、Agent 行为透明度
 - 至少覆盖桌面与一个窄屏视口；若无法运行浏览器，必须说明未验证风险
 
-**第 5 层：Java Gate（规范与 hook）**
+**第 5 层：Java 总门禁与维度核心门禁（规范与 hook）**
 若功能涉及 Java/Spring Boot/Dubbo/XXL-Job/MyBatis/Redis/金额/分页/配置/日志：
-- 对照 `.harness/docs/java-dev-conventions.md` 入口与触发的 `.harness/docs/java/rules/` 分片规则检查 Java Gate
-- 验证 Service 是否接口 + 实现，入口类是否只依赖接口
-- 验证 MapStruct、金额、分页、Redis、日志、配置密钥规则
+- 对照 `.harness/docs/java-dev-conventions.md` 入口与触发的 `.harness/docs/java/rules/` 分片规则检查 Java 总门禁和触发维度核心门禁
+- 验证总门禁 5 条是否进入 spec/contract/build/qa 并被逐项执行
+- 验证触发维度核心门禁是否满足，包括分层与 DDD、Dubbo/API、日志异常、持久化基础设施、测试安全运维
 - 运行 `.codex/hooks/convention-check.py --changed-only` 或 `.claude/hooks/convention-check.py --changed-only`
 - fail 视为必须修复；warn 必须给出修复或明确风险说明
 
-**第 6 层：Distributed Java Gate（分布式编码规范）**
+**第 6 层：分布式 Java 门禁（分布式编码规范）**
 若存在任何 Java 改动：
-- 检查 spec/contract 是否声明 Distributed Java Gate；未声明则标记为 FAIL
+- 检查 spec/contract 是否声明分布式 Java 门禁；未声明则标记为 FAIL
 - 若声明“未触发”，核对本次改动是否确实未涉及外部调用、Dubbo/HTTP/RPC、MQ、异步、线程池、锁、Redis、事务、补偿、发布停机
-- 若触发 `.harness/docs/java/rules/distributed-java-gate.md`，逐项验证资源隔离、超时/重试/幂等、锁、最终一致性、缓存、消息、批量异步、容错降级、可观测性、配置安全、发布回滚/优雅停机
+- 若触发 `.harness/docs/java/rules/distributed-java-gate.md`，逐项验证外部调用边界、资源隔离、一致性恢复、失败可追踪可降级、发布停机不丢数据
 - 对机器无法直接验证的补偿路径、人工接管、发布回滚方案，要求报告中列出证据或人工确认项
 
 ### 4. 按标准评分
@@ -131,9 +131,10 @@ color: red
 
 ### Java 规范检查（若适用）
 
-- Java Gate：PASS / FAIL / PARTIAL
-- Distributed Java Gate：未触发 / PASS / FAIL / PARTIAL
-- 分布式规则触发条款：14.x 列表或不适用理由
+- Java 总门禁：PASS / FAIL / PARTIAL
+- 触发维度核心门禁：PASS / FAIL / PARTIAL
+- 分布式 Java 门禁：未触发 / PASS / FAIL / PARTIAL
+- 分布式规则触发条款：条款列表或不适用理由
 - convention-check：PASS / FAIL / WARN
 - 人工确认项：补偿/降级/发布停机/配置审计等
 

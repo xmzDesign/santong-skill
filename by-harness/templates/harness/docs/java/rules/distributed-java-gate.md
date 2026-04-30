@@ -1,278 +1,293 @@
-# Distributed Java Gate
+# 分布式 Java 门禁
 
-Load this file when a Java task touches external calls, concurrency control, async processing, cache, MQ, transactions, consistency, release, or shutdown behavior.
+本文件适用于外部调用、并发控制、异步处理、缓存、MQ、事务、一致性、发布、回滚和停机行为。
 
-Every Java change must declare Distributed Java Gate in spec/contract/build/qa:
+所有 Java 改动都必须在 spec/contract/build/qa 中声明分布式 Java 门禁：
 
-- `未触发` with a concrete reason; or
-- `触发` with the clauses below, implementation evidence, verification method, and manual confirmation items.
+- `未触发`：写明具体理由。
+- `触发`：列出触发条款、实现证据、验证方法和人工确认项。
 
-## 14.1 资源隔离与并发治理
+## 1. 适用场景
 
-MUST:
+- 新增或修改 Dubbo/HTTP/RPC/三方 SDK 调用。
+- 新增或修改 MQ、异步任务、线程池、批处理、定时任务。
+- 新增或修改 Redis、分布式锁、缓存一致性、事务、补偿。
+- 影响发布、回滚、优雅停机、在途任务处理或运行时配置。
 
-- Different business priorities use isolated execution resources: thread pools, queues, worker pools.
-- Concurrency parameters are configurable and can take effect at runtime when the project supports it.
-- Execution resources use business-semantic names.
-- Rejection policies are defined by priority.
+## 2. 核心门禁（触发本维度必须满足）
 
-MUST NOT:
+1. **外部调用有边界**：所有外部调用必须有超时、重试上限、退避策略和幂等前提。
+2. **资源隔离可观测**：线程池、队列、锁、批处理资源必须有业务命名、容量/超时限制、拒绝/失败策略和指标。
+3. **一致性有恢复路径**：跨服务写入、事务、消息、缓存一致性必须有补偿、重放、终止条件和人工接管方案。
+4. **失败可追踪可降级**：失败任务、消息、异步处理、缓存降级必须可定位、可重试、可终止或可降级。
+5. **发布停机不丢数据**：发布、回滚、优雅停机必须处理健康检查、流量摘除、队列 flush、消息确认和在途任务。
 
-- Do not share one resource pool across all business workloads.
-- Do not ship unbounded queues.
-- Do not fallback all rejections to caller threads during peak periods and cause cascading blockage.
+## 3. 资源隔离与并发治理
 
-Acceptance:
+必须做到：
 
-- Active count, queue length, and rejection count are observable.
-- One overloaded business area does not break unrelated SLA.
+- 不同业务优先级使用隔离的线程池、队列或 worker pool。
+- 并发参数可配置；项目支持动态生效时，必须接入动态配置。
+- 执行资源使用业务语义命名。
+- 拒绝策略按业务优先级定义。
 
-## 14.2 超时、重试与幂等
+禁止：
 
-MUST:
+- 所有业务共用一个资源池。
+- 使用无界队列。
+- 高峰期把所有拒绝都回退到调用线程，造成级联阻塞。
 
-- Every external call has a timeout.
-- Retry has idempotency premise, attempt limit, backoff, and jitter.
-- Write operations have an idempotency key: request number, business key, or message ID.
-- Retriable and non-retriable errors are classified.
+验收：
 
-SHOULD:
+- active count、queue length、rejection count 可观测。
+- 单个业务过载不会击穿无关业务 SLA。
 
-- Default retries do not exceed 3.
-- Total retry window fits the end-to-end timeout budget.
+## 4. 超时、重试与幂等
 
-MUST NOT:
+必须做到：
 
-- No infinite waits.
-- No infinite or fixed-interval hard retries.
-- No repeated writes without idempotency protection.
+- 每个外部调用都有超时。
+- 重试具备幂等前提、次数上限、退避和抖动。
+- 写操作有幂等键，例如请求号、业务 key、消息 ID。
+- 可重试错误和不可重试错误必须分类。
 
-Acceptance:
+建议：
 
-- Each interface can state timeout, retry strategy, and idempotency key.
-- Failure does not amplify downstream pressure through retry storms.
+- 默认重试不超过 3 次。
+- 总重试窗口不超过端到端超时预算。
 
-## 14.3 分布式锁与并发一致性
+禁止：
 
-MUST:
+- 无限等待。
+- 无限重试或固定间隔硬重试。
+- 没有幂等保护的重复写入。
 
-- Lock keys have namespaces.
-- Lock acquisition has wait time and lease time.
-- Unlock runs in `finally` and verifies current owner.
-- Lock acquisition failure returns a clear error code or state.
+验收：
 
-SHOULD:
+- 每个接口能说明超时、重试策略和幂等键。
+- 失败不会通过重试风暴放大下游压力。
 
-- Prefer fine-grained locks.
-- Prefer optimistic lock/CAS; use distributed locks only for necessary critical sections.
+## 5. 分布式锁与并发一致性
 
-MUST NOT:
+必须做到：
 
-- No blocking lock without timeout.
-- No unlock without owner check.
-- No large lock covering the whole chain.
+- 锁 key 有命名空间。
+- 加锁有等待时间和租约时间。
+- 解锁在 `finally` 中执行，并校验当前持有者。
+- 加锁失败返回明确错误码或业务状态。
 
-Acceptance:
+建议：
 
-- Lock wait duration, timeout count, and conflict rate are observable.
-- Concurrent replay causes no duplicate execution or dirty overwrite.
+- 优先细粒度锁。
+- 优先乐观锁/CAS；只有必要临界区才使用分布式锁。
 
-## 14.4 事务与最终一致性
+禁止：
 
-MUST:
+- 无超时阻塞锁。
+- 未校验持有者就解锁。
+- 用大锁覆盖整条业务链路。
 
-- Local transactions explicitly define rollback scope.
-- Transaction boundaries are minimized.
-- Cross-service consistency has a recovery design: Outbox, Saga, TCC, or compensation task.
-- Compensation trigger, terminal condition, and manual takeover path are defined.
+验收：
 
-SHOULD:
+- 锁等待时长、超时次数、冲突率可观测。
+- 并发重放不会造成重复执行或脏覆盖。
 
-- Specify transaction propagation behavior.
-- Key state changes use version numbers or state-machine checks.
+## 6. 事务与最终一致性
 
-MUST NOT:
+必须做到：
 
-- No RPC/MQ/external calls inside long transactions.
-- No cross-service writes without compensation path.
-- No illegal state transition caused by missing state machine.
+- 本地事务明确回滚范围。
+- 事务边界尽量小。
+- 跨服务一致性有恢复设计，例如 Outbox、Saga、TCC 或补偿任务。
+- 补偿触发条件、终止条件、人工接管路径明确。
 
-Acceptance:
+建议：
 
-- Any failure point has a recovery path.
-- Rehearsal can prove eventual consistency is reachable.
+- 说明事务传播行为。
+- 关键状态变更使用版本号或状态机校验。
 
-## 14.5 缓存治理
+禁止：
 
-MUST:
+- 在长事务内执行 RPC、MQ 或外部调用。
+- 跨服务写入没有补偿路径。
+- 缺少状态机导致非法状态流转。
 
-- Cache has TTL.
-- Serialization protocol and compatibility strategy are defined.
-- Cache penetration is handled, including empty-value caching.
-- Cache failure has downgrade behavior.
+验收：
 
-SHOULD:
+- 任意失败点都有恢复路径。
+- 演练能证明最终一致性可达。
 
-- TTL includes random jitter.
-- Hot data may use local + remote two-level cache.
+## 7. 缓存治理
 
-MUST NOT:
+必须做到：
 
-- No permanent business-data cache.
-- No huge cached objects without sharding/compression.
-- No direct full traffic fallback to DB when cache is unavailable.
+- 缓存有 TTL。
+- 序列化协议和兼容策略明确。
+- 缓存穿透有处理方案，例如空值缓存。
+- 缓存失败有降级行为。
 
-Acceptance:
+建议：
 
-- Hit rate, fallback-to-origin rate, and penetration rate are measurable.
-- System can degrade when cache fails.
+- TTL 增加随机抖动。
+- 热点数据可使用本地 + 远程二级缓存。
 
-## 14.6 消息与事件处理
+禁止：
 
-MUST:
+- 业务数据永久缓存。
+- 未拆分或压缩的巨大缓存对象。
+- 缓存不可用时全量流量直接打到数据库。
 
-- Messages carry `traceId`, `messageId`, and business key.
-- Consumers are idempotent.
-- Send failure enters a compensation channel: retry, failure table, or dead letter.
-- Message contracts are versioned.
+验收：
 
-SHOULD:
+- 命中率、回源率、穿透率可衡量。
+- 缓存失败时系统能降级运行。
 
-- Exceeding retry threshold enters dead letter and alerts.
-- High-throughput scenarios use batch consume and batch commit.
+## 8. 消息与事件处理
 
-MUST NOT:
+必须做到：
 
-- Do not only guarantee “sent successfully” while ignoring consumption consistency.
-- Do not change message structures without versioning.
-- Do not silently drop failed messages.
+- 消息携带 `traceId`、`messageId` 和业务 key。
+- Consumer 幂等。
+- 发送失败进入补偿通道，例如重试、失败表、死信。
+- 消息契约版本化。
 
-Acceptance:
+建议：
 
-- The full production, consumption, and compensation lifecycle is traceable by `messageId`.
-- Duplicate delivery causes no duplicate side effects.
+- 超过重试阈值进入死信并告警。
+- 高吞吐场景使用批量消费和批量提交。
 
-## 14.7 批量处理与异步落盘
+禁止：
 
-MUST:
+- 只保证发送成功，忽略消费一致性。
+- 未版本化就变更消息结构。
+- 静默丢弃失败消息。
 
-- High-frequency writes support async enqueue + batch commit.
-- Buffer queues are bounded and have overflow handling.
-- Flush supports both threshold trigger and timed trigger.
-- Shutdown flushes remaining data.
+验收：
 
-SHOULD:
+- 可通过 `messageId` 追踪生产、消费、补偿全生命周期。
+- 重复投递不会产生重复副作用。
 
-- Batch size is based on pressure-test results.
-- Commit grouping follows sharding/locality keys when useful.
+## 9. 批处理与异步落盘
 
-MUST NOT:
+必须做到：
 
-- No row-by-row loop writes for high-frequency paths.
-- No unbounded queues.
-- No single trigger condition that can leave data stuck.
+- 高频写入支持异步入队和批量提交。
+- 缓冲队列有界，并有溢出处理。
+- flush 同时支持阈值触发和定时触发。
+- 停机时 flush 剩余数据。
 
-Acceptance:
+建议：
 
-- Enqueue latency, batch size, and flush cost are observable.
-- Abnormal restart causes no systemic data loss.
+- 批大小基于压测结果确定。
+- 提交分组按分片键或局部性 key 组织。
 
-## 14.8 容错、降级与补偿
+禁止：
 
-MUST:
+- 高频链路逐行循环写库。
+- 使用无界队列。
+- 只有单一触发条件，导致数据长期滞留。
 
-- External dependency failures enter a defined strategy: retry, downgrade, circuit break, or compensation.
-- Failed tasks are traceable, replayable, and terminable.
-- Alerts are rate-limited and deduplicated.
-- Manual takeover entry is provided.
+验收：
 
-SHOULD:
+- 入队延迟、批大小、flush 耗时可观测。
+- 异常重启不会造成系统性数据丢失。
 
-- Key dependencies use circuit breakers and isolation.
-- Network jitter, timeout, and partial success have separate strategies.
+## 10. 容错、降级与补偿
 
-MUST NOT:
+必须做到：
 
-- No catch block that only logs and continues.
-- No failed task without a state machine.
-- No alert storm without deduplication.
+- 外部依赖失败进入明确策略：重试、降级、熔断或补偿。
+- 失败任务可追踪、可重放、可终止。
+- 告警限流并去重。
+- 提供人工接管入口。
 
-Acceptance:
+建议：
 
-- Each fault category has a runbook.
-- Drill can measure MTTR improvement.
+- 关键依赖使用熔断和隔离。
+- 网络抖动、超时、部分成功分别设计策略。
 
-## 14.9 可观测性与上下文传递
+禁止：
 
-MUST:
+- catch 后只打日志并继续。
+- 失败任务没有状态机。
+- 告警没有去重导致风暴。
 
-- Logs, metrics, and tracing are all present.
-- Logs include key business context.
-- Core links have latency, throughput, and error-rate metrics.
-- Async boundaries propagate and clear context: `MDC` / `ThreadLocal`.
+验收：
 
-SHOULD:
+- 每类故障都有 runbook。
+- 演练能衡量 MTTR 改善。
 
-- Map business SLA to technical metrics.
-- Add phase metrics for performance diagnosis.
+## 11. 可观测性与上下文传递
 
-MUST NOT:
+必须做到：
 
-- No error-only logs without trace dimension.
-- No traceId loss at async boundaries.
-- No uncleared context holder causing contamination.
+- 日志、指标、链路追踪同时存在。
+- 日志包含关键业务上下文。
+- 核心链路有延迟、吞吐、错误率指标。
+- 异步边界传播并清理 `MDC` / `ThreadLocal`。
 
-Acceptance:
+建议：
 
-- One trace can locate the key failure node.
-- Metrics can slice by tenant, interface, or task type when cardinality is controlled.
+- 将业务 SLA 映射到技术指标。
+- 增加阶段性指标辅助性能诊断。
 
-## 14.10 配置与安全边界
+禁止：
 
-MUST:
+- 只有错误日志，没有 trace 维度。
+- 异步边界丢失 traceId。
+- 上下文 holder 未清理导致污染。
 
-- Configuration is centralized and environment-separated.
-- Critical configs have startup validation and change audit.
-- Identity comes from trusted server context.
-- External interfaces have auth, rate limit, input validation, and output masking.
+验收：
 
-SHOULD:
+- 一条 trace 能定位关键失败节点。
+- 指标可按租户、接口、任务类型切分，且标签基数受控。
 
-- Config changes support grayscale and rollback.
-- Secret rotation is automated when platform supports it.
+## 12. 配置与安全边界
 
-MUST NOT:
+必须做到：
 
-- No hardcoded secrets or sensitive config.
-- No test config used directly in production.
-- No authorization based on frontend-transmitted critical identity fields.
+- 配置集中管理并按环境隔离。
+- 关键配置有启动校验和变更审计。
+- 身份来自可信服务端上下文。
+- 外部接口有认证、限流、输入校验和输出脱敏。
 
-Acceptance:
+建议：
 
-- Security scan has no high-risk hardcoded secret.
-- Critical config changes are traceable to person and time.
+- 配置变更支持灰度和回滚。
+- 平台支持时自动轮换密钥。
 
-## 14.11 发布、回滚与优雅停机
+禁止：
 
-MUST:
+- 硬编码密钥或敏感配置。
+- 测试配置直接用于生产。
+- 基于前端传入的关键身份字段做授权。
 
-- Release supports health checks, grayscale rollout, and quick rollback.
-- Shutdown stops accepting new traffic and handles in-flight tasks.
-- Shutdown includes queue flush and message acknowledgement.
-- Changes have reversible rollback units.
+验收：
 
-SHOULD:
+- 安全扫描无高风险硬编码密钥。
+- 关键配置变更可追溯到人和时间。
 
-- Minimal failure-injection drill before release for key links.
-- Canary validation for critical paths.
+## 13. 发布、回滚与优雅停机
 
-MUST NOT:
+必须做到：
 
-- No forced process kill as regular shutdown.
-- No full rollout without rollback plan.
-- No tightly coupled irreversible data change and app release.
+- 发布支持健康检查、灰度和快速回滚。
+- 停机先停止接收新流量，再处理在途任务。
+- 停机包含队列 flush 和消息确认。
+- 变更有可逆回滚单元。
 
-Acceptance:
+建议：
 
-- Standard release/rollback checklist exists.
-- Drill proves shutdown does not cause systemic data corruption.
+- 关键链路发布前做最小故障注入演练。
+- 关键路径做 canary 验证。
+
+禁止：
+
+- 把强杀进程作为常规停机方式。
+- 没有回滚计划就全量发布。
+- 不可逆数据变更和应用发布强耦合。
+
+验收：
+
+- 有标准发布/回滚清单。
+- 演练证明停机不会造成系统性数据错误。

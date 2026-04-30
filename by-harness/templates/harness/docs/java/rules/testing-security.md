@@ -1,70 +1,80 @@
-# Testing, Security, Monitoring, Deployment, and Documentation Rules
+# 测试、安全、监控、部署与文档规则
 
-Load this file for tests, security-sensitive code, authentication, authorization, monitoring, metrics, deployment, CI, configuration hardening, or project documentation.
+本文件适用于测试、安全敏感代码、认证、授权、监控、指标、部署、CI、配置加固和项目文档。
 
-## Security Rules
+## 1. 适用场景
 
-- Never hardcode passwords, tokens, API keys, signatures, credentials, private keys, or authorization values.
-- Do not log raw secrets or authentication data.
-- Use HTTPS or an approved secure channel for external calls.
-- Use parameterized SQL and input validation to prevent injection.
-- Store sensitive configuration in the approved encrypted configuration mechanism.
-- Apply RBAC or the existing authorization mechanism for protected operations.
-- Require extra care, audit, and rollback planning for sensitive or destructive operations.
-- Do not rely on frontend-transmitted identity fields for authorization decisions.
+- 新增或修改鉴权、权限、输入校验、限流、审计、敏感数据处理。
+- 新增或修改单元测试、集成测试、CI、监控指标、告警、日志级别。
+- 调整部署配置、灰度、回滚、生产开关、公开文档或运维文档。
 
-## API Safety Rules
+## 2. 核心门禁（触发本维度必须满足）
 
-- Validate input at application boundaries.
-- Do not expose raw system exception messages to external callers.
-- Keep public error responses stable and safe.
-- Use DTOs for external interfaces; do not expose entities or internal domain internals.
-- Keep backward compatibility unless the task explicitly requests a breaking change.
-- Public errors must not include internal class names, SQL, stack traces, or raw third-party errors.
+1. **禁止明文秘密**：源码、测试、日志、配置、文档中不得硬编码密码、token、API key、签名密钥、私钥或授权值。
+2. **权限来自可信上下文**：受保护操作必须有认证、授权和输入校验，禁止依赖前端传入的身份字段做授权决策。
+3. **公共错误安全**：外部错误响应不得包含内部类名、SQL、堆栈、原始系统异常或第三方原始错误。
+4. **核心变更有测试**：核心业务逻辑、公共 API、安全边界和异常路径变更必须补充或更新测试。
+5. **生产影响可回滚**：生产影响变更必须写明发布验证、灰度、回滚、监控或人工确认方案。
 
-## Testing Rules
+## 3. 安全规则
 
-- Add or update tests for core business logic changes.
-- Use JUnit and Mockito conventions when adding unit tests.
-- Mock external dependencies in unit tests.
-- Use integration tests for critical persistence or cross-component flows when appropriate.
-- Cover normal and exceptional paths for API changes.
-- If tests cannot be run, state the smallest recommended validation command.
+- 外部调用使用 HTTPS 或批准的安全通道。
+- SQL 使用参数化绑定，并在应用边界做输入校验。
+- 敏感配置存放在批准的加密配置机制或配置中心。
+- 受保护操作使用 RBAC 或项目既有授权机制。
+- 敏感、破坏性操作必须有额外审计、回滚和人工确认。
+- 日志中禁止输出原始认证数据、密钥、签名、授权头。
 
-## Monitoring Rules
+## 4. API 安全规则
 
-- Preserve existing Micrometer metric conventions.
-- Keep business metrics stable and named consistently.
-- Include useful business dimensions only when cardinality is controlled.
-- Do not add high-cardinality labels such as raw IDs unless the existing monitoring design explicitly allows them.
-- ERROR-level logs may trigger alerts, so avoid logging expected business validation failures as ERROR.
-- Core links should expose latency, throughput, and error-rate visibility when the task changes operational behavior.
+- 应用边界必须校验输入。
+- 外部接口使用 DTO，不暴露 Entity、Domain 内部对象或基础设施类型。
+- 公共错误码和错误消息保持稳定、安全、可读。
+- 默认保持向后兼容；破坏性变更必须由任务明确要求。
+- 对外响应不得包含内部类名、SQL、堆栈或三方原始错误。
 
-## Deployment and Configuration Rules
+## 5. 测试规则
 
-- Keep environment-specific values out of shared defaults unless safe.
-- Do not commit production secrets or private deployment details.
-- Maintain environment separation for dev, test, pre, and prod configurations.
-- Preserve rollback compatibility for schema and API changes when possible.
-- Production-impacting changes should include validation, rollout, or rollback notes.
-- Schema changes require compatibility and rollback rehearsal notes before release.
+- 核心业务逻辑变更必须新增或更新测试。
+- 新增单元测试时遵循项目 JUnit、Mockito 约定。
+- 单元测试中 mock 外部依赖、时间、随机数、远程服务和消息组件。
+- 关键持久化或跨组件流程可按项目能力补充集成测试。
+- 公共 API 变更覆盖正常路径、参数错误、业务失败、外部依赖失败。
+- 无法运行测试时，必须写明最小建议验证命令和阻塞原因。
 
-## Documentation Rules
+## 6. 监控规则
 
-- Update documentation when public APIs, configuration keys, deployment steps, or operational behavior changes.
-- Keep documentation concise and close to changed behavior.
-- Prefer linking to authoritative specification files instead of duplicating long sections.
-- Do not add noisy comments to code for obvious behavior.
+- 保持既有 Micrometer 指标命名与标签风格。
+- 业务指标命名稳定、含义清晰。
+- 指标标签必须控制基数，禁止默认使用 raw ID、订单号、手机号等高基数字段。
+- 预期内的业务校验失败不记录为 ERROR，避免误告警。
+- 改变运行行为的核心链路应具备延迟、吞吐、错误率可见性。
 
-## Quality Gate
+## 7. 部署与配置规则
 
-Default verification:
+- 环境特定值不写入共享默认配置，除非确认安全。
+- 不提交生产密钥、生产账号、私有部署细节。
+- 保持 dev、test、pre、prod 配置隔离。
+- schema 和 API 变更尽量保持回滚兼容。
+- 生产影响变更写明上线验证、灰度策略、回滚步骤。
+- schema 变更发布前必须有兼容性和回滚演练说明。
+
+## 8. 文档规则
+
+- 公共 API、配置 key、部署步骤、运维行为变化时必须更新文档。
+- 文档保持简洁，贴近变更行为。
+- 长规范优先链接权威 spec/contract，不重复复制大段内容。
+- 代码注释用于解释意图、边界和副作用，不给显而易见的语句加噪音注释。
+
+## 9. 默认验证命令
+
+默认构建验证：
 
 ```bash
 mvn verify
 ```
 
-Suggested repository scans:
+建议扫描：
 
 ```bash
 rg -n "@Select\\(|@Update\\(|@Insert\\(|@Delete\\(" src/main/java
@@ -72,15 +82,10 @@ rg -n "logback|ordinal\\(\\)|select \\*|resultClass|\\$\\{" pom.xml src/main/jav
 rg -n "password|secret|token|authorization|privateKey|apiKey" src/main/java src/main/resources
 ```
 
-## Review Checklist
+## 10. 验收与自动检查
 
-Before finishing security/testing-sensitive changes, verify:
-
-- No secrets are introduced.
-- Logs are sanitized.
-- Inputs are validated.
-- Authorization and rate-limit impact are considered.
-- Public errors are safe.
-- Tests or validation steps are provided.
-- Metrics and alerting impact are documented when operational behavior changes.
-- Deployment and rollback notes exist for production-impacting changes.
+- `convention-check` 会拦截疑似硬编码密钥或敏感日志。
+- `convention-check` 会拦截 `logback` 依赖链。
+- 人工验收必须确认输入校验、授权、限流、审计影响已说明。
+- 人工验收必须确认测试或最小验证命令已记录。
+- 人工验收必须确认生产影响、监控、发布、回滚和文档已进入 contract。

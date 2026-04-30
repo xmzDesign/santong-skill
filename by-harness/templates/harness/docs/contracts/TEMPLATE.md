@@ -59,46 +59,71 @@
 - **build**：编译/构建成功
 - **manual**：需要用户手动验证
 
-### Java Gate 检查（若适用）
+### Java 总门禁（若适用，每次 Java 修改必须满足）
 
-- [ ] 已读取 `.harness/docs/java-dev-conventions.md` 入口
-- [ ] 已按任务触发项读取 `.harness/docs/java/rules/` 分片规则
-- [ ] 已在 spec/build 中列出本次触发的 Java Gate
-- [ ] Service 为 `XxxAppService` 接口 + `XxxAppServiceImpl` 实现
-- [ ] Controller / Dubbo Provider / Job Handler 只依赖 Service 接口
-- [ ] MapStruct 已配置 `unmappedTargetPolicy = ReportingPolicy.ERROR`
-- [ ] 新增/修改函数与方法有中文注释（用途、关键参数、返回值、副作用）
-- [ ] 金额 Java 类型为 `BigDecimal`，数据库为 `DECIMAL(18,3)`，无 `double/float`
-- [ ] 分页使用 PageHelper，且具备稳定排序
-- [ ] Redis key 有统一命名空间，业务缓存写入有 TTL
-- [ ] Web 日志走 AOP；Dubbo 日志走 Filter；关键节点日志字段完整
-- [ ] 关键配置可审计、可回滚；无硬编码密钥
-- [ ] DDD 包职责与依赖方向正确，Application 不直接操作 Mapper，Domain 不依赖 Infrastructure
-- [ ] Dubbo/API 公共方法返回 `ApiResponse<T>`，不新增第二套响应包装
+- [ ] 先契约后实现：spec/contract 已包含 Java 入口、触发分片、门禁清单和验收方式
+- [ ] 先本地后通用：已查看同层既有实现，并优先复用已有工具、异常、响应包装、转换器、配置和命名
+- [ ] 边界不被突破：入口、Application、Domain、Infrastructure 的依赖方向正确
+- [ ] 风险显式落地：公共 API、SQL、缓存、消息、事务、配置、安全、发布、回滚影响已进入验收项
+- [ ] 验证可追溯：已运行可用测试和 `convention-check`，fail 已修复，warn 已修复或解释
+
+### Java 维度核心门禁（按触发维度勾选）
+
+#### 通用工程（每次 Java 修改）
+
+- [ ] 最小安全变更，不无依据扩范围
+- [ ] 公共契约保持兼容；破坏性变更由任务明确要求
+- [ ] 不重复造工具类、异常类、转换器、响应包装或框架胶水
+- [ ] 新增/修改方法有中文注释，说明用途、参数、返回值和副作用
+- [ ] 交付摘要记录读取分片、验证命令和剩余风险
+
+#### 分层与 DDD
+
+- [ ] Controller / Provider / Job 只依赖应用服务接口，不注入 `Impl`
+- [ ] `XxxAppService` 是接口，`XxxAppServiceImpl` 实现对应接口
+- [ ] Domain 不依赖 Spring、MyBatis、Redis、MQ、HTTP Client 或数据库 Entity
+- [ ] Application 不直接操作 Mapper，通过 Repository/Adapter 抽象访问
+- [ ] MapStruct 配置 `unmappedTargetPolicy = ReportingPolicy.ERROR`
+
+#### Dubbo 与公共 API
+
+- [ ] 公共 client/api service 方法统一返回 `ApiResponse<T>`
 - [ ] Public DTO 实现 `Serializable` 并声明 `serialVersionUID`
-- [ ] 公共枚举使用 `name()` 作为外部稳定值，未使用 `ordinal()`
-- [ ] 对外契约未暴露 Domain 模型、数据库 Entity 或 Infrastructure 内部类型
-- [ ] 日志敏感字段已脱敏，异常响应不暴露原始系统错误
-- [ ] 输入校验、鉴权/限流、监控指标、部署/回滚影响已按任务风险覆盖
-- [ ] 已运行 convention-check，fail 已修复，warn 已修复或说明风险
+- [ ] 公共枚举使用 `name()` 或稳定 code，未使用 `ordinal()`
+- [ ] 公共 API 未暴露 Domain、Entity、DO、Mapper、Infrastructure 内部类型
+- [ ] 非幂等核心写接口明确 `retries = 0` 或记录既有重试与幂等策略
 
-### Distributed Java Gate 检查（所有 Java 改动必须声明）
+#### 日志与异常
 
-- [ ] 已在 spec/contract/build/qa 中声明 Distributed Java Gate：未触发 / 触发
-- [ ] 若声明未触发，已说明理由，且本次 Java 改动不涉及外部调用、Dubbo/HTTP/RPC、MQ、异步、线程池、锁、Redis、事务、补偿、发布停机
-- [ ] 若触发资源隔离：线程池/队列/Worker 池有业务命名、容量、隔离和拒绝策略
-- [ ] 若触发外部调用：每个调用有超时、重试上限、退避策略、可重试错误分类和幂等前提
-- [ ] 若触发写操作/Job/消息消费：有幂等键（请求号/业务主键/messageId）和重复执行保护
-- [ ] 若触发分布式锁：锁 key 有命名空间，获取有等待时间和租约时间，释放在 `finally` 且校验持有者
-- [ ] 若触发事务/跨服务一致性：事务边界最小化，跨服务一致性有 Outbox/Saga/TCC/补偿路径、终止条件和人工接管
-- [ ] 若触发缓存：TTL、空值缓存、防穿透/击穿/雪崩、降级方案和失效策略已明确
-- [ ] 若触发 MQ/事件：消息携带 `traceId/messageId/业务键`，消费端幂等，失败进入重试/失败表/死信且可重放
-- [ ] 若触发批量异步：队列有界，具备阈值触发 + 定时触发，停机前冲刷剩余数据
-- [ ] 若触发容错降级：失败可追踪、可重放、可终止，告警限流去重，有人工接管入口
-- [ ] 若触发异步边界：`MDC/ThreadLocal` 正确透传并清理，关键链路具备日志/指标/trace
-- [ ] 若触发配置安全：集中配置、环境隔离、变更审计、回滚、鉴权、限流、脱敏、密钥托管已明确
-- [ ] 若触发发布停机：健康检查、灰度放量、快速回滚、停止接收新流量、在途任务处理、队列冲刷方案已明确
-- [ ] 对机器无法验证的补偿、降级、人工接管、发布回滚项，已列入人工确认或发布检查清单
+- [ ] Web/Dubbo/MQ/异步入口生成或传递 TraceId，并在结束时清理 MDC
+- [ ] 日志敏感字段已脱敏，无 token、密码、密钥、签名、授权头等敏感值
+- [ ] ERROR 日志包含异常堆栈和业务上下文
+- [ ] 外部错误响应未暴露系统异常、SQL、堆栈或第三方原始错误
+- [ ] 业务异常使用项目统一异常和错误码
+
+#### 持久化与基础设施
+
+- [ ] MyBatis SQL 写在 XML Mapper，未使用注解内联 SQL
+- [ ] SQL 未使用 `select *`、`${}`、`resultClass`；统计行数使用 `count(*)`
+- [ ] 金额为 Java `BigDecimal` 和数据库 `DECIMAL(18,3)`，更新维护 `update_time`
+- [ ] 分页有稳定排序；count 为 0 时不继续查明细
+- [ ] Redis key 有命名空间，业务缓存有 TTL；锁有超时和持有者校验释放
+
+#### 测试安全运维
+
+- [ ] 无硬编码密码、token、API key、私钥、签名密钥或授权值
+- [ ] 受保护操作有鉴权、输入校验和必要的限流/审计
+- [ ] 核心业务逻辑和公共 API 变更覆盖正常/异常路径测试
+- [ ] 监控指标标签基数受控，不使用 raw ID 作为高基数 label
+- [ ] 生产影响变更写明发布验证、灰度、回滚或人工确认方案
+
+#### 分布式 Java 门禁（所有 Java 改动必须声明）
+
+- [ ] 已声明未触发并说明理由，或声明触发并列出触发条款、证据和人工确认项
+- [ ] 外部调用有超时、重试上限、退避策略和幂等前提
+- [ ] 线程池、队列、锁有业务命名、容量/超时限制和拒绝/失败策略
+- [ ] 跨服务一致性有事务边界、补偿路径、终止条件和人工接管方案
+- [ ] MQ/异步/缓存/停机可观测、可重放或可降级，并能处理在途任务
 
 ### 前端三层规范检查（若适用）
 
