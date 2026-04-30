@@ -59,6 +59,7 @@
 - 只允许实现 contract 范围内内容。
 - 若项目技术栈包含 Java/Spring Boot，编码前必须先阅读 `.harness/docs/java-dev-conventions.md` 入口，并按任务触发维度读取 `.harness/docs/java/rules/` 分片规则，完成前置闸门确认。
 - 若本次涉及 Java，实现前必须复述 Java 总门禁 5 条，并列出本次触发的维度核心门禁。未触发的维度要写明理由，触发的维度必须按入口文件中的 5 条核心规则逐项落地。
+- 若本次涉及 Java，实现前必须声明魔法值治理方式：业务状态、任务类型、动作类型、错误码、配置 key、阈值使用 enum、语义常量或配置项，禁止在分支中散落字符串/数字字面量。
 - 若本次涉及 Java，实现前必须确认 contract 已包含触发维度的验收项，至少覆盖分层与 DDD、Dubbo/API、日志异常、持久化基础设施、测试安全运维中的实际触发项。
 - 若本次涉及 Java，实现前必须声明分布式 Java 门禁：未触发需说明理由；触发时逐项覆盖外部调用边界、资源隔离、一致性恢复、失败可追踪可降级、发布停机不丢数据。
 - 若项目技术栈包含 React/Vue/TypeScript/Next.js，或本次任务涉及 UI/样式/交互，编码前必须先阅读 `.harness/docs/frontend-dev-conventions.md`，并按需阅读：
@@ -73,6 +74,7 @@
   - 测试通过（既有 + 新增）
   - 验收标准逐条核对
   - 若涉及 Java：Java 总门禁、触发维度核心门禁、分布式 Java 门禁逐条核对；运行 convention-check；fail 必须修复，warn 必须修复或解释
+  - 若涉及 Java：确认业务状态、任务类型、动作类型、错误码、配置 key、阈值没有散落魔法字符串/魔法数字
   - 若涉及前端：三层前端规范逐条核对；无新增硬编码颜色、无裸全局样式、无无解释 inline style；loading / empty / error / disabled / focus-visible 覆盖完整
   - 新增/修改函数与方法的中文注释完整
   - 无调试残留

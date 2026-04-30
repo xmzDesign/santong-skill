@@ -53,6 +53,7 @@ JAVA_RULE_CARD = [
     "9. 公共 client API 必须返回 ApiResponse<T>；Public DTO 必须 Serializable + serialVersionUID。",
     "10. 公共枚举使用 name() 或稳定 code，禁止 ordinal()；日志和外部错误必须脱敏。",
     "11. Domain 不依赖基础设施；Application 不直接操作 MyBatis Mapper。",
+    "12. 业务状态、任务类型、动作类型、错误码、配置 key、阈值必须使用 enum、语义常量或配置项，禁止散落魔法值。",
 ]
 
 DISTRIBUTED_JAVA_RULE_CARD = [
@@ -206,6 +207,16 @@ SENSITIVE_LOG_RE = re.compile(
 )
 MESSAGE_SEND_RE = re.compile(r"(rocketMQTemplate|kafkaTemplate|rabbitTemplate|jmsTemplate)\s*\.\s*(send|convertAndSend|syncSend|asyncSend)")
 ASYNC_BOUNDARY_RE = re.compile(r"(@Async\b|CompletableFuture\.(runAsync|supplyAsync)|new\s+Thread\s*\()")
+MAGIC_BUSINESS_STRING_RE = re.compile(
+    r'(?:"[A-Z][A-Z0-9]*_[A-Z0-9_]*"\s*\.equals\s*\(|'
+    r'\.equals\s*\(\s*"[A-Z][A-Z0-9]*_[A-Z0-9_]*"\s*\)|'
+    r'(?:==|!=)\s*"[A-Z][A-Z0-9]*_[A-Z0-9_]*"|'
+    r'"[A-Z][A-Z0-9]*_[A-Z0-9_]*"\s*(?:==|!=)|'
+    r'\bcase\s+"[A-Z][A-Z0-9]*_[A-Z0-9_]*"\s*:)',
+)
+MAGIC_NUMBER_CONDITION_RE = re.compile(r"\b(?:if|else\s+if|while)\s*\([^;\n]*(?:==|!=|<=|>=|<|>)\s*(-?\d+)\b")
+MAGIC_NUMBER_CASE_RE = re.compile(r"\bcase\s+(-?\d+)\s*:")
+ALLOWED_MAGIC_NUMBERS = {"-1", "0", "1"}
 
 
 def java_class_line(text: str, class_name: str) -> int:
@@ -285,6 +296,10 @@ def is_trivial_java_method(line: str) -> bool:
     return bool(re.search(r"\b(get|set|is|equals|hashCode|toString)\w*\s*\(", line))
 
 
+def allowed_magic_number(raw: str) -> bool:
+    return raw in ALLOWED_MAGIC_NUMBERS
+
+
 def scan_java(root: Path, path: Path, findings: list[Finding]):
     text = read_text(path)
     lines = text.splitlines()
@@ -346,6 +361,14 @@ def scan_java(root: Path, path: Path, findings: list[Finding]):
             add_finding(findings, "fail", "JAVA_RAW_EXCEPTION_MESSAGE", root, path, line_no, "外部错误响应禁止暴露原始系统异常消息。", line)
         if "ordinal()" in line:
             add_finding(findings, "fail", "JAVA_ENUM_ORDINAL", root, path, line_no, "外部可见或持久化业务值禁止使用 enum ordinal()；请使用 name() 或显式稳定 code。", line)
+        if MAGIC_BUSINESS_STRING_RE.search(line) and "static final" not in line:
+            add_finding(findings, "warn", "JAVA_MAGIC_BUSINESS_LITERAL", root, path, line_no, "业务状态/任务类型/动作类型禁止在分支中直接比较字符串魔法值；请使用 enum、语义常量或统一解析方法。", line)
+        number_match = MAGIC_NUMBER_CONDITION_RE.search(line)
+        if number_match and not allowed_magic_number(number_match.group(1)):
+            add_finding(findings, "warn", "JAVA_MAGIC_NUMBER", root, path, line_no, "业务阈值/状态码禁止在条件中直接写裸数字；请使用语义常量、enum 或配置项。", line)
+        case_number_match = MAGIC_NUMBER_CASE_RE.search(line)
+        if case_number_match and not allowed_magic_number(case_number_match.group(1)):
+            add_finding(findings, "warn", "JAVA_MAGIC_NUMBER", root, path, line_no, "switch case 中的业务数字必须收口为 enum 或语义常量。", line)
         if "PageHelper.startPage" in line:
             window = "\n".join(lines[index:index + 10]).lower()
             if not re.search(r"(order\s+by|\.orderby\s*\(|setorderby\s*\()", window):

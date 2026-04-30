@@ -25,8 +25,9 @@ argument-hint: 可选 - 指定要评估的 contract 或 spec
 4. 若涉及 UI，结合截图进行视觉检查。
 5. 阅读源码并校验逻辑正确性。
 6. 若涉及 Java，读取 `.harness/docs/java-dev-conventions.md` 入口和任务触发的 `.harness/docs/java/rules/` 分片规则，按 Java 总门禁与触发维度核心门禁检查实现，并运行 convention-check。
-7. 若存在 Java 改动，检查 spec/contract 是否包含分布式 Java 门禁；未声明则 FAIL。若触发 `.harness/docs/java/rules/distributed-java-gate.md`，逐项检查外部调用边界、资源隔离、一致性恢复、失败可追踪可降级、发布停机不丢数据。
-8. 若涉及前端，读取 `.harness/docs/frontend-dev-conventions.md`、`.harness/docs/frontend/` 三层规范和对应 BYAI HTML 参考页，检查 token、状态覆盖、响应式、可访问性、视觉一致性与反例规避。
+7. 若涉及 Java，检查业务状态、任务类型、动作类型、错误码、配置 key、阈值是否使用 enum、语义常量或配置项，确认没有散落魔法字符串/魔法数字，也没有用 `null` 隐式表达默认业务类型。
+8. 若存在 Java 改动，检查 spec/contract 是否包含分布式 Java 门禁；未声明则 FAIL。若触发 `.harness/docs/java/rules/distributed-java-gate.md`，逐项检查外部调用边界、资源隔离、一致性恢复、失败可追踪可降级、发布停机不丢数据。
+9. 若涉及前端，读取 `.harness/docs/frontend-dev-conventions.md`、`.harness/docs/frontend/` 三层规范和对应 BYAI HTML 参考页，检查 token、状态覆盖、响应式、可访问性、视觉一致性与反例规避。
 
 ### 3. 评分报告
 

@@ -65,6 +65,7 @@ color: red
 - 对照 `.harness/docs/java-dev-conventions.md` 入口与触发的 `.harness/docs/java/rules/` 分片规则检查 Java 总门禁和触发维度核心门禁
 - 验证总门禁 5 条是否进入 spec/contract/build/qa 并被逐项执行
 - 验证触发维度核心门禁是否满足，包括分层与 DDD、Dubbo/API、日志异常、持久化基础设施、测试安全运维
+- 验证业务状态、任务类型、动作类型、错误码、配置 key、阈值是否使用 enum、语义常量或配置项；若在分支逻辑中直接比较 `"INITIAL_GENERATE"`、`"EDIT_GENERATE"` 这类字符串，或直接比较业务数字，标记为 WARN 或 FAIL
 - 运行 `.codex/hooks/convention-check.py --changed-only` 或 `.claude/hooks/convention-check.py --changed-only`
 - fail 视为必须修复；warn 必须给出修复或明确风险说明
 
@@ -132,6 +133,7 @@ color: red
 ### Java 规范检查（若适用）
 
 - Java 总门禁：PASS / FAIL / PARTIAL
+- 魔法值治理：PASS / FAIL / PARTIAL
 - 触发维度核心门禁：PASS / FAIL / PARTIAL
 - 分布式 Java 门禁：未触发 / PASS / FAIL / PARTIAL
 - 分布式规则触发条款：条款列表或不适用理由

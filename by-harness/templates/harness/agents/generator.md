@@ -47,11 +47,12 @@ color: green
 3. **测试检查**：既有测试是否通过？新增测试是否通过？
 4. **验收标准检查**：逐条对照 contract 验证是否达成。
 5. **中文注释检查**：确认所有新增/修改函数、方法均有清晰中文注释。
-6. **Java 总门禁与维度核心门禁检查**：若涉及 Java，逐条核对总门禁、触发维度核心门禁，并运行 `.codex/hooks/convention-check.py --changed-only` 或 `.claude/hooks/convention-check.py --changed-only`；fail 必须修复，warn 必须修复或解释。
-7. **分布式 Java 门禁检查**：所有 Java 改动都必须核对分布式 Java 门禁；未触发需说明理由，触发时逐条核对 `.harness/docs/java/rules/distributed-java-gate.md` 适用条款，并说明机器无法判断的补偿、降级、发布停机、人工接管项。
-8. **SQL/ORM 规范检查**：若涉及 Java/MyBatis/SQL，运行 `.codex/hooks/convention-check.py --changed-only` 或 `.claude/hooks/convention-check.py --changed-only`；fail 必须修复，warn 必须修复或解释。
-9. **前端规范检查**：若涉及前端，确认无新增硬编码颜色、裸全局样式、无解释 inline style；loading / empty / error / disabled / focus-visible 覆盖完整；桌面和窄屏无文本溢出或重叠；必要时运行 `.codex/hooks/convention-check.py --changed-only` 或 `.claude/hooks/convention-check.py --changed-only`。
-10. **调试残留检查**：移除 `console.log/print`、`TODO`、临时代码等。
+6. **魔法值检查**：若涉及 Java，确认任务类型、业务状态、动作类型、错误码、配置 key、阈值没有散落字符串/数字魔法值；应使用 enum、语义常量或配置项。
+7. **Java 总门禁与维度核心门禁检查**：若涉及 Java，逐条核对总门禁、触发维度核心门禁，并运行 `.codex/hooks/convention-check.py --changed-only` 或 `.claude/hooks/convention-check.py --changed-only`；fail 必须修复，warn 必须修复或解释。
+8. **分布式 Java 门禁检查**：所有 Java 改动都必须核对分布式 Java 门禁；未触发需说明理由，触发时逐条核对 `.harness/docs/java/rules/distributed-java-gate.md` 适用条款，并说明机器无法判断的补偿、降级、发布停机、人工接管项。
+9. **SQL/ORM 规范检查**：若涉及 Java/MyBatis/SQL，运行 `.codex/hooks/convention-check.py --changed-only` 或 `.claude/hooks/convention-check.py --changed-only`；fail 必须修复，warn 必须修复或解释。
+10. **前端规范检查**：若涉及前端，确认无新增硬编码颜色、裸全局样式、无解释 inline style；loading / empty / error / disabled / focus-visible 覆盖完整；桌面和窄屏无文本溢出或重叠；必要时运行 `.codex/hooks/convention-check.py --changed-only` 或 `.claude/hooks/convention-check.py --changed-only`。
+11. **调试残留检查**：移除 `console.log/print`、`TODO`、临时代码等。
 
 不要跳过此步骤。跳过自检会显著降低交付质量。
 
@@ -60,7 +61,7 @@ color: green
 在回复中给出简短报告（不要写到文件），包含：
 - 实现了什么
 - 如何完成自检
-- 若涉及 Java，必须包含“Java 总门禁与维度核心门禁自检结果”，逐项说明总门禁、触发维度核心门禁和 convention-check 结果
+- 若涉及 Java，必须包含“Java 总门禁与维度核心门禁自检结果”，逐项说明总门禁、魔法值治理、触发维度核心门禁和 convention-check 结果
 - 若涉及 Java，必须包含“分布式 Java 门禁自检结果”，说明未触发理由或分布式规则触发条款、实现证据、人工确认项和剩余风险
 - 若涉及 Java/MyBatis/SQL，必须包含“SQL/ORM 规范自检结果”，说明 convention-check 是否通过、warn 是否已处理或解释
 - 若涉及前端，必须包含“前端三层规范自检结果”，说明读取了哪些规范、适用的页面类型、状态覆盖、视觉/响应式验证和 convention-check 结果
