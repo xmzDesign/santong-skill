@@ -28,7 +28,7 @@ read task -> plan -> build -> qa -> fix -> mark_pass -> session_close
 | 会话收口 | “收口”“保存进度”“session_close” | 运行 `.harness/scripts/session_close.py` |
 | 自动续跑 | “继续下个任务”“自动续跑” | 运行 `.harness/scripts/task_switch.py continue --target-dir .` |
 | 老仓库升级 | “升级 harness”“同步 runtime”“更新脚手架” | 运行 `scripts/update_runtime.py`，优先备份与版本化迁移 |
-| Java 规范约束 | “Java 硬规则”“Service 接口实现”“MapStruct/金额/Redis/分页规则” | 先读 `.harness/docs/java-dev-conventions.md` 入口，再按触发项读取 `.harness/docs/java/rules/` 分片规则 |
+| Java 规范约束 | “Java 硬规则”“Service 接口实现”“MapStruct/金额/Redis/分页规则” | 先读 `.harness/docs/java-dev-conventions.md` 入口，再按触发维度读取 `.harness/docs/java/rules/` 分片规则 |
 | 分布式 Java 约束 | “分布式编码规范”“幂等/重试/锁/事务/消息/缓存一致性” | 使用 `.harness/docs/java/rules/distributed-java-gate.md` 约束 spec/contract/build/qa |
 | 前端规范约束 | “前端规范”“UI 约束”“按设计稿/参考页” | 使用已下发的前端三层规范和 BYAI HTML 参考约束实现 |
 
@@ -177,6 +177,7 @@ python3 .harness/scripts/update_runtime.py --target-dir . --check-remote
 Java 后端采用分片 Java 总门禁，并融合真实项目验证过的落地规则：
 
 - Plan 阶段先读 Java 入口，再按触发维度读取分片规则：`00-core.md`、`java-ddd.md`、`dubbo-api.md`、`logging-error.md`、`persistence-infra.md`、`testing-security.md`、`distributed-java-gate.md`。
+- Plan 阶段必须执行最小实体与成本评估：如无必要，勿增实体；历史项目小改动优先复用既有实体、表、DTO、Service、配置和扩展点。
 - 所有 Java 改动都必须处理 Java 总门禁 5 条：先契约后实现、先本地后通用、边界不被突破、风险显式落地、验证可追溯。
 - 按触发维度追加 5 条左右核心门禁：通用工程、分层与 DDD、Dubbo 与公共 API、日志与异常、持久化与基础设施、测试安全运维、分布式 Java 门禁。
 - 所有 Java 改动必须声明分布式 Java 门禁：未触发需说明理由；触发外部调用、Dubbo/HTTP/RPC、MQ、异步、线程池、锁、Redis、事务、补偿或发布停机时，必须逐条对照 `distributed-java-gate.md`。
@@ -201,6 +202,7 @@ Java 后端采用分片 Java 总门禁，并融合真实项目验证过的落地
 - `AGENTS.md` 是主契约，定义 Plan / Build / Verify / Fix。
 - `.harness/docs/TASK-HARNESS.md` 是任务层契约，不得覆盖主契约。
 - 常规任务只更新任务状态、进度和闭环工件，不随意改任务结构。
+- 规划方案必须遵守“如无必要，勿增实体”；历史项目小改动默认按最小成本实施，新增实体/表/DTO/Service/配置项必须写明必要性、替代方案、迁移成本和回滚影响。
 - 单元测试通过且 spec/contract 已落盘后才可 `passes=true`；QA 报告默认非阻塞，但必须记录结果。
 - 任何已标记 `passes=true` 的 feature，如果缺少 `spec_path` 或 `contract_path` 对应文件，pre-completion hook 必须阻断完成。
 - 所有新增或修改的函数、方法必须补齐中文注释，说明用途、关键参数、返回值和副作用。

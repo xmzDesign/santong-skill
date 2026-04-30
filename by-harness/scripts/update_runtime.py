@@ -37,7 +37,7 @@ LEGACY_TASK_FILE_NAME = "task.json"
 LEGACY_SESSION_CONTEXT_FILE_NAME = "session-context.json"
 LEGACY_SESSION_BOUNDARY_FILE_NAME = "session-boundary.json"
 LEGACY_TASK_CONTRACT_FILE_NAME = "TASK-HARNESS.md"
-LATEST_RUNTIME_VERSION = "2.3.6"
+LATEST_RUNTIME_VERSION = "2.3.7"
 RUNTIME_SCRIPT_NAMES = (
     "init.sh",
     "session_close.py",
@@ -174,6 +174,7 @@ MIGRATIONS: dict[str, tuple[str, str]] = {
     "2.3.3": ("2.3.4", "migrate_runtime_versioning"),
     "2.3.4": ("2.3.5", "migrate_runtime_versioning"),
     "2.3.5": ("2.3.6", "migrate_runtime_versioning"),
+    "2.3.6": ("2.3.7", "migrate_runtime_versioning"),
 }
 
 

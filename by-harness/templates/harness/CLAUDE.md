@@ -35,8 +35,10 @@
   - 组件边界（Component boundaries）
   - 数据流（Data flow）
   - 错误处理（Error handling）
+  - 最小实体与成本评估：如无必要，勿增实体；优先复用既有实体、表、DTO、Service、配置和扩展点
   - 至少 3 个边界场景
   - 依赖项（Dependencies）
+- Plan 阶段必须遵守“如无必要，勿增实体”。尤其是历史项目的小改动，默认选择最小成本方案；若方案需要新增实体、表、DTO、Service、配置项或新层级，必须在 spec 中说明必要性、替代方案、兼容性、迁移成本和回滚影响。
 - 若需求涉及前端、UI、样式、交互、React/Vue/TypeScript 组件，Plan 阶段必须先阅读 `.harness/docs/frontend-dev-conventions.md`，并在 spec 的规范引用与 Frontend Gate 中补充：
   - 适用页面类型（Dashboard / Table / Form / Settings / Agent / Data-viz / Login / Onboarding 等）
   - 本次采用的三层规范文件（约束层 / 示范层 / 视觉层）
@@ -70,7 +72,7 @@
   - 构建/编译通过
   - 测试通过（既有 + 新增）
   - 验收标准逐条核对
-- 若涉及 Java：Java 总门禁、触发维度核心门禁、分布式 Java 门禁逐条核对；运行 convention-check；fail 必须修复，warn 必须修复或解释
+  - 若涉及 Java：Java 总门禁、触发维度核心门禁、分布式 Java 门禁逐条核对；运行 convention-check；fail 必须修复，warn 必须修复或解释
   - 若涉及前端：三层前端规范逐条核对；无新增硬编码颜色、无裸全局样式、无无解释 inline style；loading / empty / error / disabled / focus-visible 覆盖完整
   - 新增/修改函数与方法的中文注释完整
   - 无调试残留
@@ -115,6 +117,7 @@
 - 可用一条命令自动续跑下个任务（当前分支）：
   - `python3 .harness/scripts/task_switch.py continue --target-dir .`
 - 禁止隐式扩范围。
+- 如无必要，勿增实体；历史项目小改动优先最小成本实施。
 - 问题必须显式暴露并附证据。
 - 优先可回滚、低风险的朴素方案。
 - 不得省略函数/方法中文注释；注释质量不达标视为未完成。

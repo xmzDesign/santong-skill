@@ -14,6 +14,7 @@ argument-hint: 功能描述（1-4 句话）
 调用 `planner` 智能体，`planner` 会：
 - 澄清歧义（先向用户提问）
 - 调研代码库
+- 执行最小实体与成本评估：如无必要，勿增实体；历史项目小改动优先最小成本实施
 - 识别 Java/前端/项目局部规范源，并在 spec 中写入 Norm References
 - 若涉及 Java，写入 Java 总门禁、触发维度核心门禁与分布式 Java 门禁；所有 Java 改动都必须声明分布式影响
 - 若涉及前端，写入 Frontend Gate、三层规范与 BYAI 参考页
@@ -27,6 +28,7 @@ argument-hint: 功能描述（1-4 句话）
 在 `.harness/docs/contracts/<feature-name>.md` 生成冲刺契约：
 - 从规格中提取验收标准
 - 明确范围（In Scope / Out of Scope）
+- 将“如无必要，勿增实体”和最小成本方案转成可验收清单
 - 为每条标准指定验证方法
 - 若涉及 Java，将 Java 总门禁、触发维度核心门禁与分布式 Java 门禁转成可验收清单
 - 若涉及前端，将 Frontend Gate 与 BYAI 参考转成可验收清单
