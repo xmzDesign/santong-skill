@@ -15,8 +15,6 @@ HARNESS_DIR_NAME = ".harness"
 
 JAVA_EXTENSIONS = {".java"}
 SQL_EXTENSIONS = {".xml", ".sql"}
-FRONTEND_EXTENSIONS = {".ts", ".tsx", ".js", ".jsx", ".vue", ".css", ".scss", ".less"}
-STYLE_EXTENSIONS = {".css", ".scss", ".less", ".vue"}
 IGNORED_PARTS = {
     ".git",
     ".idea",
@@ -68,17 +66,6 @@ DISTRIBUTED_JAVA_RULE_CARD = [
     "6. 消息必须有 traceId/messageId/业务键，消费者幂等，并有重试/死信/补偿路径。",
     "7. 异步边界必须传递并清理 MDC/ThreadLocal，核心链路必须有日志、指标和 trace。",
 ]
-
-FRONTEND_RULE_CARD = [
-    "前端门禁：",
-    "1. 业务样式应使用设计 token/theme 变量；token/theme 文件外不允许硬编码颜色。",
-    "2. TSX/JSX/Vue 禁止 inline style，除非是已记录的动态几何、图表或虚拟列表例外。",
-    "3. 避免裸全局覆盖；Antd 覆盖必须通过 CSS Modules 或根 class 限定作用域。",
-    "4. 禁止使用 !important，除非说明第三方兼容例外。",
-    "5. 避免紫色渐变、玻璃拟态、装饰圆球等通用 AI 产品视觉。",
-    "6. 前端变更需覆盖适用的 loading/empty/error/disabled/focus-visible 状态。",
-]
-
 
 @dataclass
 class Finding:
@@ -148,7 +135,7 @@ def all_relevant_files(root: Path) -> list[Path]:
 
 
 def is_relevant(path: Path) -> bool:
-    return path.suffix.lower() in (JAVA_EXTENSIONS | SQL_EXTENSIONS | FRONTEND_EXTENSIONS)
+    return path.suffix.lower() in (JAVA_EXTENSIONS | SQL_EXTENSIONS)
 
 
 def is_ignored(path: Path) -> bool:
@@ -167,19 +154,6 @@ def read_text(path: Path) -> str:
         return path.read_text(encoding="utf-8")
     except UnicodeDecodeError:
         return path.read_text(encoding="utf-8", errors="ignore")
-
-
-def is_frontend_token_or_theme_file(root: Path, path: Path) -> bool:
-    rel = rel_path(root, path).replace("\\", "/").lower()
-    name = path.name.lower()
-    return (
-        "/tokens/" in rel
-        or "/theme/" in rel
-        or "/styles/variables" in rel
-        or "token" in name
-        or "theme" in name
-        or name in {"variables.scss", "variables.less", "antd-theme.less"}
-    )
 
 
 def add_finding(findings: list[Finding], severity: str, rule: str, root: Path, path: Path, line_no: int, message: str, line: str):
@@ -506,92 +480,6 @@ def scan_sql(root: Path, path: Path, findings: list[Finding]):
             add_finding(findings, "warn", "SQL_UPDATE_TIME", root, path, line_no, "记录更新必须同步维护 update_time；请确认本更新可豁免或补充 update_time。", line)
 
 
-def scan_frontend(root: Path, path: Path, findings: list[Finding]):
-    text = read_text(path)
-    suffix = path.suffix.lower()
-    is_token_or_theme = is_frontend_token_or_theme_file(root, path)
-    for line_no, line in enumerate(text.splitlines(), start=1):
-        lowered = line.lower()
-        if suffix in {".tsx", ".jsx", ".vue"} and re.search(r"\bstyle\s*=\s*\{\{", line):
-            add_finding(
-                findings,
-                "fail",
-                "FE_INLINE_STYLE",
-                root,
-                path,
-                line_no,
-                "禁止 inline style，除非这是已记录的动态几何、图表或虚拟列表例外。",
-                line,
-            )
-        if not is_token_or_theme and re.search(r"#[0-9a-fA-F]{3,8}\b", line):
-            severity = "fail" if suffix in STYLE_EXTENSIONS else "warn"
-            add_finding(
-                findings,
-                severity,
-                "FE_HARDCODED_COLOR",
-                root,
-                path,
-                line_no,
-                "Hardcoded color found outside token/theme files; use semantic token or existing theme variable.",
-                line,
-            )
-        if not is_token_or_theme and re.search(r"var\(--color-[^)]+\)", line):
-            add_finding(
-                findings,
-                "warn",
-                "FE_PRIMITIVE_TOKEN",
-                root,
-                path,
-                line_no,
-                "Primitive color token referenced in component/business style; prefer semantic token such as bg/fg/border/intent/agent.",
-                line,
-            )
-        if suffix in STYLE_EXTENSIONS and "!important" in line:
-            add_finding(
-                findings,
-                "warn",
-                "FE_IMPORTANT",
-                root,
-                path,
-                line_no,
-                "Avoid !important; scope overrides or explain the third-party compatibility exception.",
-                line,
-            )
-        if suffix in STYLE_EXTENSIONS and ".ant-" in line and ":global" not in line and ":where" not in line:
-            add_finding(
-                findings,
-                "warn",
-                "FE_NAKED_ANTD_OVERRIDE",
-                root,
-                path,
-                line_no,
-                "Antd override appears unscoped; wrap it in CSS Modules :global under a module root class.",
-                line,
-            )
-        if "backdrop-filter" in lowered:
-            add_finding(
-                findings,
-                "warn",
-                "FE_GLASSMORPHISM",
-                root,
-                path,
-                line_no,
-                "Glassmorphism is not part of the default B2B SaaS visual baseline; remove or justify.",
-                line,
-            )
-        if "linear-gradient" in lowered and re.search(r"(8b5cf6|7c3aed|a855f7|purple|violet)", lowered):
-            add_finding(
-                findings,
-                "warn",
-                "FE_AI_PURPLE_GRADIENT",
-                root,
-                path,
-                line_no,
-                "Avoid generic purple AI gradients unless explicitly required by the product design system.",
-                line,
-            )
-
-
 def scan_files(root: Path, files: list[Path]) -> list[Finding]:
     findings: list[Finding] = []
     for path in files:
@@ -602,8 +490,6 @@ def scan_files(root: Path, files: list[Path]) -> list[Finding]:
             scan_xml_config(root, path, findings)
             if path.name.lower() != "pom.xml":
                 scan_sql(root, path, findings)
-        elif suffix in FRONTEND_EXTENSIONS:
-            scan_frontend(root, path, findings)
     return findings
 
 
@@ -625,9 +511,6 @@ def format_text(findings: list[Finding], files: list[Path], root: Path) -> str:
         for item in findings
     ):
         lines.extend(SQL_RULE_CARD)
-        lines.append("")
-    if any(item.rule.startswith("FE_") for item in findings):
-        lines.extend(FRONTEND_RULE_CARD)
         lines.append("")
     lines.append(f"规范检查在 {len(files)} 个相关文件中发现 {len(fails)} 个 FAIL、{len(warns)} 个 WARN。")
     for item in findings[:60]:

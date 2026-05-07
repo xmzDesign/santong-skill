@@ -18,7 +18,7 @@
 
 **为什么**：“看起来不错”这类主观标准会导致评估偏宽松。机器可验证标准能强制精确表达。（Anthropic）
 
-**如何执行**：每条 contract 验收标准都要指定验证方式：单元测试、Playwright E2E、控制台检查、视觉对比或构建成功。
+**如何执行**：每条 contract 验收标准都要指定验证方式：单元测试、集成测试、convention-check、编译构建或人工可复核证据。
 
 ## 3. 一次只做一个 Sprint（One Sprint at a Time）
 

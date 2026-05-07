@@ -21,13 +21,11 @@ CHECKLIST = [
     "9. 若修改 Java，业务状态、任务类型、动作类型、错误码、配置 key、阈值是否已使用 enum、语义常量或配置项，未散落魔法字符串/魔法数字？",
     "10. 若修改 Java，分布式 Java 门禁是否已声明未触发理由，或已核对触发条款？",
     "11. 若修改 Java/MyBatis/SQL，convention-check.py --changed-only 是否无 FAIL，WARN 是否已修复或解释？",
-    "12. 若修改前端/UI，是否已读取并应用 frontend-dev-conventions 与三层规范？",
-    "13. 若修改前端/UI，是否无硬编码颜色、无无解释 inline style、无裸全局覆盖，并覆盖 loading/empty/error/disabled/focus-visible 状态？",
 ]
 
 TASK_HARNESS_CHECKLIST = [
-    "14. 若本轮映射到 active bucket 任务，passes=true 前单元测试是否已通过？",
-    "15. QA 报告是否已记录（非阻塞），进度日志是否已更新？",
+    "12. 若本轮映射到 active bucket 任务，passes=true 前单元测试是否已通过？",
+    "13. QA 报告是否已记录（非阻塞），进度日志是否已更新？",
 ]
 
 

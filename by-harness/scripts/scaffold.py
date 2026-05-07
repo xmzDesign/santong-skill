@@ -17,50 +17,13 @@ from datetime import date
 from pathlib import Path
 
 HARNESS_DIR_NAME = ".harness"
-HARNESS_RUNTIME_VERSION = "2.3.9"
+HARNESS_RUNTIME_VERSION = "2.3.10"
 MANAGED_BLOCK_BEGIN = "<!-- BEGIN BY-HARNESS MANAGED BLOCK -->"
 MANAGED_BLOCK_END = "<!-- END BY-HARNESS MANAGED BLOCK -->"
 AGENT_DOC_ALIASES = {
     "AGENTS.md": ("AGENTS.md", "AGENT.md", "agents.md", "agent.md"),
     "CLAUDE.md": ("CLAUDE.md", "claude.md"),
 }
-FRONTEND_REFERENCE_FILES = (
-    "docs/frontend/references/byai-ds-v/index.html",
-    "docs/frontend/references/byai-ds-v/readme.html",
-    "docs/frontend/references/byai-ds-v/assets/fonts.css",
-    "docs/frontend/references/byai-ds-v/assets/shell.css",
-    "docs/frontend/references/byai-ds-v/tokens/tailwind.config.js",
-    "docs/frontend/references/byai-ds-v/tokens/tokens.css",
-    "docs/frontend/references/byai-ds-v/tokens/tokens.json",
-    "docs/frontend/references/byai-ds-v/pages/01-login.html",
-    "docs/frontend/references/byai-ds-v/pages/02-dashboard.html",
-    "docs/frontend/references/byai-ds-v/pages/03-table.html",
-    "docs/frontend/references/byai-ds-v/pages/04-chat.html",
-    "docs/frontend/references/byai-ds-v/pages/05-settings.html",
-    "docs/frontend/references/byai-ds-v/pages/06-lead-detail.html",
-    "docs/frontend/references/byai-ds-v/pages/07-agent-studio.html",
-    "docs/frontend/references/byai-ds-v/pages/08-billing.html",
-    "docs/frontend/references/byai-ds-v/pages/09-team.html",
-    "docs/frontend/references/byai-ds-v/pages/10-audit-log.html",
-    "docs/frontend/references/byai-ds-v/pages/11-integrations.html",
-    "docs/frontend/references/byai-ds-v/pages/12-onboarding.html",
-    "docs/frontend/references/byai-ds-v/packages/ui/showcase.html",
-    "docs/frontend/references/byai-ds-v/packages/ui/src/styles.css",
-    "docs/frontend/references/byai-ds-v/spec/01-philosophy.md",
-    "docs/frontend/references/byai-ds-v/spec/02-tokens-primitives.md",
-    "docs/frontend/references/byai-ds-v/spec/03-tokens-semantic.md",
-    "docs/frontend/references/byai-ds-v/spec/04-typography.md",
-    "docs/frontend/references/byai-ds-v/spec/05-layout-grid.md",
-    "docs/frontend/references/byai-ds-v/spec/06-components.md",
-    "docs/frontend/references/byai-ds-v/spec/07-agent-patterns.md",
-    "docs/frontend/references/byai-ds-v/spec/08-states.md",
-    "docs/frontend/references/byai-ds-v/spec/09-data-viz.md",
-    "docs/frontend/references/byai-ds-v/spec/10-voice-microcopy.md",
-    "docs/frontend/references/byai-ds-v/spec/appendix-a-accessibility.md",
-    "docs/frontend/references/byai-ds-v/spec/appendix-b-motion.md",
-    "docs/frontend/references/byai-ds-v/spec/appendix-c-ai-consumption.md",
-    "docs/frontend/references/byai-ds-v/spec/appendix-d-antipatterns.md",
-)
 JAVA_RULE_FILES = (
     "docs/java/rules/00-core.md",
     "docs/java/rules/java-ddd.md",
@@ -324,12 +287,6 @@ def verify_outputs(target_dir: Path):
         f"{HARNESS_DIR_NAME}/docs/contracts/TEMPLATE.md",
         f"{HARNESS_DIR_NAME}/docs/java-dev-conventions.md",
         *[f"{HARNESS_DIR_NAME}/{rel}" for rel in JAVA_RULE_FILES],
-        f"{HARNESS_DIR_NAME}/docs/frontend-dev-conventions.md",
-        f"{HARNESS_DIR_NAME}/docs/frontend/README.md",
-        f"{HARNESS_DIR_NAME}/docs/frontend/rules.md",
-        f"{HARNESS_DIR_NAME}/docs/frontend/code-design.md",
-        f"{HARNESS_DIR_NAME}/docs/frontend/ui-design.md",
-        *[f"{HARNESS_DIR_NAME}/{rel}" for rel in FRONTEND_REFERENCE_FILES],
         f"{HARNESS_DIR_NAME}/docs/qa",
         f"{HARNESS_DIR_NAME}/task-harness/progress",
     ]
@@ -359,15 +316,6 @@ def main():
         *[
             (f"harness/{rel}", f"{HARNESS_DIR_NAME}/{rel}")
             for rel in JAVA_RULE_FILES
-        ],
-        ("harness/docs/frontend-dev-conventions.md", f"{HARNESS_DIR_NAME}/docs/frontend-dev-conventions.md"),
-        ("harness/docs/frontend/README.md", f"{HARNESS_DIR_NAME}/docs/frontend/README.md"),
-        ("harness/docs/frontend/rules.md", f"{HARNESS_DIR_NAME}/docs/frontend/rules.md"),
-        ("harness/docs/frontend/code-design.md", f"{HARNESS_DIR_NAME}/docs/frontend/code-design.md"),
-        ("harness/docs/frontend/ui-design.md", f"{HARNESS_DIR_NAME}/docs/frontend/ui-design.md"),
-        *[
-            (f"harness/{rel}", f"{HARNESS_DIR_NAME}/{rel}")
-            for rel in FRONTEND_REFERENCE_FILES
         ],
         ("harness/docs/contracts/TEMPLATE.md", f"{HARNESS_DIR_NAME}/docs/contracts/TEMPLATE.md"),
         ("harness/agents/planner.md", ".claude/agents/planner.md"),

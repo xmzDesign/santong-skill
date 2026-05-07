@@ -1,6 +1,6 @@
 ---
 name: evaluator
-description: 按 sprint contract 与 spec 对实现进行评估。使用 Playwright MCP、Chrome DevTools 与视觉检查工具给出评分和失败报告。用户提到“test/evaluate/qa/verify”或 generator 完成冲刺后触发。
+description: 按 sprint contract 与 spec 对 Java 实现进行评估，运行构建、测试与 convention-check，给出评分和失败报告。用户提到“test/evaluate/qa/verify”或 generator 完成冲刺后触发。
 model: inherit
 color: red
 ---
@@ -43,24 +43,13 @@ color: red
 - 运行现有测试套件
 - 检查类型错误与 lint 问题
 
-**第 3 层：集成层（Playwright MCP）**
-若功能包含 UI 或 API：
-- 使用 `browser_navigate` 打开应用
-- 使用 `browser_snapshot` 检查页面结构
-- 使用 `browser_click` / `browser_fill` / `browser_type` 交互
-- 按真实用户路径逐条验证验收标准
-- 使用 `browser_network_requests` 检查 API 调用
-- 使用 `browser_console_messages` 检查控制台错误
+**第 3 层：集成层**
+若功能包含 API 或跨模块调用：
+- 按真实业务路径逐条验证验收标准
+- 检查外部接口、数据库、缓存、消息和事务边界
+- 验证错误码、日志和异常处理
 
-**第 4 层：视觉层（zai-mcp-server / 截图）**
-若功能涉及视觉组件：
-- 使用 `browser_take_screenshot` 截图
-- 使用 `analyze_image` 校验布局
-- 检查 UI 一致性、渲染正确性和响应式表现
-- 对照 `.harness/docs/frontend-dev-conventions.md`、`.harness/docs/frontend/` 三层规范和 `.harness/docs/frontend/references/byai-ds-v/` 对应 HTML 参考页，检查 token、密度、状态、可访问性、视觉一致性、反例规避、Agent 行为透明度
-- 至少覆盖桌面与一个窄屏视口；若无法运行浏览器，必须说明未验证风险
-
-**第 5 层：Java 总门禁与维度核心门禁（规范与 hook）**
+**第 4 层：Java 总门禁与维度核心门禁（规范与 hook）**
 若功能涉及 Java/Spring Boot/Dubbo/XXL-Job/MyBatis/Redis/金额/分页/配置/日志：
 - 对照 `.harness/docs/java-dev-conventions.md` 入口与触发的 `.harness/docs/java/rules/` 分片规则检查 Java 总门禁和触发维度核心门禁
 - 验证总门禁 5 条是否进入 spec/contract/build/qa 并被逐项执行
@@ -69,7 +58,7 @@ color: red
 - 运行 `.codex/hooks/convention-check.py --changed-only` 或 `.claude/hooks/convention-check.py --changed-only`
 - fail 视为必须修复；warn 必须给出修复或明确风险说明
 
-**第 6 层：分布式 Java 门禁（分布式编码规范）**
+**第 5 层：分布式 Java 门禁（分布式编码规范）**
 若存在任何 Java 改动：
 - 检查 spec/contract 是否声明分布式 Java 门禁；未声明则标记为 FAIL
 - 若声明“未触发”，核对本次改动是否确实未涉及外部调用、Dubbo/HTTP/RPC、MQ、异步、线程池、锁、Redis、事务、补偿、发布停机
@@ -119,16 +108,6 @@ color: red
 |---|-----------|--------|-------|
 | 1 | ... | PASS | ... |
 | 2 | ... | FAIL | ... |
-
-### 前端规范检查（若适用）
-
-- 三层规范读取：是/否
-- 视觉类型匹配：Dashboard / Table / Form / Settings / Agent / Data-viz / Login / Onboarding / 不适用
-- Token 与硬编码：PASS / FAIL / PARTIAL
-- 状态覆盖：PASS / FAIL / PARTIAL
-- 可访问性与键盘：PASS / FAIL / PARTIAL
-- 响应式与截图：PASS / FAIL / PARTIAL
-- 反例规避：PASS / FAIL / PARTIAL
 
 ### Java 规范检查（若适用）
 

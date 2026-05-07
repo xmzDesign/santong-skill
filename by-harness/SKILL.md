@@ -1,6 +1,6 @@
 ---
 name: by-harness
-description: 初始化、维护和执行 by-harness 工作流时必须使用本 skill。适用于用户提到 by-harness、harness、初始化、持续拆任务、执行 feat、plan/build/qa/fix、session_close、自动续跑、runtime 升级，或需要下发 Java 总门禁、分布式 Java 门禁、前端三层规范来约束模型编码的场景。本 skill 会生成独立闭环脚手架、分片任务存储、会话收口工具、运行时升级工具，并下发 Java 硬规则门禁、分布式 Java 编码契约、前端三层规范与 BYAI HTML 视觉参考；feature_list 仅作为 legacy 兼容镜像。
+description: 初始化、维护和执行 by-harness 工作流时必须使用本 skill。适用于用户提到 by-harness、harness、初始化、持续拆任务、执行 feat、plan/build/qa/fix、session_close、自动续跑、runtime 升级，或需要下发 Java 总门禁、分布式 Java 门禁来约束模型编码的场景。本 skill 会生成独立闭环脚手架、分片任务存储、会话收口工具、运行时升级工具，并下发 Java 硬规则门禁与分布式 Java 编码契约；feature_list 仅作为 legacy 兼容镜像。
 argument-hint: "[项目名称] [项目描述]"
 disable-model-invocation: false
 user-invocable: true
@@ -30,7 +30,6 @@ read task -> plan -> build -> qa -> fix -> mark_pass -> session_close
 | 老仓库升级 | “升级 harness”“同步 runtime”“更新脚手架” | 运行 `scripts/update_runtime.py`，优先备份与版本化迁移 |
 | Java 规范约束 | “Java 硬规则”“Service 接口实现”“MapStruct/金额/Redis/分页规则” | 先读 `.harness/docs/java-dev-conventions.md` 入口，再按触发维度读取 `.harness/docs/java/rules/` 分片规则 |
 | 分布式 Java 约束 | “分布式编码规范”“幂等/重试/锁/事务/消息/缓存一致性” | 使用 `.harness/docs/java/rules/distributed-java-gate.md` 约束 spec/contract/build/qa |
-| 前端规范约束 | “前端规范”“UI 约束”“按设计稿/参考页” | 使用已下发的前端三层规范和 BYAI HTML 参考约束实现 |
 
 如果缺少项目名、目标目录或任务 ID，能从当前仓库和 `.harness/task-harness/index.json` 推断时直接推断；推断风险高时再问一个简短问题。
 
@@ -172,11 +171,10 @@ python3 .harness/scripts/update_runtime.py --target-dir . --check-remote
 
 ## 8. 工程规范下发
 
-初始化会下发两类工程规范：
+初始化会下发 Java 工程规范：
 
-- 后端入口：`.harness/docs/java-dev-conventions.md`
-- 后端分片：`.harness/docs/java/rules/`
-- 前端入口：`.harness/docs/frontend-dev-conventions.md`
+- Java 入口：`.harness/docs/java-dev-conventions.md`
+- Java 分片：`.harness/docs/java/rules/`
 
 Java 后端采用分片 Java 总门禁，并融合真实项目验证过的落地规则：
 
@@ -191,17 +189,6 @@ Java 后端采用分片 Java 总门禁，并融合真实项目验证过的落地
 - QA 阶段对照 contract、触发分片和 convention-check 结果验收。
 - Stop hook 阶段自动拦截可机器识别的 fail/warn。
 
-前端采用三层结构：
-
-- 约束层：`.harness/docs/frontend/rules.md`
-- 示范层：`.harness/docs/frontend/code-design.md`
-- 视觉层：`.harness/docs/frontend/ui-design.md`
-- 视觉参考：`.harness/docs/frontend/references/byai-ds-v/index.html`
-
-当前任务涉及 React、Vue、Next.js、TypeScript 组件、UI、样式、表格、表单、图表、Agent 界面或交互状态时，模型必须先阅读 `.harness/docs/frontend-dev-conventions.md`，再按任务类型阅读三层规范。
-
-新增页面、重构页面或明显视觉变更时，还必须打开 BYAI HTML 参考页。参考页用于理解布局、密度、状态、token 和视觉气质，不要把 demo HTML 直接复制成业务实现。
-
 ## 9. 运行约束
 
 - `AGENTS.md` 是主契约，定义 Plan / Build / Verify / Fix。
@@ -212,7 +199,6 @@ Java 后端采用分片 Java 总门禁，并融合真实项目验证过的落地
 - 任何已标记 `passes=true` 的 feature，如果缺少 `spec_path` 或 `contract_path` 对应文件，pre-completion hook 必须阻断完成。
 - 所有新增或修改的函数、方法必须补齐中文注释，说明用途、关键参数、返回值和副作用。
 - 涉及 Java 时，完成前自检 Java 总门禁、魔法值治理、触发维度核心门禁和分布式 Java 门禁，并运行 convention-check。读取规范时必须先读入口，再按触发维度读分片，不能默认整包加载所有规则。
-- 涉及前端时，完成前自检 token、状态覆盖、响应式、可访问性、BYAI 参考页对齐和反例规避。
 - 不使用破坏性 git 命令，不覆盖用户已有修改，不在已有项目中默认 `--force`。
 
 ## 10. 回报格式
@@ -233,4 +219,3 @@ Java 后端采用分片 Java 总门禁，并融合真实项目验证过的落地
 - `升级这个项目里的 harness runtime`
 - `这个 Java 功能按 Java 总门禁检查 Service、金额、Redis、分页和配置`
 - `这个 Java 功能按分布式编码规范检查幂等、重试、锁、事务和消息`
-- `这个前端页面按 BYAI 参考和三层规范重做`

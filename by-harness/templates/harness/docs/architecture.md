@@ -90,9 +90,8 @@ Codex 运行时：
 
 | MCP 工具 | 使用方 | 目的 |
 |----------|---------|---------|
-| Playwright | Evaluator | E2E 测试、浏览器自动化 |
-| Chrome DevTools | Evaluator | 控制台错误、网络与性能检查 |
-| zai-mcp-server | Evaluator | UI 视觉验证 |
+| JUnit / Maven / Gradle | Evaluator | 单元测试、集成测试、构建验证 |
+| convention-check | Evaluator | Java/MyBatis/SQL 机器检查 |
 | web_reader | Planner | 获取外部文档资料 |
 
 ## Sprint 生命周期

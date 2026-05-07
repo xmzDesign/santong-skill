@@ -28,7 +28,7 @@
 
 - 不允许编写实现代码。
 - Spec 必须包含：
-  - 规范引用（Norm references）：本次读取的 Java/前端/项目局部规范文件、适用原因、未适用原因
+  - 规范引用（Norm references）：本次读取的 Java/项目局部规范文件、适用原因、未适用原因
   - 问题陈述（Problem statement）
   - 用户故事（User stories）
   - 可机器验证的验收标准
@@ -39,10 +39,6 @@
   - 至少 3 个边界场景
   - 依赖项（Dependencies）
 - Plan 阶段必须遵守“如无必要，勿增实体”。尤其是历史项目的小改动，默认选择最小成本方案；若方案需要新增实体、表、DTO、Service、配置项或新层级，必须在 spec 中说明必要性、替代方案、兼容性、迁移成本和回滚影响。
-- 若需求涉及前端、UI、样式、交互、React/Vue/TypeScript 组件，Plan 阶段必须先阅读 `.harness/docs/frontend-dev-conventions.md`，并在 spec 的规范引用与 Frontend Gate 中补充：
-  - 适用页面类型（Dashboard / Table / Form / Settings / Agent / Data-viz / Login / Onboarding 等）
-  - 本次采用的三层规范文件（约束层 / 示范层 / 视觉层）
-  - 视觉与交互验收标准（可截图、可浏览器验证、可代码扫描）
 - 若需求涉及 Java/Spring Boot/Dubbo/XXL-Job/MyBatis/Redis/金额/分页/配置/日志，Plan 阶段必须先阅读 `.harness/docs/java-dev-conventions.md` 入口，再按触发维度读取 `.harness/docs/java/rules/` 下的分片规则，并在 spec 的规范引用、Java 总门禁、维度核心门禁和分布式 Java 门禁中补充：
   - Java 总门禁 5 条：先契约后实现、先本地后通用、边界不被突破、风险显式落地、验证可追溯
   - 触发维度核心门禁：通用工程、分层与 DDD、Dubbo 与公共 API、日志与异常、持久化与基础设施、测试安全运维、分布式 Java 门禁；每个触发维度按入口文件列出的 5 条核心规则落地
@@ -55,19 +51,13 @@
 - 从 `.harness/docs/specs/` 读取目标 spec。
 - 从 `.harness/docs/contracts/` 读取目标 contract。
 - 若 contract 缺失，先基于 `.harness/docs/contracts/TEMPLATE.md` 创建再实现。
-- 若 spec/contract 缺少本次适用的 Java 总门禁、触发维度核心门禁、分布式 Java 门禁或 Frontend Gate，先补齐 contract，再开始实现。
+- 若 spec/contract 缺少本次适用的 Java 总门禁、触发维度核心门禁或分布式 Java 门禁，先补齐 contract，再开始实现。
 - 只允许实现 contract 范围内内容。
 - 若项目技术栈包含 Java/Spring Boot，编码前必须先阅读 `.harness/docs/java-dev-conventions.md` 入口，并按任务触发维度读取 `.harness/docs/java/rules/` 分片规则，完成前置闸门确认。
 - 若本次涉及 Java，实现前必须复述 Java 总门禁 5 条，并列出本次触发的维度核心门禁。未触发的维度要写明理由，触发的维度必须按入口文件中的 5 条核心规则逐项落地。
 - 若本次涉及 Java，实现前必须声明魔法值治理方式：业务状态、任务类型、动作类型、错误码、配置 key、阈值使用 enum、语义常量或配置项，禁止在分支中散落字符串/数字字面量。
 - 若本次涉及 Java，实现前必须确认 contract 已包含触发维度的验收项，至少覆盖分层与 DDD、Dubbo/API、日志异常、持久化基础设施、测试安全运维中的实际触发项。
 - 若本次涉及 Java，实现前必须声明分布式 Java 门禁：未触发需说明理由；触发时逐项覆盖外部调用边界、资源隔离、一致性恢复、失败可追踪可降级、发布停机不丢数据。
-- 若项目技术栈包含 React/Vue/TypeScript/Next.js，或本次任务涉及 UI/样式/交互，编码前必须先阅读 `.harness/docs/frontend-dev-conventions.md`，并按需阅读：
-  - `.harness/docs/frontend/rules.md`
-  - `.harness/docs/frontend/code-design.md`
-  - `.harness/docs/frontend/ui-design.md`
-- 若新增页面、重构页面或明显视觉变更，必须打开 `.harness/docs/frontend/references/byai-ds-v/index.html` 或对应 HTML 页面作为视觉参考。
-- 前端编码前必须明确本次适用的 token、状态、布局、Antd/组件库、视觉类型与反例规避清单。
 - 所有新增/修改的函数、方法必须补充中文注释，至少说明：用途、关键参数、返回值与副作用（如状态变更/IO）。
 - 交付前必须自检：
   - 构建/编译通过
@@ -75,7 +65,6 @@
   - 验收标准逐条核对
   - 若涉及 Java：Java 总门禁、触发维度核心门禁、分布式 Java 门禁逐条核对；运行 convention-check；fail 必须修复，warn 必须修复或解释
   - 若涉及 Java：确认业务状态、任务类型、动作类型、错误码、配置 key、阈值没有散落魔法字符串/魔法数字
-  - 若涉及前端：三层前端规范逐条核对；无新增硬编码颜色、无裸全局样式、无无解释 inline style；loading / empty / error / disabled / focus-visible 覆盖完整
   - 新增/修改函数与方法的中文注释完整
   - 无调试残留
 
@@ -132,12 +121,6 @@
 - 所有 Java 改动必须显式处理分布式 Java 门禁：未触发需写明理由；触发 `.harness/docs/java/rules/distributed-java-gate.md` 任一条款时必须进入 spec、contract、build 自检和 QA 报告。
 - 完成前运行 `.codex/hooks/convention-check.py --changed-only` 或 `.claude/hooks/convention-check.py --changed-only`。
 
-### 前端附加规则（适用时强制）
-
-- 若为前端项目或涉及 UI/样式/交互：必须遵守 `.harness/docs/frontend-dev-conventions.md`。
-- 新增页面、重构页面、明显视觉变更时，还必须遵守 `.harness/docs/frontend/rules.md`、`.harness/docs/frontend/code-design.md`、`.harness/docs/frontend/ui-design.md`。
-- 前端完成前必须运行可用的构建/测试/截图验证；若无法运行，必须说明阻塞原因与人工验证建议。
-
 ## 与 Task Harness 的集成（可选但推荐）
 
 若项目存在 `.harness/task-harness/index.json` 与 `.harness/docs/TASK-HARNESS.md`，按以下方式形成任务闭环：
@@ -178,9 +161,6 @@
 - `.harness/docs/plans/`：计划产物
 - `.harness/docs/java-dev-conventions.md`：Java 后端编码规范入口（Java 项目先读）
 - `.harness/docs/java/rules/`：Java 分片规则（按任务触发维度读取）
-- `.harness/docs/frontend-dev-conventions.md`：前端工程级编码规范（前端项目必读）
-- `.harness/docs/frontend/`：前端三层规范（约束层、示范层、视觉层）
-- `.harness/docs/frontend/references/byai-ds-v/`：BYAI HTML 视觉参考页与 token 快照
 - `.harness/feature_list.json`：legacy 兼容镜像（仅在历史项目存在时沿用）
 - `.harness/config/runtime-version.json`：运行时版本号（用于版本化升级）
 - `.harness/config/update-policy.json`：远程更新策略（定时检查与自动应用）
