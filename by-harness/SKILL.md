@@ -125,10 +125,12 @@ python3 {{SKILL_PATH}}/scripts/rebalance_tasks.py --target-dir "<项目目录>"
 python3 .harness/scripts/session_close.py \
   --target-dir . \
   --feature-id "<feat-id>" \
-  --outcome "in-progress|completed|blocked" \
+  --outcome "pass|fail|blocked|in-progress" \
   --qa-score "<0-100，可选>" \
   --note "<本轮摘要>"
 ```
+
+`completed` 作为旧命令兼容别名，会被脚本映射为 `pass`；新命令必须优先使用 `pass`。
 
 收口脚本会：
 

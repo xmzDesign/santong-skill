@@ -18,6 +18,26 @@ from pathlib import Path
 HARNESS_DIR_NAME = ".harness"
 SESSION_MODE_SOFT = "soft_reset"
 SESSION_MODE_HARD = "hard_new_session"
+VALID_OUTCOMES = ("pass", "fail", "blocked", "in-progress")
+OUTCOME_ALIASES = {
+    "complete": "pass",
+    "completed": "pass",
+    "done": "pass",
+    "passed": "pass",
+    "success": "pass",
+    "failed": "fail",
+    "failure": "fail",
+    "block": "blocked",
+    "blocked": "blocked",
+    "in_progress": "in-progress",
+    "in-progress": "in-progress",
+    "progress": "in-progress",
+    "wip": "in-progress",
+}
+
+
+class HarnessJsonError(RuntimeError):
+    """Raised when harness JSON storage cannot be read or parsed."""
 
 
 def parse_args():
@@ -27,8 +47,7 @@ def parse_args():
     parser.add_argument(
         "--outcome",
         default="in-progress",
-        choices=["pass", "fail", "blocked", "in-progress"],
-        help="本次会话结果",
+        help="本次会话结果：pass/fail/blocked/in-progress（completed 兼容映射为 pass）",
     )
     parser.add_argument(
         "--qa-score",
@@ -42,11 +61,32 @@ def parse_args():
         default=[],
         help="本次会话说明（可重复）",
     )
-    return parser.parse_args()
+    args = parser.parse_args()
+    try:
+        args.outcome = normalize_outcome(args.outcome)
+    except ValueError as exc:
+        parser.error(str(exc))
+    return args
+
+
+def normalize_outcome(raw: str) -> str:
+    value = str(raw or "").strip().lower()
+    outcome = OUTCOME_ALIASES.get(value, value)
+    if outcome not in VALID_OUTCOMES:
+        allowed = ", ".join(VALID_OUTCOMES)
+        raise ValueError(f"argument --outcome: invalid choice: {raw!r} (choose from {allowed})")
+    return outcome
 
 
 def load_json(path: Path):
-    return json.loads(path.read_text(encoding="utf-8"))
+    try:
+        content = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise HarnessJsonError(f"failed to read JSON: {path}: {exc}") from exc
+    try:
+        return json.loads(content)
+    except json.JSONDecodeError as exc:
+        raise HarnessJsonError(f"invalid JSON: {path}:{exc.lineno}:{exc.colno}: {exc.msg}") from exc
 
 
 def dump_text(path: Path, content: str):
@@ -99,7 +139,7 @@ def load_session_control(workspace_dir: Path) -> dict[str, str]:
         return control
     try:
         data = load_json(task_path)
-    except (json.JSONDecodeError, OSError, ValueError):
+    except (HarnessJsonError, json.JSONDecodeError, OSError, ValueError):
         return control
     harness = data.get("harness", {})
     if not isinstance(harness, dict):
@@ -408,11 +448,19 @@ def main():
     args = parse_args()
     target_dir = Path(args.target_dir).resolve()
     workspace_dir = detect_workspace_dir(target_dir)
-    store = resolve_store(workspace_dir)
+    try:
+        store = resolve_store(workspace_dir)
+    except HarnessJsonError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(1)
     session_control = load_session_control(workspace_dir)
     context_mode = session_control["context_mode"]
 
-    features = load_all_features(workspace_dir, store)
+    try:
+        features = load_all_features(workspace_dir, store)
+    except HarnessJsonError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(1)
     if not isinstance(features, list):
         print("Error: feature list storage invalid")
         sys.exit(1)

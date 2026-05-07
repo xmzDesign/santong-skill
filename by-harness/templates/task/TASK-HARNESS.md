@@ -12,7 +12,7 @@
 ## 会话启动（必须按顺序）
 
 1. 运行 `bash .harness/scripts/init.sh`（legacy 项目可用 `bash .harness/init.sh`）
-2. 阅读根目录 `AGENTS.md`（主工作流约束）
+2. 阅读根目录 `AGENTS.md`/`CLAUDE.md`（主工作流约束）
 3. 阅读 `.harness/docs/TASK-HARNESS.md`（任务追踪约束）
 4. 阅读 `.harness/task-harness/index.json`（定位 active bucket）
 5. 阅读对应任务文件（如 `.harness/task-harness/features/backlog-core.json`；若存在 `.harness/feature_list.json`，仅作兼容查看）
@@ -42,7 +42,7 @@
 
 1. 写入进度日志（`.harness/task-harness/progress/YYYY-MM.md`，并刷新 `.harness/task-harness/progress/latest.txt` 快照）
 2. 若该 feature 单元测试通过且 `spec_path` / `contract_path` 文件存在：更新 `passes=true`
-3. 运行会话收口脚本：`python3 .harness/scripts/session_close.py --target-dir . --feature-id <feat-id>`
+3. 运行会话收口脚本：`python3 .harness/scripts/session_close.py --target-dir . --feature-id <feat-id> --outcome pass|fail|blocked|in-progress`
 4. 提交 git commit（建议一个 feature 一个 commit）
 5. 输出下一步建议（下一个 feature 或阻塞处理方案）
 6. 根据 `.harness/config/task.json` 的 `harness.session_control.mode` 自动执行会话切换：
