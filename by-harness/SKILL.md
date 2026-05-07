@@ -58,6 +58,8 @@ python3 {{SKILL_PATH}}/scripts/scaffold.py \
 - 运行时版本：`.harness/config/runtime-version.json`
 - 更新策略：`.harness/config/update-policy.json`
 
+如果目标仓库已经存在 `AGENTS.md` / `AGENT.md` / `agents.md` / `agent.md` 或 `CLAUDE.md` / `claude.md`，初始化与升级都必须保留原内容，只合并或替换 `<!-- BEGIN BY-HARNESS MANAGED BLOCK -->` 到 `<!-- END BY-HARNESS MANAGED BLOCK -->` 之间的 by-harness 托管区块。
+
 初始化完成后，执行或提示：
 
 ```bash

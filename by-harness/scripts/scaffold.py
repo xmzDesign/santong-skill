@@ -18,6 +18,12 @@ from pathlib import Path
 
 HARNESS_DIR_NAME = ".harness"
 HARNESS_RUNTIME_VERSION = "2.3.9"
+MANAGED_BLOCK_BEGIN = "<!-- BEGIN BY-HARNESS MANAGED BLOCK -->"
+MANAGED_BLOCK_END = "<!-- END BY-HARNESS MANAGED BLOCK -->"
+AGENT_DOC_ALIASES = {
+    "AGENTS.md": ("AGENTS.md", "AGENT.md", "agents.md", "agent.md"),
+    "CLAUDE.md": ("CLAUDE.md", "claude.md"),
+}
 FRONTEND_REFERENCE_FILES = (
     "docs/frontend/references/byai-ds-v/index.html",
     "docs/frontend/references/byai-ds-v/readme.html",
@@ -112,7 +118,72 @@ def substitute(template: str, args) -> str:
     return out
 
 
+def build_managed_markdown_block(content: str) -> str:
+    body = content.strip()
+    return f"{MANAGED_BLOCK_BEGIN}\n{body}\n{MANAGED_BLOCK_END}\n"
+
+
+def looks_like_legacy_by_harness_doc(content: str) -> bool:
+    if MANAGED_BLOCK_BEGIN in content and MANAGED_BLOCK_END in content:
+        return False
+    return (
+        "本项目采用 Harness Engineering 工作流" in content
+        and ("Codex 意图路由" in content or "Claude 意图路由" in content)
+    )
+
+
+def merge_markdown_block(existing: str, managed_content: str) -> str:
+    block = build_managed_markdown_block(managed_content)
+    if MANAGED_BLOCK_BEGIN in existing and MANAGED_BLOCK_END in existing:
+        prefix, rest = existing.split(MANAGED_BLOCK_BEGIN, 1)
+        _, suffix = rest.split(MANAGED_BLOCK_END, 1)
+        return prefix.rstrip() + "\n\n" + block + suffix.lstrip()
+    if looks_like_legacy_by_harness_doc(existing):
+        return block
+    preserved = existing.rstrip()
+    if not preserved:
+        return block
+    return preserved + "\n\n" + block
+
+
+def find_existing_agent_doc(target_path: Path) -> Path | None:
+    aliases = AGENT_DOC_ALIASES.get(target_path.name, (target_path.name,))
+    for alias in aliases:
+        candidate = target_path.parent / alias
+        if candidate.exists():
+            return candidate
+    lowered = {alias.lower() for alias in aliases}
+    if target_path.parent.exists():
+        for child in target_path.parent.iterdir():
+            if child.is_file() and child.name.lower() in lowered:
+                return child
+    return None
+
+
+def generate_agent_doc(template_path: Path, target_path: Path, args) -> bool:
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    content = template_path.read_text(encoding="utf-8")
+    rendered = substitute(content, args)
+    existing_path = find_existing_agent_doc(target_path)
+    if existing_path and existing_path.exists():
+        existing = existing_path.read_text(encoding="utf-8")
+        merged = merge_markdown_block(existing, rendered)
+        target_path.write_text(merged, encoding="utf-8")
+        if existing_path.resolve() == target_path.resolve():
+            print(f"  MERGE: {target_path}")
+        else:
+            print(f"  MERGE: {existing_path} -> {target_path}")
+        return False
+
+    target_path.write_text(build_managed_markdown_block(rendered), encoding="utf-8")
+    print(f"  CREATE: {target_path}")
+    return True
+
+
 def generate_file(template_path: Path, target_path: Path, args) -> bool:
+    if target_path.name in AGENT_DOC_ALIASES and target_path.parent == Path(args.target_dir).resolve():
+        return generate_agent_doc(template_path, target_path, args)
+
     if target_path.exists() and not args.force:
         print(f"  SKIP (exists): {target_path}")
         return False

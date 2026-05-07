@@ -22,7 +22,7 @@
     {
       "path": "scripts/update_runtime.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/scripts/update_runtime.py",
-      "sha256": "4a7e577d8b1c81df74d285041cd354a88f9afb8c54ee7d9c72d12724f123e828"
+      "sha256": "6a86edc40d92e057a24f8819c437e56643c73e7d4dacac9d761d19957621923c"
     },
     {
       "path": "scripts/init.sh",
@@ -37,7 +37,7 @@
     {
       "path": "docs/TASK-HARNESS.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/task/TASK-HARNESS.md",
-      "sha256": "5d8874f6dca2eeef5cfb367714a9fa5cd263fe3f54fc9e3e937a64edfa695d54"
+      "sha256": "98432b5d0efe9469c57986394f0c8d7e38d9384bcc499e414f57b0605e38333d"
     },
     {
       "path": "docs/architecture.md",
@@ -303,13 +303,15 @@
       "path": "root/AGENTS.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/AGENTS.md",
       "sha256": "c8b86ce693ac7a43791a9f3db33c48e57e88073c83429ca89d40d42450adc800",
-      "render_project_context": true
+      "render_project_context": true,
+      "merge_strategy": "markdown_block"
     },
     {
       "path": "root/CLAUDE.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/CLAUDE.md",
       "sha256": "029bf00d7751e149720182a0653ae99a4a497fc237b23fbfd2b6f194b0a40ae1",
-      "render_project_context": true
+      "render_project_context": true,
+      "merge_strategy": "markdown_block"
     },
     {
       "path": "root/.codex/config.toml",

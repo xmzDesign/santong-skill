@@ -126,6 +126,8 @@ RUNTIME_DOC_REL_PATHS = (
     "docs/contracts/TEMPLATE.md",
 )
 REPO_ROOT_PREFIX = "root/"
+MANAGED_BLOCK_BEGIN = "<!-- BEGIN BY-HARNESS MANAGED BLOCK -->"
+MANAGED_BLOCK_END = "<!-- END BY-HARNESS MANAGED BLOCK -->"
 
 DEFAULT_MODE = "soft_reset"
 SUPPORTED_MODES = ["soft_reset", "hard_new_session"]
@@ -573,13 +575,16 @@ def migrate_grouped_layout(harness_dir: Path, dry_run: bool) -> dict[str, int]:
 def promote_claude_to_repo_root(harness_dir: Path, dry_run: bool) -> bool:
     src = harness_dir / "CLAUDE.md"
     dst = harness_dir.parent / "CLAUDE.md"
-    if not src.exists() or dst.exists():
+    if not src.exists():
         return False
     if dry_run:
-        print(f"[dry-run] promote CLAUDE.md to repo root: {src} -> {dst}")
+        action = "merge" if dst.exists() else "promote"
+        print(f"[dry-run] {action} CLAUDE.md to repo root: {src} -> {dst}")
         return True
     dst.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(src, dst)
+    template = src.read_text(encoding="utf-8")
+    existing = dst.read_text(encoding="utf-8") if dst.exists() else ""
+    dst.write_text(merge_markdown_block(existing, template), encoding="utf-8")
     return True
 
 
@@ -856,6 +861,34 @@ def load_existing_json_object(path: Path) -> dict[str, Any]:
     return payload
 
 
+def build_managed_markdown_block(content: str) -> str:
+    body = content.strip()
+    return f"{MANAGED_BLOCK_BEGIN}\n{body}\n{MANAGED_BLOCK_END}\n"
+
+
+def looks_like_legacy_by_harness_doc(content: str) -> bool:
+    if MANAGED_BLOCK_BEGIN in content and MANAGED_BLOCK_END in content:
+        return False
+    return (
+        "本项目采用 Harness Engineering 工作流" in content
+        and ("Codex 意图路由" in content or "Claude 意图路由" in content)
+    )
+
+
+def merge_markdown_block(existing: str, managed_content: str) -> str:
+    block = build_managed_markdown_block(managed_content)
+    if MANAGED_BLOCK_BEGIN in existing and MANAGED_BLOCK_END in existing:
+        prefix, rest = existing.split(MANAGED_BLOCK_BEGIN, 1)
+        _, suffix = rest.split(MANAGED_BLOCK_END, 1)
+        return prefix.rstrip() + "\n\n" + block + suffix.lstrip()
+    if looks_like_legacy_by_harness_doc(existing):
+        return block
+    preserved = existing.rstrip()
+    if not preserved:
+        return block
+    return preserved + "\n\n" + block
+
+
 def merge_hook_groups(existing: dict[str, Any], template: dict[str, Any]) -> None:
     if "hooks" not in existing or not isinstance(existing.get("hooks"), dict):
         existing["hooks"] = {}
@@ -902,6 +935,11 @@ def merge_permissions(existing: dict[str, Any], template: dict[str, Any]) -> Non
 
 
 def render_merge_strategy(target: Path, data: bytes, merge_strategy: str) -> bytes:
+    if merge_strategy == "markdown_block":
+        template = data.decode("utf-8")
+        existing = target.read_text(encoding="utf-8") if target.exists() else ""
+        return merge_markdown_block(existing, template).encode("utf-8")
+
     template = load_json_object_from_bytes(data, str(target))
     existing = load_existing_json_object(target)
     if merge_strategy == "codex_hooks":
