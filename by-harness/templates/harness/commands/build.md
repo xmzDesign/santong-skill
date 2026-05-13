@@ -14,6 +14,7 @@ argument-hint: 可选 - 指定 .harness/docs/specs/ 中要实现的 spec 文件
 ### 1. 读取规格
 
 从 `.harness/docs/specs/` 读取目标规格。若未传参数，自动选择最近修改的 spec 文件。
+先复核 spec 中的假设、歧义、取舍和范围外事项；若存在会影响数据、接口、权限、兼容性或改动范围的未澄清歧义，停止实现并向用户澄清。
 若本次任务涉及 Java/Spring Boot/Dubbo/XXL-Job/MyBatis/Redis/金额/分页/配置/日志，先读取 `.harness/docs/java-dev-conventions.md` 入口，再按触发维度读取 `.harness/docs/java/rules/` 分片规则，实现前列出 Java 总门禁和触发维度核心门禁，并确认 contract 中已有对应验收项。
 若本次任务涉及 Java，实现前必须声明魔法值治理方式：业务状态、任务类型、动作类型、错误码、配置 key、阈值使用 enum、语义常量或配置项；默认业务类型不能靠 `null` 隐式表达。
 若本次任务涉及 Java，实现前必须列出触发维度清单：通用工程、分层与 DDD、Dubbo 与公共 API、日志与异常、持久化与基础设施、测试安全运维；每个触发维度按入口文件中的 5 条核心门禁执行。
@@ -25,6 +26,10 @@ argument-hint: 可选 - 指定 .harness/docs/specs/ 中要实现的 spec 文件
 - 若已存在：读取并继续构建。
 - 若不存在：从 Generator 与 Evaluator 双方视角协商创建契约，明确：
   - 本次冲刺的具体范围是什么？
+  - 本次采用哪些假设，仍有哪些歧义，关键取舍是什么？
+  - 哪些功能、重构、格式化、清理和兼容扩展明确范围外？
+  - 是否满足简单性门禁：新增抽象、配置、实体、表、DTO、Service 或框架胶水是否必要？
+  - 每个预计改动文件如何追溯到范围、验收标准或失败修复项？
   - 需要验证哪些验收标准？
   - 每条标准采用什么验证方式？
   - 哪些验收项触发真实依赖，需要进入“集成测试矩阵”并标记 `required` / `advisory` / `manual`？
@@ -36,6 +41,10 @@ argument-hint: 可选 - 指定 .harness/docs/specs/ 中要实现的 spec 文件
 
 1. **Build**：调用 `generator` 实现本轮冲刺。
 2. **Self-verify**：`generator` 先自检。
+   - 核对本轮假设、歧义、取舍和范围外事项是否仍成立。
+   - 核对每个改动文件是否出现在 contract 的变更追溯矩阵中。
+   - 检查是否存在无关格式化、相邻重构、预存死代码清理或未请求的行为变化。
+   - 检查新增抽象、配置、实体、表、DTO、Service 或框架胶水是否有简单性门禁证据。
    - 检查所有新增/修改函数、方法是否补齐中文注释（用途、参数、返回值、副作用）。
    - 若涉及 Java，逐项检查 Java 总门禁和触发维度核心门禁，并运行 `.codex/hooks/convention-check.py --changed-only` 或 `.claude/hooks/convention-check.py --changed-only`。
    - 若涉及 Java，确认业务状态、任务类型、动作类型、错误码、配置 key、阈值没有在条件分支、switch case 或配置读取中散落魔法字符串/魔法数字。
@@ -58,6 +67,7 @@ argument-hint: 可选 - 指定 .harness/docs/specs/ 中要实现的 spec 文件
 
 若单元测试、convention-check 与 required QA Gate 通过：
 - 更新契约中的冲刺日志。
+- 更新 contract 中的变更追溯矩阵和简单性门禁结论，确保实际 diff 与 contract 一致。
 - 确认目标 feature 的 `spec_path` 与 `contract_path` 文件真实存在；缺任一文件时禁止 `passes=true`。
 - 运行 `python3 .harness/scripts/qa_runner.py --target-dir . --contract <contract-file>`，确认 `.harness/docs/qa/<feature>.result.json` 中 `gate_status=PASS`。
 - 若项目使用 task-harness（存在 `.harness/task-harness/index.json`），仅在单元测试通过、required QA Gate 通过且 spec/contract 文件存在后，更新对应单任务 JSON 的 `passes=true`。

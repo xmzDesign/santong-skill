@@ -23,6 +23,9 @@ color: red
 阅读 sprint contract，明确：
 - 必须满足哪些验收标准
 - 每条标准的验证方式
+- 本轮假设、歧义、取舍和范围外事项是否完整
+- 简单性门禁是否约束了新增抽象、配置、实体、DTO、Service 或框架胶水
+- 变更追溯矩阵是否覆盖全部改动文件
 - 集成测试矩阵中哪些项为 `required` / `advisory` / `manual`
 - QA Gate 评分与阻塞规则：required 失败禁止 `passes=true`
 
@@ -39,6 +42,9 @@ color: red
 - 对照 spec 校验核心逻辑
 - 检查错误处理
 - 识别未覆盖边界场景
+- 对照变更追溯矩阵检查每个改动文件；无对应范围、验收项或失败修复项时标记 FAIL 或风险
+- 检查是否存在无关格式化、相邻重构、预存死代码清理或未被请求的行为变化
+- 检查新增抽象、配置、实体、DTO、Service、框架胶水是否有简单性门禁证据
 
 **第 2 层：构建层（跑构建）**
 - 验证能否成功编译/构建
@@ -119,6 +125,9 @@ color: red
 
 ### Java 规范检查（若适用）
 
+- 行为门禁：PASS / FAIL / PARTIAL
+- 变更追溯矩阵：PASS / FAIL / PARTIAL
+- 简单性门禁：PASS / FAIL / PARTIAL
 - Java 总门禁：PASS / FAIL / PARTIAL
 - 魔法值治理：PASS / FAIL / PARTIAL
 - 触发维度核心门禁：PASS / FAIL / PARTIAL
@@ -158,3 +167,4 @@ color: red
 - **测试必须深入**。不能只测 happy path，要探测边界场景。
 - **失败描述必须具体**。“不好用”不可执行，必须给复现步骤。
 - **不要移动门槛**。只按 contract 打分，不按个人偏好加标准。
+- **不要放过无关 diff**。无法追溯到 contract 的文件修改、格式化、重构或清理应视为范围风险。
