@@ -77,7 +77,7 @@
     {
       "path": "docs/golden-principles.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/golden-principles.md",
-      "sha256": "661dc4044c4e35288b95165b49fd98bfcee6189d81717d13f4fb66ae9b3489db"
+      "sha256": "e8a54741482c76b4af876bd2ff41e31441af6d278a45c142f4384df01d7702a3"
     },
     {
       "path": "docs/sprint-workflow.md",
@@ -127,19 +127,19 @@
     {
       "path": "docs/contracts/TEMPLATE.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/docs/contracts/TEMPLATE.md",
-      "sha256": "ad3d9d466787518617e95b358eee9c54f82586c8331427ae2145e409ec317a3c"
+      "sha256": "af10309f436b51e0742b38c88fb111a861e32d5858baa4e1cc6235b6df55278a"
     },
     {
       "path": "root/AGENTS.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/AGENTS.md",
-      "sha256": "68028cd1f63c04964337f1d4de4c9dfbd648c03d960a4fd56af34ccb7464b0c2",
+      "sha256": "3240be59cf8ef2b59807a5baa7e80cccd6824f08456bf3fcbeaeda1f69ce18ac",
       "render_project_context": true,
       "merge_strategy": "markdown_block"
     },
     {
       "path": "root/CLAUDE.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/CLAUDE.md",
-      "sha256": "e2ba28f5afff0073e84df18754b8d350a2750864f5a62eadf434926c70c1aa73",
+      "sha256": "b2b40e4f17a0e68b064fb6242d2911acc96bc48a1e1ab72d3f639f0abaff0708",
       "render_project_context": true,
       "merge_strategy": "markdown_block"
     },
@@ -203,17 +203,17 @@
     {
       "path": "root/.claude/agents/planner.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/agents/planner.md",
-      "sha256": "b34e26c7f95f4ab7d456d4e94e0a125ce98b5c29dd6c75410e7af686bddb9aea"
+      "sha256": "805fe913243d2b0e7468ec6dbad35f4d44a47e68843c51802cf8ebba906e341c"
     },
     {
       "path": "root/.claude/agents/generator.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/agents/generator.md",
-      "sha256": "db5044cdfc945b1d6ca6d5c1efd7172d70ec9c3520fea1e50c69b2746053b076"
+      "sha256": "9034bdbe77fdff434295dcb788eb70287c80408bcdf9ed6500fdfe6ce1807c28"
     },
     {
       "path": "root/.claude/agents/evaluator.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/agents/evaluator.md",
-      "sha256": "2313e63632dd554142619eea144243f61af2057a18daee729ebdb57c445024d8"
+      "sha256": "93cbff749b8c1de432bd4019ab1ad4590e926cc0cc16c1dd9003542fdec66cac"
     },
     {
       "path": "root/.claude/agents/doc-gardener.md",
@@ -223,22 +223,22 @@
     {
       "path": "root/.claude/commands/plan.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/commands/plan.md",
-      "sha256": "43deaf31ec09e093464a0d0b5221574f0455e2590f8dccd4fa14ff8934f5a219"
+      "sha256": "253fe27451d95809933acb20b556085b0ff3444bab7afededa90ce73e8ce00a3"
     },
     {
       "path": "root/.claude/commands/build.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/commands/build.md",
-      "sha256": "fffe9406fd3bb3775bdc312945f9725eeb20fdc3426c739b4bf830f78971cfae"
+      "sha256": "c92fd9126648bfeeb217f23bdaf0175a27688b8d404601e1202db3c33552af15"
     },
     {
       "path": "root/.claude/commands/qa.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/commands/qa.md",
-      "sha256": "51102c9f6aa5947dbb79bb6691fb474f01b060f98bf71da6ac567ebf99193bbe"
+      "sha256": "c96b883a9c1edd373b4545c5248bfed110c634ec9d93ce091d72249c50fd9a5a"
     },
     {
       "path": "root/.claude/commands/sprint.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/commands/sprint.md",
-      "sha256": "ef15be9452bc618a74a4cf5ad233f589142dca569d292baea50f155c02eecb6e"
+      "sha256": "869916e89f9cf947e9e05cac9cadf0047966609edc39aca34a4e6bafdf490659"
     }
   ]
 }
