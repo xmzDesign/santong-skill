@@ -240,7 +240,7 @@ def classify(args: argparse.Namespace) -> dict[str, Any]:
             recommended = "quick_fix"
     elif changed_files and len(changed_files) <= args.max_files and stats["total_lines"] <= args.max_lines:
         confidence = "medium"
-        recommended = "ask_user"
+        recommended = "standard_feature"
     else:
         confidence = "low"
         recommended = "standard_feature"
@@ -284,8 +284,8 @@ def print_human(result: dict[str, Any]) -> None:
             print(f"    - {item}")
     if result["recommended_mode"] == "quick_fix":
         print("  next: run the targeted fix, verify it, then close with session_close.py --quick-fix")
-    elif result["recommended_mode"] == "ask_user":
-        print("  next: ask whether to proceed as quick-fix or standard feature")
+    elif result["confidence"] == "medium":
+        print("  next: use standard by-harness plan/contract/build/qa flow; record assumptions instead of asking for clarification")
     else:
         print("  next: use standard by-harness plan/contract/build/qa flow")
 

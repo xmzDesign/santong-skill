@@ -25,14 +25,14 @@ read task -> plan -> build -> qa -> fix -> mark_pass -> session_close
 | 初始化 harness | “初始化”“用 by-harness 初始化这个仓库” | 运行 `scripts/scaffold.py`，再提示执行或执行 `.harness/scripts/init.sh` |
 | 持续拆任务 | “持续拆任务”“拆 5 个任务”“把这个主题拆一下” | 运行 `scripts/decompose_tasks.py`，默认新增 v3 单任务文件 |
 | 执行某个任务 | “执行某个任务 ID”“继续当前任务” | 读取任务，按 plan/build/qa/fix/mark_pass 闭环推进 |
-| 快速修复小 bug | “quick fix”“修一个明确小 bug”“这个报错小修一下” | 先运行 `.harness/scripts/quick_fix_classifier.py`；high 走 quick-fix，medium 询问用户，low 回到标准闭环 |
+| 快速修复小 bug | “quick fix”“修一个明确小 bug”“这个报错小修一下” | 先运行 `.harness/scripts/quick_fix_classifier.py`；high 走 quick-fix，medium/low 自动回到标准闭环 |
 | 会话收口 | “收口”“保存进度”“session_close” | 运行 `.harness/scripts/session_close.py` |
 | 自动续跑 | “继续下个任务”“自动续跑” | 运行 `.harness/scripts/task_switch.py continue --target-dir .` |
 | 老仓库升级 | “升级 harness”“同步 runtime”“更新脚手架” | 运行 `scripts/update_runtime.py`，优先备份与版本化迁移 |
 | Java 规范约束 | “Java 硬规则”“Service 接口实现”“MapStruct/金额/Redis/分页规则” | 先读 `.harness/docs/java-dev-conventions.md` 入口，再按触发维度读取 `.harness/docs/java/rules/` 分片规则 |
 | 分布式 Java 约束 | “分布式编码规范”“幂等/重试/锁/事务/消息/缓存一致性” | 使用 `.harness/docs/java/rules/distributed-java-gate.md` 约束 spec/contract/build/qa |
 
-如果缺少项目名、目标目录或任务 ID，能从当前仓库和 `.harness/task-harness/index.json` 推断时直接推断；推断风险高时再问一个简短问题。
+用户发起 by-harness 指令后，默认输入的技术方案、需求描述或任务背景已经经过用户确认。不要反复澄清需求；能从当前仓库、技术方案、`.harness/task-harness/index.json` 和既有 spec/contract 推断时，直接形成假设、取舍、风险和范围外事项并继续产出。只有目标目录/任务 ID 完全无法定位、或下一步会执行破坏性操作时，才问一个必要问题。
 
 ## 2. 初始化目标仓库
 
@@ -148,7 +148,7 @@ python3 .harness/scripts/quick_fix_classifier.py \
 分类器输出 `confidence`、`recommended_mode`、`risk_flags`、`changed_files` 和 diff 统计：
 
 - `confidence=high` 且 `recommended_mode=quick_fix`：可进入 quick-fix。
-- `confidence=medium` 或 `recommended_mode=ask_user`：问用户一句，确认 quick-fix 还是标准闭环。
+- `confidence=medium`：不再询问用户，自动回到标准闭环。
 - `confidence=low` 或 `recommended_mode=standard_feature`：必须走标准 `read task -> plan -> build -> qa -> fix -> mark_pass`。
 
 Quick-fix 允许范围：
