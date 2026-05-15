@@ -20,6 +20,29 @@ from pathlib import Path
 from task_store import TASK_SCHEMA, detect_workspace_dir, dump_json, load_json, load_task_entries
 
 HARNESS_DIR_NAME = ".harness"
+TASK_GRANULARITY_RULES = (
+    "一个任务必须对应一个完整、可验证、可独立闭环的功能。",
+    "不要按 DDL/Mapper/DAO/Service/Controller/API/前端页面/测试/文档等技术步骤拆碎。",
+    "同一功能的技术步骤应放入同一个任务的 steps。",
+    "只有子项能独立发布、独立验证、独立回滚，且有自己的验收标准时，才拆成单独任务。",
+)
+TECHNICAL_SLICE_TERMS = (
+    "ddl",
+    "mapper",
+    "dao",
+    "repository",
+    "controller",
+    "service",
+    "dto",
+    "api",
+    "sql",
+    "表结构",
+    "建表",
+    "接口",
+    "前端页面",
+    "测试",
+    "文档",
+)
 
 
 def parse_args():
@@ -148,17 +171,22 @@ def build_feature(
         "spec_path": paths["spec_path"],
         "contract_path": paths["contract_path"],
         "qa_report_path": paths["qa_report_path"],
+        "granularity": {
+            "type": "independent_verifiable_feature",
+            "rules": list(TASK_GRANULARITY_RULES),
+        },
         "steps": [
             f"读取任务定义：task-harness/tasks 中 {display_name} 的目标与约束",
+            "确认任务粒度：本任务必须覆盖一个完整、可验证、可独立闭环的功能；技术步骤不得拆成独立任务",
             f"执行 plan：生成 {paths['spec_path']}",
             f"执行 contract：生成 {paths['contract_path']} 并明确验收标准与验证方式",
-            "执行 build：按 contract 范围实现并完成自检（构建/单元测试/验收标准）",
+            "执行 build：按 contract 范围完成端到端功能实现，并完成自检（构建/单元测试/验收标准）",
             f"执行 qa gate：运行 qa_runner.py，生成 {paths['qa_report_path']} 与 result JSON",
             "若单元测试未通过，进入 fix 循环（最多 3 轮）",
             "执行 mark_pass：单元测试、required QA Gate 通过且 spec/contract 文件已落盘后才可将 passes 置为 true；3 轮失败则保持 false 并继续下个任务",
         ],
         "passes": False,
-        "verification": "单元测试、required QA Gate 通过且 spec/contract 文件已落盘后才可判定通过；advisory/manual QA 结果必须记录",
+        "verification": "必须能按一个完整功能独立验收：spec/contract 文件已落盘，单元测试和 required QA Gate 通过；advisory/manual QA 结果必须记录。若无法写出独立验收标准，应并回所属功能任务。",
         "created_at": now,
         "updated_at": now,
     }
@@ -228,6 +256,17 @@ def generate_nonce(stamp: str, item_desc: str, offset: int) -> str:
 def generate_file_task_id(item_desc: str, id_prefix: str, stamp: str, nonce: str) -> str:
     text_slug = slug(item_desc, "task")
     return f"{stamp}-{slug(id_prefix, 'feat')}-{text_slug}-{nonce}"
+
+
+def task_granularity_warnings(item_desc: str) -> list[str]:
+    text = str(item_desc or "").lower()
+    hits = [term for term in TECHNICAL_SLICE_TERMS if term in text]
+    if not hits:
+        return []
+    return [
+        "任务描述疑似偏技术步骤而非完整功能: " + ", ".join(hits),
+        "请确认它能独立发布、独立验证、独立回滚；否则应并入所属功能任务的 steps。",
+    ]
 
 
 def resolve_bucket_feature_path(workspace_dir: Path, rel_path: str) -> Path:
@@ -517,6 +556,13 @@ def main():
         print(f"  - {task['display_name']}")
         print(f"    id: {task['id']}")
         print(f"    file: {task['path']}")
+    warnings = []
+    for item_desc in args.items:
+        warnings.extend(task_granularity_warnings(item_desc))
+    if warnings:
+        print("Granularity warnings:")
+        for warning in dict.fromkeys(warnings):
+            print(f"  - {warning}")
     if repaired > 0:
         print(f"Backfilled artifact fields on existing tasks: {repaired} fields updated")
     print(f"Target store: {store['mode']} / bucket={store['bucket_id']}")
@@ -527,7 +573,7 @@ def main():
         print(f"Feature file updated: {feature_path}")
     if legacy_synced:
         print(f"Legacy mirror synced: {workspace_dir / 'feature_list.json'}")
-    print("Reminder: pass gate = unit tests; QA report is non-blocking.")
+    print("Reminder: each task should be one complete independently verifiable feature; pass gate = unit tests + required QA Gate + real spec/contract artifacts.")
 
 
 if __name__ == "__main__":

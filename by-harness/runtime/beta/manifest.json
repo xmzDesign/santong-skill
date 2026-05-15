@@ -1,7 +1,7 @@
 {
   "skill": "by-harness",
   "channel": "beta",
-  "version": "2.6.2",
+  "version": "2.6.3",
   "min_compatible_version": "1.0.0",
   "files": [
     {
@@ -32,7 +32,7 @@
     {
       "path": "scripts/update_runtime.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/scripts/update_runtime.py",
-      "sha256": "32bfef9d219e8c5e9bd2a36d69a191241a3691c0b1d6dc6345db78709208aaa4"
+      "sha256": "0b9fba8357152ac34ccead3d5ce3c8fb6a27415bbea3094505e64d03187c734e"
     },
     {
       "path": "scripts/qa_runner.py",
@@ -67,7 +67,7 @@
     {
       "path": "docs/TASK-HARNESS.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/task/TASK-HARNESS.md",
-      "sha256": "7b149003b94fce447f244a9c114f72cf6b02116d760ee508e9f8f319904388f9"
+      "sha256": "1332909ddc2c3c6be96206b8c687435501230ca764db6720c1c3529a39c0c0db"
     },
     {
       "path": "docs/architecture.md",
@@ -132,14 +132,14 @@
     {
       "path": "root/AGENTS.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/AGENTS.md",
-      "sha256": "012add53aad516e5d2c5e04262cfa13d78725fb51cf8944029b6a4798be86b38",
+      "sha256": "d9d2b7671c94f22e6ce9cc4505843fba416df47aa1d8dc76228aedeed37585b1",
       "render_project_context": true,
       "merge_strategy": "markdown_block"
     },
     {
       "path": "root/CLAUDE.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/CLAUDE.md",
-      "sha256": "f11e656846a4065c306a7916083a3f0cf5fdcd0bc43450f4fb652c7e617e6b7d",
+      "sha256": "36f89dc1dbfc0a29c8ca65247700c2c6d88efde728eadf2393116f1f2c78b780",
       "render_project_context": true,
       "merge_strategy": "markdown_block"
     },

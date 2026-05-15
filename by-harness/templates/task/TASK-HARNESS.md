@@ -21,6 +21,13 @@
 
 ## 闭环执行契约（严格遵循 Harness Engineering）
 
+## 任务粒度契约
+
+- 一个任务应尽量对应一个完整、可验证、可独立闭环的功能，而不是一个技术步骤。
+- 同一功能涉及的 DDL、Mapper/DAO、Service、Controller/API、前端、测试、文档，默认放在同一个任务的 `steps` 内，不拆成多个任务。
+- 只有子项可以独立发布、独立验证、独立回滚，且有独立验收标准时，才允许拆成多个任务。
+- 如果任务描述无法写出独立验收标准或验证命令，说明粒度太细，应并回所属功能任务。
+
 针对选中的单个 feature，必须按以下严格顺序执行（不得跳步）：
 1. **读取任务（read task）**：从单任务 JSON 读取该 feature 的 `description/steps/spec_path/contract_path/qa_report_path`
 2. **plan**：生成/更新 `spec_path` 对应规格文件（禁止直接写实现）

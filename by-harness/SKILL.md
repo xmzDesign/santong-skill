@@ -109,8 +109,10 @@ python3 {{SKILL_PATH}}/scripts/decompose_tasks.py \
 
 执行原则：
 
-- 用户指定数量时尽量满足；未指定时通常拆 4-8 个可执行任务。
-- 每个任务要能进入 `read task -> plan -> build -> qa -> fix -> mark_pass` 闭环。
+- 任务粒度宁可少而完整，不要碎片化；未指定数量时通常拆 2-5 个可独立验收的功能任务。
+- 每个任务必须是一个完整、可验证、可独立闭环的功能切片：包含业务目标、主要实现面、验收标准和验证方式，能进入 `read task -> plan -> build -> qa -> fix -> mark_pass` 闭环。
+- 不按技术层、文件或步骤拆任务：不要把同一功能拆成 `DDL`、`Mapper/DAO`、`Service`、`Controller/API`、`前端页面`、`测试`、`文档` 等单独任务；这些应作为同一个功能任务的 `steps`。
+- 只有当子项本身可被独立发布、独立验证、独立回滚，且有自己的验收标准时，才拆成单独任务。
 - 新任务默认新增到 `.harness/task-harness/tasks/<批次目录>/`，不得为了追加任务而修改 `backlog-core.json` 或 `index.json`。
 - 回报新增任务 ID、优先级、建议执行顺序和下一步命令。
 

@@ -68,7 +68,7 @@ CLAUDE.md
 ### 核心能力
 
 - `scaffold.py`：向目标仓库安装 by-harness 运行时、入口文档、hooks、任务模板和工程规范。
-- `decompose_tasks.py`：把需求拆成可独立闭环的任务文件。
+- `decompose_tasks.py`：把需求拆成可独立验收的完整功能任务文件，避免按 DDL/Mapper/Service/Controller/测试等技术步骤拆碎。
 - `ensure_task_branch.py`：定位当前应执行的任务，不负责强制切分支。
 - `session_close.py`：写入会话进度、刷新 latest 快照，并给出下一任务建议。
 - `task_switch.py`：在当前分支继续下一个任务，并触发运行时检查。
@@ -105,6 +105,8 @@ python3 by-harness/scripts/decompose_tasks.py \
   --item "新增用户权限矩阵" \
   --item "增加组织级审计日志"
 ```
+
+拆任务时宁可少而完整：每个 `--item` 应是一个可独立发布、验证、回滚的功能；同一功能里的建表、接口、服务、前端、测试和文档应写入该任务的 `steps`，不要拆成多个任务。
 
 会话收口：
 
