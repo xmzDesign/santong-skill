@@ -14,7 +14,7 @@ argument-hint: 可选 - 指定 .harness/docs/specs/ 中要实现的 spec 文件
 ### 1. 读取规格
 
 从 `.harness/docs/specs/` 读取目标规格。若未传参数，自动选择最近修改的 spec 文件。
-先复核 spec 中的假设、歧义、取舍和范围外事项；若存在会影响数据、接口、权限、兼容性或改动范围的未澄清歧义，停止实现并向用户澄清。
+先复核 spec 中的假设、歧义、取舍和范围外事项；若存在会影响数据、接口、权限、兼容性或改动范围的未决歧义，不停止等待用户澄清，按低风险、可回滚、最小实现自动补齐 contract，并记录风险与验证方式。
 若本次任务涉及 Java/Spring Boot/Dubbo/XXL-Job/MyBatis/Redis/金额/分页/配置/日志，先读取 `.harness/docs/java-dev-conventions.md` 入口，再按触发维度读取 `.harness/docs/java/rules/` 分片规则，实现前列出 Java 总门禁和触发维度核心门禁，并确认 contract 中已有对应验收项。
 若本次任务涉及 Java，实现前必须声明魔法值治理方式：业务状态、任务类型、动作类型、错误码、配置 key、阈值使用 enum、语义常量或配置项；默认业务类型不能靠 `null` 隐式表达。
 若本次任务涉及 Java，实现前必须列出触发维度清单：通用工程、分层与 DDD、Dubbo 与公共 API、日志与异常、持久化与基础设施、测试安全运维；每个触发维度按入口文件中的 5 条核心门禁执行。
@@ -72,4 +72,4 @@ argument-hint: 可选 - 指定 .harness/docs/specs/ 中要实现的 spec 文件
 - 运行 `python3 .harness/scripts/qa_runner.py --target-dir . --contract <contract-file>`，确认 `.harness/docs/qa/<feature>.result.json` 中 `gate_status=PASS`。
 - 若项目使用 task-harness（存在 `.harness/task-harness/index.json`），仅在单元测试通过、required QA Gate 通过且 spec/contract 文件存在后，更新对应单任务 JSON 的 `passes=true`。
 - 通过 `.harness/scripts/session_close.py` 写入 `.harness/task-harness/progress/YYYY-MM/<timestamp>-<feature-id>.md`。
-- 询问用户是否执行 `doc-gardener` 做文档新鲜度检查。
+- 若本轮改动影响文档、公共接口或配置语义，自动执行 `doc-gardener` 做文档新鲜度检查；否则记录跳过原因。

@@ -37,7 +37,7 @@ LEGACY_TASK_FILE_NAME = "task.json"
 LEGACY_SESSION_CONTEXT_FILE_NAME = "session-context.json"
 LEGACY_SESSION_BOUNDARY_FILE_NAME = "session-boundary.json"
 LEGACY_TASK_CONTRACT_FILE_NAME = "TASK-HARNESS.md"
-LATEST_RUNTIME_VERSION = "2.6.1"
+LATEST_RUNTIME_VERSION = "2.6.2"
 DEFAULT_TASK_GLOBS = ("task-harness/tasks/*.json", "task-harness/tasks/**/*.json")
 RUNTIME_SCRIPT_NAMES = (
     "init.sh",
@@ -148,6 +148,7 @@ MIGRATIONS: dict[str, tuple[str, str]] = {
     "2.4.0": ("2.5.0", "migrate_file_tasks_storage"),
     "2.5.0": ("2.6.0", "migrate_qa_gate_runtime"),
     "2.6.0": ("2.6.1", "migrate_quick_fix_runtime"),
+    "2.6.1": ("2.6.2", "migrate_quick_fix_runtime"),
 }
 
 

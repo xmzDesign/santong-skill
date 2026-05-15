@@ -108,7 +108,7 @@ Codex 运行时：
   v
 状态：PLANNING（Planner 产出 spec）
   |
-  [spec 已批准]
+  [spec 已落盘且包含自动决策]
   v
 状态：CONTRACTING（Generator + Evaluator 协商）
   |

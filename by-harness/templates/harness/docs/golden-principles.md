@@ -94,11 +94,11 @@ hook 与智能体发现问题时必须显式报告，不能静默降级。
 
 ## 12. 编码前先暴露判断（Think Before Coding）
 
-实现前必须列出假设、歧义、取舍和范围外事项。若歧义影响数据、接口、权限、兼容性或改动范围，先澄清再推进。
+实现前必须列出假设、歧义、取舍和范围外事项。默认用户输入的技术方案已经确认；若歧义影响数据、接口、权限、兼容性或改动范围，自动选择低风险、可回滚、最小实现，并把风险转成验证项或范围外事项。
 
-**为什么**：模型最常见的错误不是语法，而是在需求不清时自行补全上下文，导致做对了代码、做错了目标。
+**为什么**：模型最常见的错误不是语法，而是在需求不清时隐式补全上下文，导致做对了代码、做错了目标；显式自动决策比反复向用户澄清更适合已确认技术方案的执行场景。
 
-**如何执行**：Planner 在 spec 中写明 `Assumptions`、`Ambiguities`、`Tradeoffs`、`Non-goals`；Generator 在 build 前复核这些内容，缺失时回到 plan/contract。
+**如何执行**：Planner 在 spec 中写明 `Assumptions`、`Ambiguities & Decisions`、`Tradeoffs`、`Non-goals`；Generator 在 build 前复核这些内容，缺失时自动回到 plan/contract 补齐，不等待用户重复确认。
 
 ## 13. 最小可行实现（Simplicity First）
 
