@@ -37,7 +37,7 @@ LEGACY_TASK_FILE_NAME = "task.json"
 LEGACY_SESSION_CONTEXT_FILE_NAME = "session-context.json"
 LEGACY_SESSION_BOUNDARY_FILE_NAME = "session-boundary.json"
 LEGACY_TASK_CONTRACT_FILE_NAME = "TASK-HARNESS.md"
-LATEST_RUNTIME_VERSION = "2.6.3"
+LATEST_RUNTIME_VERSION = "2.6.4"
 DEFAULT_TASK_GLOBS = ("task-harness/tasks/*.json", "task-harness/tasks/**/*.json")
 RUNTIME_SCRIPT_NAMES = (
     "init.sh",
@@ -48,6 +48,7 @@ RUNTIME_SCRIPT_NAMES = (
     "task_store.py",
     "update_runtime.py",
     "upgrade_legacy_repo.py",
+    "agent_review.py",
     "qa_runner.py",
     "qa_report.py",
     "qa_gate.py",
@@ -150,6 +151,7 @@ MIGRATIONS: dict[str, tuple[str, str]] = {
     "2.6.0": ("2.6.1", "migrate_quick_fix_runtime"),
     "2.6.1": ("2.6.2", "migrate_quick_fix_runtime"),
     "2.6.2": ("2.6.3", "migrate_quick_fix_runtime"),
+    "2.6.3": ("2.6.4", "migrate_agent_review_runtime"),
 }
 
 
@@ -730,6 +732,15 @@ def migrate_quick_fix_runtime(harness_dir: Path, dry_run: bool) -> dict[str, int
     return {"quick_fix_runtime": copied}
 
 
+def migrate_agent_review_runtime(harness_dir: Path, dry_run: bool) -> dict[str, int]:
+    """Install agent review runtime scripts when using local fallback without a manifest."""
+    copied = 0
+    for script_name in ("agent_review.py", "qa_runner.py", "qa_report.py", "update_runtime.py"):
+        if copy_sibling_runtime_script(harness_dir, script_name, dry_run):
+            copied += 1
+    return {"agent_review_runtime": copied}
+
+
 def run_migration(step_name: str, harness_dir: Path, dry_run: bool) -> dict[str, int]:
     if step_name == "migrate_remove_branch_switching":
         return migrate_remove_branch_switching(harness_dir, dry_run)
@@ -741,6 +752,8 @@ def run_migration(step_name: str, harness_dir: Path, dry_run: bool) -> dict[str,
         return migrate_qa_gate_runtime(harness_dir, dry_run)
     if step_name == "migrate_quick_fix_runtime":
         return migrate_quick_fix_runtime(harness_dir, dry_run)
+    if step_name == "migrate_agent_review_runtime":
+        return migrate_agent_review_runtime(harness_dir, dry_run)
     raise RuntimeError(f"未知迁移步骤：{step_name}")
 
 

@@ -380,6 +380,8 @@ def compute_gate_status(matrix: list[dict[str, str]], commands: list[dict[str, o
     required = [item for item in matrix if item.get("gate") == GATE_REQUIRED]
     advisory = [item for item in matrix if item.get("gate") == GATE_ADVISORY]
     manual = [item for item in matrix if item.get("gate") == GATE_MANUAL]
+    required_commands = [item for item in commands if item.get("gate") == GATE_REQUIRED]
+    advisory_commands = [item for item in commands if item.get("gate") == GATE_ADVISORY]
     summary = {
         "required_total": len(required),
         "required_passed": sum(1 for item in required if item.get("status") == STATUS_PASS),
@@ -387,12 +389,21 @@ def compute_gate_status(matrix: list[dict[str, str]], commands: list[dict[str, o
         "advisory_total": len(advisory),
         "advisory_failed": sum(1 for item in advisory if item.get("status") == STATUS_FAIL),
         "manual_total": len(manual),
+        "required_command_total": len(required_commands),
+        "required_command_failed": sum(
+            1 for item in required_commands if item.get("status") in {STATUS_FAIL, STATUS_SKIP}
+        ),
+        "advisory_command_total": len(advisory_commands),
+        "advisory_command_failed": sum(1 for item in advisory_commands if item.get("status") == STATUS_FAIL),
     }
     blocking_failures = []
     for name in ("convention_check", "maven_test"):
         status = command_status(commands, name)
         if status == STATUS_FAIL:
             blocking_failures.append(name)
+    for command in required_commands:
+        if command.get("status") in {STATUS_FAIL, STATUS_SKIP}:
+            blocking_failures.append(str(command.get("name") or "required_command"))
     if required:
         if command_status(commands, "maven_verify") == STATUS_FAIL:
             blocking_failures.append("maven_verify")
@@ -443,18 +454,36 @@ def render_markdown(result: dict[str, object]) -> str:
         "",
         "### 命令结果",
         "",
-        "| 命令 | 状态 | Exit Code | 说明 |",
-        "| --- | --- | --- | --- |",
+        "| 命令 | Gate | 状态 | Exit Code | 说明 |",
+        "| --- | --- | --- | --- | --- |",
     ]
     for command in result.get("commands", []) or []:
         lines.append(
-            "| {name} | {status} | {exit_code} | {summary} |".format(
+            "| {name} | {gate} | {status} | {exit_code} | {summary} |".format(
                 name=command.get("name", ""),
+                gate=command.get("gate", ""),
                 status=command.get("status", ""),
                 exit_code=command.get("exit_code", ""),
                 summary=str(command.get("summary", "")).replace("|", "/"),
             )
         )
+
+    agent_review = next(
+        (command for command in result.get("commands", []) or [] if command.get("name") == "agent_review"),
+        None,
+    )
+    if agent_review:
+        lines.extend(["", "### Agent Review Closeout", ""])
+        target = agent_review.get("target", {}) if isinstance(agent_review.get("target"), dict) else {}
+        lines.append(f"- backend: {agent_review.get('backend', 'n/a')}")
+        lines.append(f"- gate: {agent_review.get('gate', 'n/a')}")
+        lines.append(f"- status: {agent_review.get('status', 'n/a')}")
+        lines.append(f"- target: {target.get('kind', 'n/a')} {target.get('base') or target.get('commit') or ''}".rstrip())
+        findings = agent_review.get("accepted_findings", []) if isinstance(agent_review.get("accepted_findings"), list) else []
+        lines.append(f"- accepted/actionable findings: {len(findings)}")
+        for finding in findings[:10]:
+            title = str(finding.get("title", finding)).replace("|", "/") if isinstance(finding, dict) else str(finding)
+            lines.append(f"  - {title}")
 
     lines.extend(["", "### 验收标准结果", "", "| # | 标准 | 验证方法 | 状态 |", "| --- | --- | --- | --- |"])
     for item in result.get("acceptance_criteria", []) or []:
@@ -491,6 +520,8 @@ def render_markdown(result: dict[str, object]) -> str:
             f"- required: {summary.get('required_passed', 0)}/{summary.get('required_total', 0)} passed",
             f"- advisory failed: {summary.get('advisory_failed', 0)}/{summary.get('advisory_total', 0)}",
             f"- manual confirmation: {summary.get('manual_total', 0)}",
+            f"- required commands failed: {summary.get('required_command_failed', 0)}/{summary.get('required_command_total', 0)}",
+            f"- advisory commands failed: {summary.get('advisory_command_failed', 0)}/{summary.get('advisory_command_total', 0)}",
             "",
             "### 后续动作",
         ]

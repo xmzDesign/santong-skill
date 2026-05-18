@@ -24,7 +24,7 @@ read task -> plan -> build -> qa -> fix -> mark_pass -> session_close
 |---|---|---|
 | 初始化 harness | “初始化”“用 by-harness 初始化这个仓库” | 运行 `scripts/scaffold.py`，再提示执行或执行 `.harness/scripts/init.sh` |
 | 持续拆任务 | “持续拆任务”“拆 5 个任务”“把这个主题拆一下” | 运行 `scripts/decompose_tasks.py`，默认新增 v3 单任务文件 |
-| 执行某个任务 | “执行某个任务 ID”“继续当前任务” | 读取任务，按 plan/build/qa/fix/mark_pass 闭环推进 |
+| 执行某个任务 | “执行某个任务 ID”“继续当前任务” | 读取任务，按 plan/build/qa/agent-review/fix/mark_pass 闭环推进 |
 | 快速修复小 bug | “quick fix”“修一个明确小 bug”“这个报错小修一下” | 先运行 `.harness/scripts/quick_fix_classifier.py`；high 走 quick-fix，medium/low 自动回到标准闭环 |
 | 会话收口 | “收口”“保存进度”“session_close” | 运行 `.harness/scripts/session_close.py` |
 | 自动续跑 | “继续下个任务”“自动续跑” | 运行 `.harness/scripts/task_switch.py continue --target-dir .` |
@@ -130,9 +130,9 @@ python3 {{SKILL_PATH}}/scripts/rebalance_tasks.py --target-dir "<项目目录>"
 2. 读取任务：看 `description`、`steps`、`spec_path`、`contract_path`、`qa_report_path`。
 3. Plan：生成或更新 `.harness/docs/specs/<feature>.md`。
 4. Build：只实现 contract 范围内的内容。
-5. QA Gate：运行可用测试、`convention-check` 和 required 集成测试门禁；失败要记录问题。
-6. Fix：单元测试失败时最多修 3 轮。
-7. Mark pass：单元测试通过、required QA Gate 通过，且 `spec_path` / `contract_path` 文件真实存在后，才可把 `passes=false` 改为 `true`。
+5. QA Gate：运行可用测试、`convention-check`、required 集成测试门禁和 Agent Review Closeout（single-pass，只审查一次）；失败要记录问题。
+6. Fix：根据 QA Gate 和 Agent Review 结果一次性修复所有问题；单元测试失败时最多修 3 轮。
+7. Mark pass：单元测试通过、required QA Gate 通过，required Agent Review（如启用）无 accepted/actionable finding，且 `spec_path` / `contract_path` 文件真实存在后，才可把 `passes=false` 改为 `true`。
 8. Session close：调用会话收口脚本，写入独立进度分片。
 
 如果 3 轮后单元测试仍失败，保持 `passes=false`，记录原因、已尝试修复和下一步建议。
@@ -262,7 +262,7 @@ Java 后端采用分片 Java 总门禁，并融合真实项目验证过的落地
 - 常规任务只更新对应单任务 JSON 的状态、进度和闭环工件，不随意改任务结构。
 - quick-fix 只用于小修复旁路日志，不得作为 feature 完成依据；需要完成 feature 时必须回到标准门禁。
 - 规划方案必须遵守“如无必要，勿增实体”；历史项目小改动默认按最小成本实施，新增实体/表/DTO/Service/配置项必须写明必要性、替代方案、迁移成本和回滚影响。
-- 单元测试通过、required QA Gate 通过且 spec/contract 已落盘后才可 `passes=true`；advisory/manual QA 结果必须记录。
+- 单元测试通过、required QA Gate 通过、required Agent Review（如启用）通过且 spec/contract 已落盘后才可 `passes=true`；advisory/manual QA 与 Agent Review 结果必须记录。
 - 任何已标记 `passes=true` 的 feature，如果缺少 `spec_path` 或 `contract_path` 对应文件，pre-completion hook 必须阻断完成。
 - 所有新增或修改的函数、方法必须补齐中文注释，说明用途、关键参数、返回值和副作用。
 - 涉及 Java 时，完成前自检 Java 总门禁、魔法值治理、触发维度核心门禁和分布式 Java 门禁，并运行 convention-check。读取规范时必须先读入口，再按触发维度读分片，不能默认整包加载所有规则。

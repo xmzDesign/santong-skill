@@ -6,7 +6,7 @@
 - **创建时间（Created）**：{{DATE}}
 - **状态（Status）**：draft
 - **最大迭代次数（Max Iterations）**：3
-- **执行门禁（Execution Gate）**：单元测试通过、`convention-check` 无 fail，且 required 集成测试门禁通过
+- **执行门禁（Execution Gate）**：单元测试通过、`convention-check` 无 fail、required 集成测试门禁通过，且 required Agent Review（如启用）无 accepted/actionable finding
 
 ## 规范引用（Norm References）
 
@@ -100,6 +100,7 @@
 - **build**：编译/构建成功
 - **integration**：通过 Testcontainers 或项目既有集成测试运行真实依赖链路
 - **manual**：需要用户手动验证
+- **agent_review**：通过 `.harness/scripts/agent_review.py` 执行 Codex/Claude 代码审查收口；默认 advisory，可在 QA Runner 中用 `--agent-review-required` 升级为 required
 
 ## 集成测试矩阵（Integration Test Matrix）
 

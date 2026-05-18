@@ -295,7 +295,7 @@ def main():
     qa_gate_errors = passed_feature_qa_gate_errors(workspace) if has_task_harness else []
     if artifact_errors or qa_gate_errors:
         message = (
-            "Completion gate failed: features marked passes=true must have real spec/contract files and required QA Gate PASS.\n"
+            "Completion gate failed: features marked passes=true must have real spec/contract files and required QA Gate PASS (including required Agent Review when enabled).\n"
             + "\n".join([*artifact_errors, *qa_gate_errors][:20])
             + ("\n- ... more gate errors omitted." if len([*artifact_errors, *qa_gate_errors]) > 20 else "")
             + "\n\nFix by creating/updating artifacts, rerun qa_runner.py, or set passes=false until gates pass."

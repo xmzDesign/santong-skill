@@ -471,7 +471,7 @@ def build_session_entry(
     if quick_fix:
         entry += "  4. 若 quick-fix 复核触发高风险或 diff 超阈值，补 spec/contract 后切回标准流程\n"
     else:
-        entry += "  4. 执行 read task -> plan -> build -> qa gate -> fix -> mark_pass\n"
+        entry += "  4. 执行 read task -> plan -> build -> qa gate/agent review -> fix -> mark_pass\n"
     return entry
 
 

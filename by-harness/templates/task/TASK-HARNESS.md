@@ -32,9 +32,9 @@
 1. **读取任务（read task）**：从单任务 JSON 读取该 feature 的 `description/steps/spec_path/contract_path/qa_report_path`
 2. **plan**：生成/更新 `spec_path` 对应规格文件（禁止直接写实现）
 3. **build**：基于 spec + contract 实现并自检；所有新增/修改函数、方法必须补齐中文注释
-4. **qa gate**：运行 `.harness/scripts/qa_runner.py`，生成 `qa_report_path` 与对应 `.result.json`，按 contract 逐条评分；required 集成门禁失败会阻塞 `passes=true`
+4. **qa gate**：运行 `.harness/scripts/qa_runner.py`，生成 `qa_report_path` 与对应 `.result.json`，按 contract 逐条评分；required 集成门禁和 required Agent Review（如启用）失败会阻塞 `passes=true`
 5. **fix**：若单元测试未通过，进入修复循环（最多 3 轮）
-6. **mark_pass**：单元测试通过、required QA Gate 通过，且 `spec_path` / `contract_path` 文件真实存在后，才可将该 feature `passes=false -> true`
+6. **mark_pass**：单元测试通过、required QA Gate 通过、required Agent Review（如启用）无 accepted/actionable finding，且 `spec_path` / `contract_path` 文件真实存在后，才可将该 feature `passes=false -> true`
 
 ## Quick Fix 分流（明确小 bug）
 
@@ -72,7 +72,7 @@ python3 .harness/scripts/session_close.py \
 
 - 对应单任务 JSON（例如 `.harness/task-harness/tasks/<batch-id>/<display-id>-<title>-<hash>.json`）中仅允许修改：
   - `status: todo|doing|done`
-  - `passes: false -> true`（单元测试通过、required QA Gate 通过且 spec/contract 已落盘后）
+  - `passes: false -> true`（单元测试通过、required QA Gate 通过、required Agent Review 如启用已通过且 spec/contract 已落盘后）
 - quick-fix 收口不得修改任务定义或 `passes`；若要完成任务，必须回到标准闭环
 - 若存在 `.harness/feature_list.json` 或 `.harness/task-harness/features/*.json`，其为 legacy 兼容数据，常规不直接手改
 - 禁止修改：
@@ -82,7 +82,7 @@ python3 .harness/scripts/session_close.py \
 ## 会话结束前必须完成
 
 1. 写入进度日志（`.harness/task-harness/progress/YYYY-MM/<timestamp>-<feature-id>.md`）
-2. 若该 feature 单元测试通过、required QA Gate 通过且 `spec_path` / `contract_path` 文件存在：更新 `passes=true`
+2. 若该 feature 单元测试通过、required QA Gate 通过、required Agent Review（如启用）通过且 `spec_path` / `contract_path` 文件存在：更新 `passes=true`
 3. 运行会话收口脚本：`python3 .harness/scripts/session_close.py --target-dir . --feature-id <task-id> --outcome pass|fail|blocked|in-progress`
 4. quick-fix 可改用：`python3 .harness/scripts/session_close.py --target-dir . --quick-fix --title "<bug 标题>" --outcome pass --note "<验证命令和结果>"`
 5. 提交 git commit（建议一个 feature 一个 commit）

@@ -35,7 +35,7 @@ argument-hint: 功能描述（1-4 句话）
 - 建立变更追溯矩阵，要求每个预计改动文件映射到范围、验收标准或失败修复项
 - 为每条标准指定验证方法
 - 若涉及 Java，将 Java 总门禁、触发维度核心门禁与分布式 Java 门禁转成可验收清单
-- 设置执行门禁：单元测试、convention-check 和 required QA Gate 必须通过
+- 设置执行门禁：单元测试、convention-check、required QA Gate 和 required Agent Review（如启用）必须通过
 - 设置最大迭代：`3`
 
 输出契约路径、自动决策和验证方式。
@@ -55,6 +55,7 @@ argument-hint: 功能描述（1-4 句话）
 调用 `evaluator` 智能体：
 - 读取契约
 - 按契约执行单元、构建和必要的集成验证
+- 在 QA 末尾执行 Agent Review Closeout（single-pass，只审查一次）；Codex/Claude 统一通过 `.harness/scripts/agent_review.py` 归一化结果
 - 检查行为门禁、简单性门禁、变更追溯矩阵和范围外事项
 - 对每条验收标准评分
 - 计算总分
@@ -75,7 +76,7 @@ argument-hint: 功能描述（1-4 句话）
 
 ### 阶段 6：Complete（完成）
 
-若单元测试、convention-check 与 required QA Gate 通过：
+若单元测试、convention-check、required QA Gate 与 required Agent Review（如启用）通过：
 1. 在 contract 的 Sprint Log 里写入最终结果
 2. 确认该 feature 的 `spec_path` 与 `contract_path` 文件真实存在；缺任一文件时回到 Plan/Contract 阶段补齐
 3. 确认 `.harness/docs/qa/<feature>.result.json` 中 `gate_status=PASS`

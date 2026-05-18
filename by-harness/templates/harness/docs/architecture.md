@@ -73,7 +73,8 @@ Codex 运行时：
 | /build 命令 | `.claude/commands/build.md` | 触发 generator + evaluator |
 | /qa 命令 | `.claude/commands/qa.md` | 独立执行评估 |
 | /sprint 命令 | `.claude/commands/sprint.md` | 执行全流程冲刺 |
-| QA Runner | `.harness/scripts/qa_runner.py` | 执行 convention-check、mvn test、mvn verify 并生成 QA Gate 结果 |
+| QA Runner | `.harness/scripts/qa_runner.py` | 执行 convention-check、mvn test、mvn verify、Agent Review 并生成 QA Gate 结果 |
+| Agent Review | `.harness/scripts/agent_review.py` | 统一 Codex/Claude 代码审查收口，归一化 accepted/actionable finding |
 | QA Report | `.harness/scripts/qa_report.py` | 解析 Surefire/Failsafe 报告并绑定 contract 集成测试矩阵 |
 | QA Gate | `.harness/scripts/qa_gate.py` | 根据 result JSON 判断 required 门禁是否通过 |
 | Testcontainers Doctor | `.harness/scripts/testcontainers_doctor.py` | 检查 Docker/Testcontainers 集成测试环境 |

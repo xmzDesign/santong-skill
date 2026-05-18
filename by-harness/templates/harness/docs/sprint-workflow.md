@@ -89,11 +89,11 @@ Evaluator 使用 Java 工程验证策略：
 - FAIL：标准未满足，附失败细节、复现步骤、修复建议
 
 **评分公式**：`分数 = (通过标准条数 / 标准总条数) * 100`  
-**执行门禁**：单元测试通过、`convention-check` 无 fail，且 contract 中 required 集成测试全部通过
+**执行门禁**：单元测试通过、`convention-check` 无 fail、contract 中 required 集成测试全部通过，且 required Agent Review（如启用）无 accepted/actionable finding
 
 **阶段流转条件**：
-- required QA Gate 通过：进入阶段 6（Complete）
-- 单元测试、convention-check 或 required 集成测试失败：进入阶段 5（Fix）
+- required QA Gate 与 required Agent Review（如启用）通过：进入阶段 6（Complete）
+- 单元测试、convention-check、required 集成测试或 required Agent Review 失败：进入阶段 5（Fix），一次性修复所有 Agent Review accepted finding 和测试失败，不再重新审查
 
 ## 阶段 5：Fix Loop（修复循环）
 
@@ -136,7 +136,7 @@ Evaluator 使用 Java 工程验证策略：
    - 剩余问题或技术债
 
 若项目启用了 task-harness（存在 `.harness/task-harness/index.json`）：
-- 单元测试通过、required QA Gate 通过，且 `spec_path` / `contract_path` 文件真实存在后，才可更新对应 feature 的 `passes=true`
+- 单元测试通过、required QA Gate 通过、required Agent Review（如启用）通过，且 `spec_path` / `contract_path` 文件真实存在后，才可更新对应 feature 的 `passes=true`
 - 同步在 `.harness/task-harness/progress/YYYY-MM/<timestamp>-<feature-id>.md` 写入该 feature 的闭环记录
 
 ## 上下文重置（Context Reset）与压缩（Compaction）的取舍

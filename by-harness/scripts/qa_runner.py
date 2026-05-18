@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from datetime import datetime
@@ -24,6 +25,8 @@ import testcontainers_doctor  # noqa: E402
 STATUS_PASS = "PASS"
 STATUS_FAIL = "FAIL"
 STATUS_SKIP = "SKIP"
+GATE_REQUIRED = "required"
+GATE_ADVISORY = "advisory"
 
 
 def parse_args():
@@ -36,6 +39,23 @@ def parse_args():
     parser.add_argument("--skip-convention", action="store_true", help="跳过 convention-check")
     parser.add_argument("--skip-test", action="store_true", help="跳过 mvn test")
     parser.add_argument("--skip-verify", action="store_true", help="跳过 mvn verify")
+    parser.add_argument(
+        "--agent-review",
+        default=os.environ.get("BY_HARNESS_AGENT_REVIEW", "auto"),
+        choices=("auto", "codex", "claude", "off"),
+        help="运行 Agent Review Closeout；默认 auto",
+    )
+    parser.add_argument("--agent-review-required", action="store_true", help="将 agent review 作为 required 门禁")
+    parser.add_argument(
+        "--agent-review-mode",
+        default="auto",
+        choices=("auto", "local", "branch", "commit"),
+        help="agent review target selection",
+    )
+    parser.add_argument("--agent-review-base", default="", help="agent review branch base ref")
+    parser.add_argument("--agent-review-commit", default="", help="agent review commit ref")
+    parser.add_argument("--agent-review-full-access", action="store_true", help="agent review 使用完整本地权限")
+    parser.add_argument("--skip-agent-review", action="store_true", help="跳过 agent review closeout")
     parser.add_argument("--no-fail", action="store_true", help="即使 gate FAIL 也返回 0")
     return parser.parse_args()
 
@@ -101,6 +121,7 @@ def skipped_command(name: str, reason: str, command: list[str] | None = None) ->
         "command": command or [],
         "exit_code": None,
         "status": STATUS_SKIP,
+        "gate": GATE_ADVISORY,
         "summary": reason,
         "stdout_tail": "",
         "stderr_tail": "",
@@ -155,6 +176,7 @@ def run_doctor(root: Path, required: bool) -> dict[str, object]:
         "command": [sys.executable, str(SCRIPT_DIR / "testcontainers_doctor.py"), "--target-dir", str(root)],
         "exit_code": 0 if result.get("docker_available") else 1,
         "status": status,
+        "gate": GATE_REQUIRED if required else GATE_ADVISORY,
         "summary": (
             "Docker available"
             if result.get("docker_available")
@@ -170,6 +192,94 @@ def build_outputs(target_dir: Path, contract_path: Path | None, args) -> tuple[P
     output_md = resolve_path(target_dir, args.output_md) if args.output_md else default_md
     output_json = resolve_path(target_dir, args.output_json) if args.output_json else default_json
     return output_md, output_json
+
+
+def load_json(path: Path) -> dict[str, object]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def run_agent_review(root: Path, args) -> dict[str, object]:
+    gate = GATE_REQUIRED if args.agent_review_required else GATE_ADVISORY
+    if args.skip_agent_review or args.agent_review == "off":
+        if gate == GATE_REQUIRED:
+            return {
+                "name": "agent_review",
+                "command": [],
+                "exit_code": 1,
+                "status": STATUS_FAIL,
+                "gate": gate,
+                "summary": "required agent review disabled",
+                "stdout_tail": "",
+                "stderr_tail": "",
+            }
+        return skipped_command("agent_review", "agent review disabled")
+
+    result_json = root / ".harness" / "docs" / "qa" / "agent-review-last.result.json"
+    raw_output = root / ".harness" / "docs" / "qa" / "agent-review-last.txt"
+    command = [
+        sys.executable,
+        str(SCRIPT_DIR / "agent_review.py"),
+        "--target-dir",
+        str(root),
+        "--backend",
+        args.agent_review,
+        "--mode",
+        args.agent_review_mode,
+        "--gate",
+        gate,
+        "--result-json",
+        str(result_json),
+        "--output",
+        str(raw_output),
+    ]
+    if args.agent_review_base:
+        command.extend(["--base", args.agent_review_base])
+    if args.agent_review_commit:
+        command.extend(["--commit", args.agent_review_commit])
+    if args.agent_review_full_access:
+        command.append("--full-access")
+
+    for path in (result_json, raw_output):
+        try:
+            path.unlink()
+        except FileNotFoundError:
+            pass
+
+    completed = subprocess.run(
+        command,
+        cwd=str(root),
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    result = load_json(result_json)
+    result_status = str(result.get("status") or "")
+    if completed.returncode != 0:
+        status = STATUS_FAIL
+    elif result_status in {STATUS_PASS, STATUS_FAIL, STATUS_SKIP}:
+        status = result_status
+    else:
+        status = STATUS_FAIL
+    return {
+        "name": "agent_review",
+        "command": command,
+        "exit_code": completed.returncode,
+        "status": status,
+        "gate": gate,
+        "summary": str(result.get("summary") or command_summary("agent_review", completed.returncode)),
+        "backend": result.get("backend", args.agent_review),
+        "target": result.get("target", {}),
+        "result_json": str(result_json),
+        "raw_output": str(raw_output),
+        "accepted_findings": result.get("accepted_findings", []),
+        "rejected_findings": result.get("rejected_findings", []),
+        "stdout_tail": tail(completed.stdout or str(result.get("stdout_tail", ""))),
+        "stderr_tail": tail(completed.stderr or str(result.get("stderr_tail", ""))),
+    }
 
 
 def main():
@@ -206,6 +316,8 @@ def main():
         commands.append(run_command("maven_verify", ["mvn", "verify"], root))
     else:
         commands.append(skipped_command("maven_verify", "pom.xml not found", ["mvn", "verify"]))
+
+    commands.append(run_agent_review(root, args))
 
     commands_json = write_commands_json(root, commands)
     output_md, output_json = build_outputs(target_dir, contract_path, args)

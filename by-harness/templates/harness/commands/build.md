@@ -52,7 +52,7 @@ argument-hint: 可选 - 指定 .harness/docs/specs/ 中要实现的 spec 文件
    - 若涉及 Java，逐项检查分布式 Java 门禁；未触发需说明理由，触发时必须给出实现证据与人工确认项。
    - 若 contract 集成测试矩阵存在 `required` 项，补齐或更新对应 `*IT.java` / 项目约定集成测试；不得只用 mock 替代真实 DB/Redis/MQ/HTTP/RPC/事务边界。
 3. **Evaluate**：调用 `evaluator` 按契约测试。
-4. **Gate**：检查单元测试、convention-check 和 required QA Gate 是否通过。
+4. **Gate**：检查单元测试、convention-check、required QA Gate 和 required Agent Review（如启用）是否通过。
    - 若 PASS：冲刺完成。
    - 若 FAIL：把失败项回传给 `generator` 修复。
 
@@ -65,11 +65,11 @@ argument-hint: 可选 - 指定 .harness/docs/specs/ 中要实现的 spec 文件
 
 ### 5. 完成收尾
 
-若单元测试、convention-check 与 required QA Gate 通过：
+若单元测试、convention-check、required QA Gate 与 required Agent Review（如启用）通过：
 - 更新契约中的冲刺日志。
 - 更新 contract 中的变更追溯矩阵和简单性门禁结论，确保实际 diff 与 contract 一致。
 - 确认目标 feature 的 `spec_path` 与 `contract_path` 文件真实存在；缺任一文件时禁止 `passes=true`。
 - 运行 `python3 .harness/scripts/qa_runner.py --target-dir . --contract <contract-file>`，确认 `.harness/docs/qa/<feature>.result.json` 中 `gate_status=PASS`。
-- 若项目使用 task-harness（存在 `.harness/task-harness/index.json`），仅在单元测试通过、required QA Gate 通过且 spec/contract 文件存在后，更新对应单任务 JSON 的 `passes=true`。
+- 若项目使用 task-harness（存在 `.harness/task-harness/index.json`），仅在单元测试通过、required QA Gate 通过、required Agent Review（如启用）通过且 spec/contract 文件存在后，更新对应单任务 JSON 的 `passes=true`。
 - 通过 `.harness/scripts/session_close.py` 写入 `.harness/task-harness/progress/YYYY-MM/<timestamp>-<feature-id>.md`。
 - 若本轮改动影响文档、公共接口或配置语义，自动执行 `doc-gardener` 做文档新鲜度检查；否则记录跳过原因。

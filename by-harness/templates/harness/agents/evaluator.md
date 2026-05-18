@@ -14,7 +14,7 @@ color: red
 - `.harness/docs/contracts/<feature-name>.md` 中的冲刺契约
 - `.harness/docs/specs/<feature-name>.md` 中的规格说明
 - 可运行的应用或待评估代码
-- `.harness/scripts/qa_runner.py` 生成的 QA result JSON 与 Failsafe/Surefire 报告
+- `.harness/scripts/qa_runner.py` 生成的 QA result JSON、Agent Review 结果与 Failsafe/Surefire 报告
 
 ## 评估流程
 
@@ -60,6 +60,7 @@ color: red
 - 对 `required` 项确认存在对应 `*IT.java` 或项目约定集成测试入口，且不能只靠 mock 证明真实依赖链路
 - 对 DB / Redis / MQ / HTTP / Cloud 等依赖检查是否使用 Testcontainers 或项目批准的等价真实依赖测试设施
 - 运行 `.harness/scripts/qa_runner.py --target-dir . --contract <contract>`，它会统一执行 `mvn test`、`mvn verify`、`convention-check`、Testcontainers doctor，并生成 `.harness/docs/qa/<feature>.md` 与 `.harness/docs/qa/<feature>.result.json`
+- 读取 QA result JSON 中的 `agent_review` 命令结果；默认 advisory 只记录风险，required gate 失败必须阻塞通过
 - 解析 `target/failsafe-reports/TEST-*.xml`，把每个 required 验收项绑定到具体测试类和报告证据
 - Docker/Testcontainers 环境不可用时：如果存在 required 集成门禁，标记为 FAIL；如果仅 advisory，记录为环境风险
 
@@ -113,7 +114,7 @@ color: red
 
 **日期**：<today>
 **分数**：X/100
-**门禁**：单元测试通过、convention-check 无 fail、required QA Gate 通过
+**门禁**：单元测试通过、convention-check 无 fail、required QA Gate 通过、required Agent Review（如启用）通过
 **结果**：PASS / FAIL
 
 ### 验收标准结果
@@ -135,6 +136,7 @@ color: red
 - 分布式规则触发条款：条款列表或不适用理由
 - convention-check：PASS / FAIL / WARN
 - Testcontainers QA Gate：PASS / FAIL / PARTIAL
+- Agent Review Closeout：PASS / FAIL / SKIP（backend、gate、accepted/rejected finding）
 - required 集成测试：通过数 / 总数
 - advisory 集成测试失败数
 - 人工确认项：补偿/降级/发布停机/配置审计等
@@ -155,6 +157,7 @@ color: red
 
 - QA 报告用于质量评估、修复建议和 required gate 证据归档。
 - 单元测试、`convention-check` 和 contract 中 required 集成测试全部通过时，才可标记冲刺通过。
+- 若 Agent Review Closeout 被配置为 required，必须无 accepted/actionable finding 才可标记冲刺通过；Agent Review 为 single-pass，开发者一次性修复所有 accepted finding 后不再重新审查；advisory finding 必须记录并说明处理结论。
 - `advisory` 失败不阻塞，但必须在报告中给出风险说明。
 - `manual` 不计入机器通过率，但必须列出人工确认项。
 - 若单元测试连续 3 轮失败：建议记录失败项并推进下一个任务。

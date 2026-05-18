@@ -181,12 +181,12 @@ def build_feature(
             f"执行 plan：生成 {paths['spec_path']}",
             f"执行 contract：生成 {paths['contract_path']} 并明确验收标准与验证方式",
             "执行 build：按 contract 范围完成端到端功能实现，并完成自检（构建/单元测试/验收标准）",
-            f"执行 qa gate：运行 qa_runner.py，生成 {paths['qa_report_path']} 与 result JSON",
+            f"执行 qa gate：运行 qa_runner.py，生成 {paths['qa_report_path']} 与 result JSON，并记录 Agent Review Closeout 结果",
             "若单元测试未通过，进入 fix 循环（最多 3 轮）",
-            "执行 mark_pass：单元测试、required QA Gate 通过且 spec/contract 文件已落盘后才可将 passes 置为 true；3 轮失败则保持 false 并继续下个任务",
+            "执行 mark_pass：单元测试、required QA Gate 与 required Agent Review（如启用）通过且 spec/contract 文件已落盘后才可将 passes 置为 true；3 轮失败则保持 false 并继续下个任务",
         ],
         "passes": False,
-        "verification": "必须能按一个完整功能独立验收：spec/contract 文件已落盘，单元测试和 required QA Gate 通过；advisory/manual QA 结果必须记录。若无法写出独立验收标准，应并回所属功能任务。",
+        "verification": "必须能按一个完整功能独立验收：spec/contract 文件已落盘，单元测试、required QA Gate 和 required Agent Review（如启用）通过；advisory/manual QA 与 Agent Review 结果必须记录。若无法写出独立验收标准，应并回所属功能任务。",
         "created_at": now,
         "updated_at": now,
     }
@@ -433,7 +433,7 @@ def append_progress_note(workspace_dir: Path, added_tasks, bucket_id: str, mode:
         "新增任务:\n"
         f"{added_text}\n"
         f"任务桶: {bucket_id}\n"
-        "说明: 新任务已按 harness 闭环模板生成（read task/plan/build/qa gate/fix/mark_pass）。\n"
+        "说明: 新任务已按 harness 闭环模板生成（read task/plan/build/qa gate/agent review/fix/mark_pass）。\n"
     )
 
     if mode in ("sharded", "file_tasks"):
@@ -573,7 +573,7 @@ def main():
         print(f"Feature file updated: {feature_path}")
     if legacy_synced:
         print(f"Legacy mirror synced: {workspace_dir / 'feature_list.json'}")
-    print("Reminder: each task should be one complete independently verifiable feature; pass gate = unit tests + required QA Gate + real spec/contract artifacts.")
+    print("Reminder: each task should be one complete independently verifiable feature; pass gate = unit tests + required QA Gate + required Agent Review if enabled + real spec/contract artifacts.")
 
 
 if __name__ == "__main__":
