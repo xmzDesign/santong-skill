@@ -17,9 +17,13 @@ from datetime import date
 from pathlib import Path
 
 HARNESS_DIR_NAME = ".harness"
-HARNESS_RUNTIME_VERSION = "2.6.4"
+HARNESS_RUNTIME_VERSION = "2.6.7"
 MANAGED_BLOCK_BEGIN = "<!-- BEGIN BY-HARNESS MANAGED BLOCK -->"
 MANAGED_BLOCK_END = "<!-- END BY-HARNESS MANAGED BLOCK -->"
+EDIT_COUNTS_IGNORE_PATTERNS = (
+    ".codex/hooks/.edit-counts.json",
+    ".claude/hooks/.edit-counts.json",
+)
 AGENT_DOC_ALIASES = {
     "AGENTS.md": ("AGENTS.md", "AGENT.md", "agents.md", "agent.md"),
     "CLAUDE.md": ("CLAUDE.md", "claude.md"),
@@ -247,6 +251,34 @@ def merge_codex_hooks(target_dir: Path, template_hooks_path: Path):
     print(f"  MERGE: {hooks_path}")
 
 
+def ensure_edit_counts_gitignore(target_dir: Path) -> bool:
+    gitignore_path = target_dir / ".gitignore"
+    if gitignore_path.exists():
+        content = gitignore_path.read_text(encoding="utf-8")
+    else:
+        content = ""
+
+    existing_patterns = {
+        line.strip()
+        for line in content.splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    }
+    missing = [
+        pattern
+        for pattern in EDIT_COUNTS_IGNORE_PATTERNS
+        if pattern not in existing_patterns
+    ]
+    if not missing:
+        return False
+
+    pieces = [content.rstrip()] if content.strip() else []
+    pieces.append("# by-harness runtime state")
+    pieces.extend(missing)
+    gitignore_path.write_text("\n".join(pieces) + "\n", encoding="utf-8")
+    print(f"  MERGE: {gitignore_path}")
+    return True
+
+
 def ship_runtime_script(
     skill_dir: Path,
     harness_dir: Path,
@@ -399,6 +431,8 @@ def main():
 
     merge_settings(target_dir, templates_harness / "settings.json")
     merge_codex_hooks(target_dir, templates_harness / "codex" / "hooks.json")
+    if ensure_edit_counts_gitignore(target_dir):
+        created += 1
 
     try:
         verify_outputs(target_dir)

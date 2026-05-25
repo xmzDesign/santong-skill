@@ -37,8 +37,13 @@ LEGACY_TASK_FILE_NAME = "task.json"
 LEGACY_SESSION_CONTEXT_FILE_NAME = "session-context.json"
 LEGACY_SESSION_BOUNDARY_FILE_NAME = "session-boundary.json"
 LEGACY_TASK_CONTRACT_FILE_NAME = "TASK-HARNESS.md"
-LATEST_RUNTIME_VERSION = "2.6.4"
+LATEST_RUNTIME_VERSION = "2.6.7"
+DEFAULT_MANIFEST_URL = "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/runtime/stable/manifest.json"
 DEFAULT_TASK_GLOBS = ("task-harness/tasks/*.json", "task-harness/tasks/**/*.json")
+EDIT_COUNTS_IGNORE_PATTERNS = (
+    ".codex/hooks/.edit-counts.json",
+    ".claude/hooks/.edit-counts.json",
+)
 RUNTIME_SCRIPT_NAMES = (
     "init.sh",
     "quick_fix_classifier.py",
@@ -118,15 +123,15 @@ LEGACY_CONTROL_KEYS = (
 SEMVER_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
 
 DEFAULT_POLICY = {
-    "enabled": False,
+    "enabled": True,
     "channel": "stable",
-    "manifest_url": "",
-    "check_interval_minutes": 360,
+    "manifest_url": DEFAULT_MANIFEST_URL,
+    "check_interval_minutes": 720,
     "auto_apply_patch": True,
     "auto_apply_minor": False,
     "auto_apply_major": False,
     "require_checksum": True,
-    "request_timeout_seconds": 10,
+    "request_timeout_seconds": 30,
 }
 
 MIGRATIONS: dict[str, tuple[str, str]] = {
@@ -152,6 +157,9 @@ MIGRATIONS: dict[str, tuple[str, str]] = {
     "2.6.1": ("2.6.2", "migrate_quick_fix_runtime"),
     "2.6.2": ("2.6.3", "migrate_quick_fix_runtime"),
     "2.6.3": ("2.6.4", "migrate_agent_review_runtime"),
+    "2.6.4": ("2.6.5", "migrate_edit_counts_state"),
+    "2.6.5": ("2.6.6", "migrate_update_policy_bootstrap"),
+    "2.6.6": ("2.6.7", "migrate_session_close_runtime_check"),
 }
 
 
@@ -309,6 +317,57 @@ def load_json(path: Path) -> dict[str, Any]:
 def dump_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def ensure_edit_counts_gitignore(repo_root: Path, dry_run: bool) -> bool:
+    gitignore_path = repo_root / ".gitignore"
+    if gitignore_path.exists():
+        content = gitignore_path.read_text(encoding="utf-8")
+    else:
+        content = ""
+
+    existing_patterns = {
+        line.strip()
+        for line in content.splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    }
+    missing = [
+        pattern
+        for pattern in EDIT_COUNTS_IGNORE_PATTERNS
+        if pattern not in existing_patterns
+    ]
+    if not missing:
+        return False
+
+    if dry_run:
+        print(f"[dry-run] update .gitignore runtime-state patterns: {gitignore_path}")
+        return True
+
+    pieces = [content.rstrip()] if content.strip() else []
+    pieces.append("# by-harness runtime state")
+    pieces.extend(missing)
+    gitignore_path.write_text("\n".join(pieces) + "\n", encoding="utf-8")
+    print(f"Updated .gitignore runtime-state patterns: {gitignore_path}")
+    return True
+
+
+def ensure_update_policy(harness_dir: Path, dry_run: bool) -> bool:
+    policy_path = resolve_preferred_path(harness_dir, POLICY_FILE_NAME, LEGACY_POLICY_FILE_NAME)
+    if policy_path.exists():
+        return False
+
+    if dry_run:
+        print(f"[dry-run] create default update policy: {policy_path}")
+        return True
+
+    payload = dict(DEFAULT_POLICY)
+    payload["notes"] = [
+        "by-harness 自动生成的默认更新策略；可将 enabled 设为 false 关闭主动检查。",
+        "自动检查由 init.sh、task_switch.py 和 session_close.py 触发，并受 check_interval_minutes 限制。",
+    ]
+    dump_json(policy_path, payload)
+    print(f"Created default update policy: {policy_path}")
+    return True
 
 
 def load_policy(harness_dir: Path) -> dict[str, Any]:
@@ -741,6 +800,23 @@ def migrate_agent_review_runtime(harness_dir: Path, dry_run: bool) -> dict[str, 
     return {"agent_review_runtime": copied}
 
 
+def migrate_edit_counts_state(harness_dir: Path, dry_run: bool) -> dict[str, int]:
+    """Ensure legacy edit-count state files are ignored by Git."""
+    changed = ensure_edit_counts_gitignore(harness_dir.parent, dry_run)
+    return {"edit_counts_ignore": int(changed)}
+
+
+def migrate_update_policy_bootstrap(harness_dir: Path, dry_run: bool) -> dict[str, int]:
+    """Install a default update policy so automatic checks can self-start."""
+    changed = ensure_update_policy(harness_dir, dry_run)
+    return {"update_policy_bootstrap": int(changed)}
+
+
+def migrate_session_close_runtime_check(harness_dir: Path, dry_run: bool) -> dict[str, int]:
+    """Version marker for quieter session_close runtime checks shipped by manifest."""
+    return {"session_close_runtime_check": 0}
+
+
 def run_migration(step_name: str, harness_dir: Path, dry_run: bool) -> dict[str, int]:
     if step_name == "migrate_remove_branch_switching":
         return migrate_remove_branch_switching(harness_dir, dry_run)
@@ -754,6 +830,12 @@ def run_migration(step_name: str, harness_dir: Path, dry_run: bool) -> dict[str,
         return migrate_quick_fix_runtime(harness_dir, dry_run)
     if step_name == "migrate_agent_review_runtime":
         return migrate_agent_review_runtime(harness_dir, dry_run)
+    if step_name == "migrate_edit_counts_state":
+        return migrate_edit_counts_state(harness_dir, dry_run)
+    if step_name == "migrate_update_policy_bootstrap":
+        return migrate_update_policy_bootstrap(harness_dir, dry_run)
+    if step_name == "migrate_session_close_runtime_check":
+        return migrate_session_close_runtime_check(harness_dir, dry_run)
     raise RuntimeError(f"未知迁移步骤：{step_name}")
 
 
@@ -1228,6 +1310,8 @@ def main() -> int:
     policy = load_policy(harness_dir)
     state = load_state(harness_dir)
     repo_root = harness_dir.parent
+    ensure_edit_counts_gitignore(repo_root, args.dry_run)
+    ensure_update_policy(harness_dir, args.dry_run)
     current_version, source = infer_current_version(harness_dir)
     if parse_semver(current_version) is None:
         print(f"Error: 无法识别当前版本：{current_version}")

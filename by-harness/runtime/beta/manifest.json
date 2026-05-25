@@ -1,13 +1,13 @@
 {
   "skill": "by-harness",
   "channel": "beta",
-  "version": "2.6.4",
+  "version": "2.6.7",
   "min_compatible_version": "1.0.0",
   "files": [
     {
       "path": "scripts/session_close.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/scripts/session_close.py",
-      "sha256": "6c419d82442f147bd8a09d9eaee25c4cc0991fc185f719ccd1efc2cec73064da"
+      "sha256": "eca67fd1259c032caf91b07d8df332ffaae71980b75c687401c3d49db03621e1"
     },
     {
       "path": "scripts/quick_fix_classifier.py",
@@ -32,7 +32,7 @@
     {
       "path": "scripts/update_runtime.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/scripts/update_runtime.py",
-      "sha256": "95c4bc5f545a0605b9908ac2147c31c9e81f88a162025092986b6d7899942336"
+      "sha256": "1c639a482ec637a7666062e86c999d4180f8e9ee4bd04de0f76f2cfe8bdd28ce"
     },
     {
       "path": "scripts/agent_review.py",
@@ -167,7 +167,7 @@
     {
       "path": "root/.codex/hooks/loop-detector.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/codex/hooks/loop-detector.py",
-      "sha256": "66de35db28b9cae76e1f45469dabb51e6d106a896be5cdcc3ec5ad6b4429152d"
+      "sha256": "a304f7fdf00915febf4ffbcb4477f4937de238a6f4ef6b3db6e2ad71ccc0f29d"
     },
     {
       "path": "root/.codex/hooks/pre-completion-check.py",
@@ -193,7 +193,7 @@
     {
       "path": "root/.claude/hooks/loop-detector.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/hooks/loop-detector.py",
-      "sha256": "f75ae7567623364b3a2a4b431e3d4bb230d8768b275fe7ef31d2f3c5b94fc621"
+      "sha256": "01f616326ded70ca0bbb183e1237be3493560ff0c210145030233105115688ce"
     },
     {
       "path": "root/.claude/hooks/pre-completion-check.py",

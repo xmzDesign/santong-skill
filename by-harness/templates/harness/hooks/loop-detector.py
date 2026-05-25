@@ -17,15 +17,51 @@ Hook output format:
 import json
 import sys
 import time
+import tempfile
+import hashlib
 from pathlib import Path
 
 MAX_EDITS = 5
+STATE_KIND = 'claude'
+
+
+def find_repo_root(start):
+    """Find the repository root for state scoping."""
+    current = start.resolve()
+    for candidate in (current, *current.parents):
+        if (candidate / '.git').exists():
+            return candidate
+    return current
+
+
+def resolve_git_dir(repo_root):
+    """Resolve .git for normal repos and git worktrees."""
+    dot_git = repo_root / '.git'
+    if dot_git.is_dir():
+        return dot_git
+    if dot_git.is_file():
+        try:
+            content = dot_git.read_text(encoding='utf-8').strip()
+        except OSError:
+            return None
+        if content.startswith('gitdir:'):
+            git_dir = Path(content.split(':', 1)[1].strip())
+            if not git_dir.is_absolute():
+                git_dir = (repo_root / git_dir).resolve()
+            return git_dir
+    return None
 
 
 def get_state_path():
-    """Get the path to the edit counts state file."""
-    # Store in .claude/hooks/ relative to current project
-    return Path.cwd() / '.claude' / 'hooks' / '.edit-counts.json'
+    """Get the path to the local edit counts state file."""
+    repo_root = find_repo_root(Path.cwd())
+    git_dir = resolve_git_dir(repo_root)
+    if git_dir is not None:
+        return git_dir / 'by-harness' / f'edit-counts-{STATE_KIND}.json'
+
+    key = str(repo_root).encode('utf-8')
+    digest = hashlib.sha256(key).hexdigest()[:16]
+    return Path(tempfile.gettempdir()) / 'by-harness' / digest / f'edit-counts-{STATE_KIND}.json'
 
 
 def load_state(state_path):

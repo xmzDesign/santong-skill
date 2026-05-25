@@ -1,1 +1,5 @@
 .idea/
+
+# by-harness runtime state
+.codex/hooks/.edit-counts.json
+.claude/hooks/.edit-counts.json

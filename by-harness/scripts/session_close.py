@@ -11,6 +11,7 @@ Actions:
 import argparse
 import json
 import re
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -18,6 +19,7 @@ from pathlib import Path
 import task_store
 
 HARNESS_DIR_NAME = ".harness"
+DEFAULT_CHECK_INTERVAL_MINUTES = 720
 SESSION_MODE_SOFT = "soft_reset"
 SESSION_MODE_HARD = "hard_new_session"
 VALID_OUTCOMES = ("pass", "fail", "blocked", "in-progress")
@@ -241,6 +243,99 @@ def find_feature(features, feature_id: str):
 
 def repo_root_from_workspace(workspace_dir: Path) -> Path:
     return workspace_dir.parent if workspace_dir.name == HARNESS_DIR_NAME else workspace_dir
+
+
+def to_int(value, default: int) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def resolve_runtime_config_path(workspace_dir: Path, primary: str, legacy: str) -> Path:
+    primary_path = workspace_dir / primary
+    if primary_path.exists():
+        return primary_path
+    legacy_path = workspace_dir / legacy
+    if legacy_path.exists():
+        return legacy_path
+    return primary_path
+
+
+def runtime_check_due(workspace_dir: Path) -> bool:
+    policy_path = resolve_runtime_config_path(
+        workspace_dir,
+        "config/update-policy.json",
+        "update-policy.json",
+    )
+    if not policy_path.exists():
+        return True
+
+    try:
+        policy = load_json(policy_path)
+    except HarnessJsonError:
+        return True
+    if not isinstance(policy, dict):
+        return True
+    if not bool(policy.get("enabled", False)):
+        return False
+
+    state_path = resolve_runtime_config_path(
+        workspace_dir,
+        "config/update-state.json",
+        "update-state.json",
+    )
+    if not state_path.exists():
+        return True
+
+    try:
+        state = load_json(state_path)
+    except HarnessJsonError:
+        return True
+    if not isinstance(state, dict):
+        return True
+
+    interval_minutes = max(
+        1,
+        to_int(policy.get("check_interval_minutes", DEFAULT_CHECK_INTERVAL_MINUTES), DEFAULT_CHECK_INTERVAL_MINUTES),
+    )
+    last_check_ts = to_int(state.get("last_check_unix", 0), 0)
+    if last_check_ts <= 0:
+        return True
+    return int(datetime.now().timestamp()) - last_check_ts >= interval_minutes * 60
+
+
+def update_script_path(repo_root: Path, workspace_dir: Path) -> Path | None:
+    for candidate in (
+        workspace_dir / "scripts" / "update_runtime.py",
+        repo_root / "scripts" / "update_runtime.py",
+    ):
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def invoke_runtime_check(repo_root: Path, workspace_dir: Path) -> tuple[int, str]:
+    script = update_script_path(repo_root, workspace_dir)
+    if script is None:
+        return 0, "update_runtime.py not found (skip remote check)"
+
+    cmd = ["python3", str(script), "--target-dir", str(repo_root), "--check-remote"]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    out = (result.stdout or "").strip()
+    err = (result.stderr or "").strip()
+    detail = out if out else err
+    return result.returncode, detail
+
+
+def print_runtime_check_result(rc: int, detail: str) -> None:
+    if not detail:
+        return
+    print("Runtime check:")
+    for line in detail.splitlines():
+        print(f"  {line}")
+    if rc != 0:
+        print("  Runtime check failed; session close remains completed.")
 
 
 def resolve_artifact_path(workspace_dir: Path, raw_path: str) -> Path:
@@ -657,6 +752,7 @@ def main():
     args = parse_args()
     target_dir = Path(args.target_dir).resolve()
     workspace_dir = detect_workspace_dir(target_dir)
+    repo_root = repo_root_from_workspace(workspace_dir)
     session_control = load_session_control(workspace_dir)
     context_mode = session_control["context_mode"]
     quick_fix_title = quick_fix_title_from_args(args)
@@ -816,6 +912,10 @@ def main():
         print(f"Next recommended task: {task_summary(next_feature)}")
     else:
         print("Next recommended task: none (all tasks are passed)")
+
+    if runtime_check_due(workspace_dir):
+        rc_update, update_detail = invoke_runtime_check(repo_root, workspace_dir)
+        print_runtime_check_result(rc_update, update_detail)
 
 
 if __name__ == "__main__":
