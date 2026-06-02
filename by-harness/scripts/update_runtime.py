@@ -26,23 +26,23 @@ VERSION_FILE_NAME = "config/runtime-version.json"
 POLICY_FILE_NAME = "config/update-policy.json"
 STATE_FILE_NAME = "config/update-state.json"
 TASK_FILE_NAME = "config/task.json"
-SESSION_CONTEXT_FILE_NAME = "config/session-context.json"
-SESSION_BOUNDARY_FILE_NAME = "config/session-boundary.json"
 TASK_CONTRACT_FILE_NAME = "docs/TASK-HARNESS.md"
 
 LEGACY_VERSION_FILE_NAME = "runtime-version.json"
 LEGACY_POLICY_FILE_NAME = "update-policy.json"
 LEGACY_STATE_FILE_NAME = "update-state.json"
 LEGACY_TASK_FILE_NAME = "task.json"
-LEGACY_SESSION_CONTEXT_FILE_NAME = "session-context.json"
-LEGACY_SESSION_BOUNDARY_FILE_NAME = "session-boundary.json"
 LEGACY_TASK_CONTRACT_FILE_NAME = "TASK-HARNESS.md"
-LATEST_RUNTIME_VERSION = "2.6.10"
+LATEST_RUNTIME_VERSION = "2.6.11"
 DEFAULT_MANIFEST_URL = "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/runtime/stable/manifest.json"
 DEFAULT_TASK_GLOBS = ("task-harness/tasks/*.json", "task-harness/tasks/**/*.json")
 EDIT_COUNTS_IGNORE_PATTERNS = (
     ".codex/hooks/.edit-counts.json",
     ".claude/hooks/.edit-counts.json",
+    ".harness/config/session-context.json",
+    ".harness/session-context.json",
+    ".harness/config/session-boundary.json",
+    ".harness/session-boundary.json",
 )
 RUNTIME_SCRIPT_NAMES = (
     "init.sh",
@@ -163,6 +163,7 @@ MIGRATIONS: dict[str, tuple[str, str]] = {
     "2.6.7": ("2.6.8", "migrate_fast_track_runtime"),
     "2.6.8": ("2.6.9", "migrate_root_fast_route_prompt"),
     "2.6.9": ("2.6.10", "migrate_session_start_runtime_check_prompt"),
+    "2.6.10": ("2.6.11", "migrate_remove_session_state_files"),
 }
 
 
@@ -222,14 +223,6 @@ def resolve_preferred_path(harness_dir: Path, primary: str, legacy: str) -> Path
 
 def task_json_path(harness_dir: Path) -> Path:
     return resolve_preferred_path(harness_dir, TASK_FILE_NAME, LEGACY_TASK_FILE_NAME)
-
-
-def session_context_path(harness_dir: Path) -> Path:
-    return resolve_preferred_path(harness_dir, SESSION_CONTEXT_FILE_NAME, LEGACY_SESSION_CONTEXT_FILE_NAME)
-
-
-def session_boundary_path(harness_dir: Path) -> Path:
-    return resolve_preferred_path(harness_dir, SESSION_BOUNDARY_FILE_NAME, LEGACY_SESSION_BOUNDARY_FILE_NAME)
 
 
 def parse_semver(value: str) -> tuple[int, int, int] | None:
@@ -508,11 +501,11 @@ def migrate_task_json_to_current_branch_mode(task_data: dict[str, Any]) -> tuple
         if files.get("update_state") != f".harness/{STATE_FILE_NAME}":
             files["update_state"] = f".harness/{STATE_FILE_NAME}"
             changed = True
-        if files.get("session_context") != f".harness/{SESSION_CONTEXT_FILE_NAME}":
-            files["session_context"] = f".harness/{SESSION_CONTEXT_FILE_NAME}"
+        if "session_context" in files:
+            files.pop("session_context", None)
             changed = True
-        if files.get("session_boundary") != f".harness/{SESSION_BOUNDARY_FILE_NAME}":
-            files["session_boundary"] = f".harness/{SESSION_BOUNDARY_FILE_NAME}"
+        if "session_boundary" in files:
+            files.pop("session_boundary", None)
             changed = True
         if files.get("init_script") != ".harness/scripts/init.sh":
             files["init_script"] = ".harness/scripts/init.sh"
@@ -547,25 +540,6 @@ def migrate_task_json_to_current_branch_mode(task_data: dict[str, Any]) -> tuple
     return payload, changed
 
 
-def cleanup_session_context(session_context_path: Path, dry_run: bool) -> bool:
-    if not session_context_path.exists():
-        return False
-    try:
-        payload = load_json(session_context_path)
-    except (json.JSONDecodeError, OSError, ValueError):
-        return False
-    if not isinstance(payload, dict):
-        return False
-    if "review_pending" not in payload:
-        return False
-    payload.pop("review_pending", None)
-    if dry_run:
-        print(f"[dry-run] cleanup key review_pending: {session_context_path}")
-    else:
-        dump_json(session_context_path, payload)
-    return True
-
-
 def remove_file(path: Path, dry_run: bool) -> bool:
     if not path.exists():
         return False
@@ -574,6 +548,19 @@ def remove_file(path: Path, dry_run: bool) -> bool:
     else:
         path.unlink()
     return True
+
+
+def remove_session_state_files(harness_dir: Path, dry_run: bool) -> int:
+    removed = 0
+    for path in (
+        harness_dir / "config" / "session-context.json",
+        harness_dir / "session-context.json",
+        harness_dir / "config" / "session-boundary.json",
+        harness_dir / "session-boundary.json",
+    ):
+        if remove_file(path, dry_run):
+            removed += 1
+    return removed
 
 
 def relocate_path(harness_dir: Path, target_rel: str, legacy_rel: str, dry_run: bool) -> bool:
@@ -596,8 +583,6 @@ def migrate_grouped_layout(harness_dir: Path, dry_run: bool) -> dict[str, int]:
         (VERSION_FILE_NAME, LEGACY_VERSION_FILE_NAME),
         (POLICY_FILE_NAME, LEGACY_POLICY_FILE_NAME),
         (STATE_FILE_NAME, LEGACY_STATE_FILE_NAME),
-        (SESSION_CONTEXT_FILE_NAME, LEGACY_SESSION_CONTEXT_FILE_NAME),
-        (SESSION_BOUNDARY_FILE_NAME, LEGACY_SESSION_BOUNDARY_FILE_NAME),
         (TASK_CONTRACT_FILE_NAME, LEGACY_TASK_CONTRACT_FILE_NAME),
         ("scripts/init.sh", "init.sh"),
         ("task-harness/progress/latest.txt", "progress.txt"),
@@ -634,8 +619,7 @@ def migrate_remove_branch_switching(harness_dir: Path, dry_run: bool) -> dict[st
         else:
             dump_json(task_path, migrated)
         stats["task_json_changed"] += 1
-    if cleanup_session_context(session_context_path(harness_dir), dry_run):
-        stats["context_cleaned"] += 1
+    stats["files_removed"] += remove_session_state_files(harness_dir, dry_run)
     if remove_file(harness_dir / "branch-rollup.json", dry_run):
         stats["files_removed"] += 1
     if promote_claude_to_repo_root(harness_dir, dry_run):
@@ -656,8 +640,7 @@ def migrate_runtime_versioning(harness_dir: Path, dry_run: bool) -> dict[str, in
         else:
             dump_json(task_path, migrated)
         stats["task_json_changed"] += 1
-    if cleanup_session_context(session_context_path(harness_dir), dry_run):
-        stats["context_cleaned"] += 1
+    stats["files_removed"] += remove_session_state_files(harness_dir, dry_run)
     if promote_claude_to_repo_root(harness_dir, dry_run):
         stats["claude_promoted"] += 1
     layout = migrate_grouped_layout(harness_dir, dry_run)
@@ -835,6 +818,16 @@ def migrate_session_start_runtime_check_prompt(harness_dir: Path, dry_run: bool)
     return {"session_start_runtime_check_prompt": 0}
 
 
+def migrate_remove_session_state_files(harness_dir: Path, dry_run: bool) -> dict[str, int]:
+    """Remove disabled session context/boundary state files from the working tree."""
+    removed = remove_session_state_files(harness_dir, dry_run)
+    ignore_changed = ensure_edit_counts_gitignore(harness_dir.parent, dry_run)
+    return {
+        "session_state_files_removed": removed,
+        "session_state_gitignore": int(ignore_changed),
+    }
+
+
 def run_migration(step_name: str, harness_dir: Path, dry_run: bool) -> dict[str, int]:
     if step_name == "migrate_remove_branch_switching":
         return migrate_remove_branch_switching(harness_dir, dry_run)
@@ -860,6 +853,8 @@ def run_migration(step_name: str, harness_dir: Path, dry_run: bool) -> dict[str,
         return migrate_root_fast_route_prompt(harness_dir, dry_run)
     if step_name == "migrate_session_start_runtime_check_prompt":
         return migrate_session_start_runtime_check_prompt(harness_dir, dry_run)
+    if step_name == "migrate_remove_session_state_files":
+        return migrate_remove_session_state_files(harness_dir, dry_run)
     raise RuntimeError(f"未知迁移步骤：{step_name}")
 
 

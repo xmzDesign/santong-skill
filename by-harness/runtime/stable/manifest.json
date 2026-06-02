@@ -1,13 +1,13 @@
 {
   "skill": "by-harness",
   "channel": "stable",
-  "version": "2.6.10",
+  "version": "2.6.11",
   "min_compatible_version": "1.0.0",
   "files": [
     {
       "path": "scripts/session_close.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/scripts/session_close.py",
-      "sha256": "f1dbee148a3a9c3a42ef788c4f527d482638d02a646ae5ca7c1f2c3ee2ce890c"
+      "sha256": "8b0abfcb308527d999d365a254c94cc356bcc01989c03a435f712250f7cc06cd"
     },
     {
       "path": "scripts/quick_fix_classifier.py",
@@ -17,12 +17,12 @@
     {
       "path": "scripts/ensure_task_branch.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/scripts/ensure_task_branch.py",
-      "sha256": "8e2adaea6a61966e5c27ecbe2ebfdf2dc2ad6f472b52111f6851c78f6bb30c4d"
+      "sha256": "2db56f0686822954798e9a565b6d606bc6d977fa51a0e84f1f3f52c44c2e3374"
     },
     {
       "path": "scripts/task_switch.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/scripts/task_switch.py",
-      "sha256": "9a5ffe136e93ac371428058b1d6599f246b780d3a3e4dbb68d9f113fb3f198e1"
+      "sha256": "54afee4f866f057cb28e6a9584bfdb4e37067ce1febcdaaa8b77fe5e01f931d2"
     },
     {
       "path": "scripts/task_store.py",
@@ -32,7 +32,7 @@
     {
       "path": "scripts/update_runtime.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/scripts/update_runtime.py",
-      "sha256": "0ab8aa7f51be701cd7d1894a055ed170777757d5f3147e172802490a8f3671ec"
+      "sha256": "0b705320aeab96dab6fe50bd71de2a5279fcb1b82183c8ef814132725b2f48b0"
     },
     {
       "path": "scripts/agent_review.py",
@@ -62,7 +62,7 @@
     {
       "path": "scripts/init.sh",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/task/init.sh",
-      "sha256": "3afad0cabee3c40f55dda62189d79cf86a3d3f0f7b601032fc6fcbaf07770ab8"
+      "sha256": "bdbfb729f9681dec4aec549af8cbbe70485041ca2a66fa9080b27784211f9d88"
     },
     {
       "path": "scripts/upgrade_legacy_repo.py",
@@ -72,7 +72,7 @@
     {
       "path": "docs/TASK-HARNESS.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/task/TASK-HARNESS.md",
-      "sha256": "86d4ef73a47b3d8de9be3cd75ad97f31c5ef162dc6db0d04d54f9d31ddbe3ac3"
+      "sha256": "84dba022508ad8e7467ed18d539577f25ac672e5a703a1f9e3ea322ead7fc91b"
     },
     {
       "path": "docs/architecture.md",
@@ -137,14 +137,14 @@
     {
       "path": "root/AGENTS.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/AGENTS.md",
-      "sha256": "fba9f86c8051f7b3cc061ef912e09dc7ebab75c9ea0415bc71618c7a6db409eb",
+      "sha256": "fe3016e08265810541f5238dd90fa0770fa8f7e79c7e59fc238c566d62d362fa",
       "render_project_context": true,
       "merge_strategy": "markdown_block"
     },
     {
       "path": "root/CLAUDE.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/CLAUDE.md",
-      "sha256": "c105f88ce6b193b38712a32d88723507e47f742da0ea62816804ce783ab00261",
+      "sha256": "f4f11d5ea4fa87c854ad31a02d44b59f43e91d0bed0f13268eded78312aca6ac",
       "render_project_context": true,
       "merge_strategy": "markdown_block"
     },
@@ -162,7 +162,7 @@
     {
       "path": "root/.codex/hooks/context-injector.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/codex/hooks/context-injector.py",
-      "sha256": "cf37405c6a20e2e6b6536266bf1ba801a92b98250fef810f23dfaf455b2f87f3"
+      "sha256": "eaa7b12b7804b177ab1beb7cbddbe0f5f7e752a42a59267483a4b1c2d1dcba8d"
     },
     {
       "path": "root/.codex/hooks/loop-detector.py",
@@ -188,7 +188,7 @@
     {
       "path": "root/.claude/hooks/context-injector.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/hooks/context-injector.py",
-      "sha256": "cf37405c6a20e2e6b6536266bf1ba801a92b98250fef810f23dfaf455b2f87f3"
+      "sha256": "eaa7b12b7804b177ab1beb7cbddbe0f5f7e752a42a59267483a4b1c2d1dcba8d"
     },
     {
       "path": "root/.claude/hooks/loop-detector.py",

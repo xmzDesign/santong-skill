@@ -14,8 +14,6 @@ from typing import Any
 from task_store import display_label, feature_lookup_aliases, load_task_entries, normalize_lookup_value, write_feature_update
 
 HARNESS_DIR_NAME = ".harness"
-SESSION_MODE_SOFT = "soft_reset"
-SESSION_MODE_HARD = "hard_new_session"
 
 STOP_WORDS = {
     "处理",
@@ -134,51 +132,6 @@ def resolve_feature_file(workspace_dir: Path) -> tuple[Path, Path, dict[str, Any
     feature_file = resolve_bucket_feature_path(workspace_dir, rel_path)
     legacy_mirror = workspace_dir / "feature_list.json"
     return feature_file, legacy_mirror, index_data
-
-
-def normalize_session_mode(raw: str) -> str:
-    value = str(raw or "").strip().lower()
-    if value in {"hard_new_session", "hard", "new_session"}:
-        return SESSION_MODE_HARD
-    if value in {"soft_reset", "soft", "reset"}:
-        return SESSION_MODE_SOFT
-    return SESSION_MODE_SOFT
-
-
-def load_session_mode(workspace_dir: Path) -> str:
-    task_path = workspace_dir / "config" / "task.json"
-    if not task_path.exists():
-        task_path = workspace_dir / "task.json"
-    if not task_path.exists():
-        return SESSION_MODE_SOFT
-
-    try:
-        data = load_json(task_path)
-    except (json.JSONDecodeError, OSError, ValueError):
-        return SESSION_MODE_SOFT
-    harness = data.get("harness", {})
-    if not isinstance(harness, dict):
-        return SESSION_MODE_SOFT
-
-    session_control = harness.get("session_control", {})
-    if isinstance(session_control, dict) and session_control.get("mode"):
-        return normalize_session_mode(str(session_control.get("mode")))
-    return normalize_session_mode(str(harness.get("session_mode", "")))
-
-
-def load_session_boundary(workspace_dir: Path) -> dict[str, Any] | None:
-    path = workspace_dir / "config" / "session-boundary.json"
-    if not path.exists():
-        path = workspace_dir / "session-boundary.json"
-    if not path.exists():
-        return None
-    try:
-        data = load_json(path)
-    except (json.JSONDecodeError, OSError, ValueError):
-        return {"invalid": True}
-    if not isinstance(data, dict):
-        return {"invalid": True}
-    return data
 
 
 def to_priority(value: Any) -> int:
@@ -361,19 +314,6 @@ def main() -> int:
     args = parse_args()
     repo = Path(args.target_dir).resolve()
     workspace_dir = detect_workspace_dir(repo)
-
-    session_mode = load_session_mode(workspace_dir)
-    if session_mode == SESSION_MODE_HARD:
-        boundary = load_session_boundary(workspace_dir)
-        if boundary:
-            closed_id = str(boundary.get("closed_feature_id", "n/a"))
-            next_id = str(boundary.get("next_feature_id", "n/a"))
-            print(
-                "[task] blocked by session boundary: "
-                f"mode=hard_new_session closed_feature={closed_id} next_feature={next_id}"
-            )
-            print("[task] run `bash .harness/scripts/init.sh` in a NEW session before next feature.")
-            return 2
 
     try:
         entries = load_task_entries(workspace_dir)

@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import subprocess
 from pathlib import Path
 
@@ -27,25 +26,18 @@ def detect_workspace_dir(repo: Path) -> Path:
 
 
 def clear_session_markers(workspace: Path) -> None:
-    context_path = workspace / "config" / "session-context.json"
-    if not context_path.exists():
-        context_path = workspace / "session-context.json"
-    if not context_path.exists():
-        return
-    try:
-        data = json.loads(context_path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError, ValueError):
-        return
-    if not isinstance(data, dict):
-        return
-
-    changed = False
-    for key in ("reset_required", "review_pending"):
-        if bool(data.get(key)):
-            data[key] = False
-            changed = True
-    if changed:
-        context_path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    for path in (
+        workspace / "config" / "session-context.json",
+        workspace / "session-context.json",
+        workspace / "config" / "session-boundary.json",
+        workspace / "session-boundary.json",
+    ):
+        if not path.exists():
+            continue
+        try:
+            path.unlink()
+        except OSError:
+            pass
 
 
 def ensure_script_path(repo: Path, workspace: Path) -> Path | None:

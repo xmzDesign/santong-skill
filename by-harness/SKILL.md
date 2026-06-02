@@ -85,6 +85,7 @@ python3 .harness/scripts/update_runtime.py --target-dir . --check-remote
 - `.harness/task-harness/progress/YYYY-MM/*.md`：每次会话一个独立进度文件，避免多分支同时追加同一月度文件。
 - `.harness/task-harness/progress/latest.txt`：legacy 兼容快照，不作为权威进度源。
 - `.harness/task-harness/features/*.json`：只作为 v2/legacy bucket 读取兼容，不作为新任务默认写入目标。
+- `session-context.json` / `session-boundary.json` 已禁用：收口和续跑只依赖会话日志、任务状态和模型提示，不再写会引发分支冲突的会话运行态 JSON。
 
 `.harness/feature_list.json` 只用于 legacy 项目兼容：如果旧项目已经存在该文件，可以继续作为旧 active bucket 视图；新项目不要主动创建它。
 

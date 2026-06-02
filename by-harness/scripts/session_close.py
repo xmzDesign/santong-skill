@@ -716,53 +716,26 @@ def use_file_task_progress(workspace_dir: Path, entries) -> bool:
     return isinstance(index, dict) and str(index.get("mode", "")).strip() == "file_tasks"
 
 
-def bump_session_context(workspace_dir: Path, meta: dict, context_mode: str) -> tuple[Path, int]:
-    context_path = workspace_dir / "config" / "session-context.json"
-    if not context_path.exists():
-        legacy = workspace_dir / "session-context.json"
-        if legacy.exists():
-            context_path = legacy
-    epoch = 0
-    if context_path.exists():
+def session_state_paths(workspace_dir: Path) -> list[Path]:
+    return [
+        workspace_dir / "config" / "session-context.json",
+        workspace_dir / "session-context.json",
+        workspace_dir / "config" / "session-boundary.json",
+        workspace_dir / "session-boundary.json",
+    ]
+
+
+def remove_session_state_files(workspace_dir: Path) -> list[Path]:
+    removed: list[Path] = []
+    for path in session_state_paths(workspace_dir):
+        if not path.exists():
+            continue
         try:
-            existing = load_json(context_path)
-            epoch = int(existing.get("epoch", 0))
-        except (json.JSONDecodeError, OSError, ValueError, TypeError):
-            epoch = 0
-
-    epoch += 1
-    payload = {
-        "epoch": epoch,
-        "context_mode": context_mode,
-        "reset_required": context_mode == SESSION_MODE_SOFT,
-        "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "work_mode": meta.get("work_mode", "standard"),
-        "quick_fix_title": meta.get("quick_fix_title", ""),
-        "closed_feature_id": meta.get("closed_feature_id", ""),
-        "closed_feature_display": meta.get("closed_feature_display", ""),
-        "closed_feature_description": meta.get("closed_feature_description", ""),
-        "next_feature_id": meta.get("next_feature_id", ""),
-        "next_feature_display": meta.get("next_feature_display", ""),
-        "next_feature_description": meta.get("next_feature_description", ""),
-        "outcome": meta.get("outcome", ""),
-        "qa_gate_status": meta.get("qa_gate_status", ""),
-        "qa_gate_result": meta.get("qa_gate_result", ""),
-    }
-    dump_json(context_path, payload)
-    return context_path, epoch
-
-
-def write_hard_boundary(workspace_dir: Path, meta: dict, epoch: int) -> Path:
-    boundary_path = workspace_dir / "config" / "session-boundary.json"
-    if not boundary_path.exists():
-        legacy = workspace_dir / "session-boundary.json"
-        if legacy.exists():
-            boundary_path = legacy
-    payload = dict(meta)
-    payload["require_new_session"] = True
-    payload["epoch"] = epoch
-    dump_json(boundary_path, payload)
-    return boundary_path
+            path.unlink()
+            removed.append(path)
+        except OSError:
+            pass
+    return removed
 
 
 def main():
@@ -911,11 +884,7 @@ def main():
         fast_track=args.fast_track,
         quick_fix_title=quick_fix_title,
     )
-    context_path, epoch = bump_session_context(
-        workspace_dir=workspace_dir,
-        meta=meta,
-        context_mode=context_mode,
-    )
+    removed_state_files = remove_session_state_files(workspace_dir)
 
     log_action = "Wrote" if file_task_progress else "Appended"
     if args.quick_fix:
@@ -924,14 +893,14 @@ def main():
         print(f"Fast-track close: {quick_fix_title}")
     print(f"{log_action} session log: {session_log_path} (session #{session_no})")
     print(f"Context mode: {context_mode}")
-    print(f"Session context updated: {context_path} (epoch={epoch})")
+    print("Session state files disabled: no session-context.json or session-boundary.json written")
+    for removed in removed_state_files:
+        print(f"Removed legacy session state file: {removed}")
     print("Auto-continue command: python3 .harness/scripts/task_switch.py continue --target-dir .")
     if context_mode == SESSION_MODE_HARD:
-        boundary_path = write_hard_boundary(workspace_dir, meta, epoch)
-        print(f"Session boundary marker: {boundary_path}")
-        print("Session rotation required: start a NEW session before next feature.")
+        print("Session rotation recommended: start a NEW session before next feature.")
     else:
-        print("Soft reset activated: current session should treat previous feature context as stale.")
+        print("Soft reset advisory: current session should treat previous feature context as stale.")
     if next_feature:
         print(f"Next recommended task: {task_summary(next_feature)}")
     else:

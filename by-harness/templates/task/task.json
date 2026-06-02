@@ -27,8 +27,6 @@
       "runtime_version": ".harness/config/runtime-version.json",
       "update_policy": ".harness/config/update-policy.json",
       "update_state": ".harness/config/update-state.json",
-      "session_context": ".harness/config/session-context.json",
-      "session_boundary": ".harness/config/session-boundary.json",
       "init_script": ".harness/scripts/init.sh",
       "quick_fix_classifier": ".harness/scripts/quick_fix_classifier.py",
       "main_contract": "AGENTS.md",

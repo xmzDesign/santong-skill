@@ -185,60 +185,12 @@ case "$SESSION_MODE" in
 esac
 echo "  session_mode: $SESSION_MODE"
 
-if [ "$SESSION_MODE" = "hard_new_session" ]; then
-  BOUNDARY_FILE="$(resolve_file "config/session-boundary.json" "session-boundary.json")"
-  if [ -f "$BOUNDARY_FILE" ]; then
-    BOUNDARY_FILE="$BOUNDARY_FILE" python3 - <<'PY'
-import json
-import os
-from pathlib import Path
-
-path = Path(os.environ["BOUNDARY_FILE"])
-try:
-    data = json.loads(path.read_text(encoding="utf-8"))
-except Exception:
-    print("  检测到 session-boundary.json，但解析失败")
-else:
-    closed_id = data.get("closed_feature_display") or data.get("closed_feature_id", "n/a")
-    next_id = data.get("next_feature_display") or data.get("next_feature_id", "n/a")
-    print(f"  上一 feature 已收口: {closed_id}")
-    print(f"  下一任务建议: {next_id}")
-    print("  当前 init 视为新会话启动，将消费边界标记")
-PY
-    rm -f "$BOUNDARY_FILE"
-  else
-    echo "  无会话边界标记"
-  fi
-else
-  CONTEXT_FILE="$(resolve_file "config/session-context.json" "session-context.json")"
-  if [ -f "$CONTEXT_FILE" ]; then
-    CONTEXT_FILE="$CONTEXT_FILE" python3 - <<'PY'
-import json
-import os
-from pathlib import Path
-
-path = Path(os.environ["CONTEXT_FILE"])
-try:
-    data = json.loads(path.read_text(encoding="utf-8"))
-except Exception:
-    print("  检测到 session-context.json，但解析失败")
-else:
-    epoch = data.get("epoch", "n/a")
-    reset_required = bool(data.get("reset_required"))
-    closed_id = data.get("closed_feature_display") or data.get("closed_feature_id", "n/a")
-    print(f"  当前 context epoch: {epoch}")
-    print(f"  最近收口 feature: {closed_id}")
-    if reset_required:
-        data["reset_required"] = False
-        path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        print("  已消费 soft_reset 标记：后续按新任务上下文执行")
-    else:
-        print("  soft_reset 标记已消费，无需额外处理")
-PY
-  else
-    echo "  未发现 session-context.json（首次会话或旧版本项目）"
-  fi
-fi
+rm -f \
+  "$HARNESS_DIR/config/session-context.json" \
+  "$HARNESS_DIR/session-context.json" \
+  "$HARNESS_DIR/config/session-boundary.json" \
+  "$HARNESS_DIR/session-boundary.json"
+echo "  session-context/session-boundary 状态文件已禁用；如有旧文件已清理"
 
 echo ""
 echo "[7/8] 任务自动定位（当前分支）:"

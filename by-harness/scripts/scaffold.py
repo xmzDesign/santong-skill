@@ -17,12 +17,16 @@ from datetime import date
 from pathlib import Path
 
 HARNESS_DIR_NAME = ".harness"
-HARNESS_RUNTIME_VERSION = "2.6.10"
+HARNESS_RUNTIME_VERSION = "2.6.11"
 MANAGED_BLOCK_BEGIN = "<!-- BEGIN BY-HARNESS MANAGED BLOCK -->"
 MANAGED_BLOCK_END = "<!-- END BY-HARNESS MANAGED BLOCK -->"
 EDIT_COUNTS_IGNORE_PATTERNS = (
     ".codex/hooks/.edit-counts.json",
     ".claude/hooks/.edit-counts.json",
+    ".harness/config/session-context.json",
+    ".harness/session-context.json",
+    ".harness/config/session-boundary.json",
+    ".harness/session-boundary.json",
 )
 AGENT_DOC_ALIASES = {
     "AGENTS.md": ("AGENTS.md", "AGENT.md", "agents.md", "agent.md"),

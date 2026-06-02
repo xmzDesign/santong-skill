@@ -3,3 +3,7 @@
 # by-harness runtime state
 .codex/hooks/.edit-counts.json
 .claude/hooks/.edit-counts.json
+.harness/config/session-context.json
+.harness/session-context.json
+.harness/config/session-boundary.json
+.harness/session-boundary.json

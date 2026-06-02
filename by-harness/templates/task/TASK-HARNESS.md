@@ -110,8 +110,8 @@ python3 .harness/scripts/session_close.py \
 5. 提交 git commit（建议一个 feature 一个 commit）
 6. 输出下一步建议（下一个 feature 或阻塞处理方案）
 7. 根据 `.harness/config/task.json` 的 `harness.session_control.mode` 自动执行会话切换：
-   - `soft_reset`：继续当前会话时，必须按新 epoch 上下文处理下一 feature
-   - `hard_new_session`：必须新开会话后再开始下一 feature
+   - `soft_reset`：不写 session-context 状态文件；继续当前会话时，必须按会话日志和下一任务提示处理下一 feature
+   - `hard_new_session`：不写 session-boundary 状态文件；必须由模型按收口输出主动新开会话后再开始下一 feature
 8. 自动续跑下一个任务可执行：
    - `python3 .harness/scripts/task_switch.py continue --target-dir .`
    - 该命令会在当前分支自动定位下一个任务并更新状态（不切分支）

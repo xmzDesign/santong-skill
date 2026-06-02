@@ -404,44 +404,7 @@ def get_session_context_notice():
     cwd = Path.cwd()
     workspace = cwd / HARNESS_DIR_NAME if (cwd / HARNESS_DIR_NAME).exists() else cwd
     mode = get_session_mode(workspace)
-    context_path = workspace / "config" / "session-context.json"
-    if not context_path.exists():
-        context_path = workspace / "session-context.json"
-    boundary_path = workspace / "config" / "session-boundary.json"
-    if not boundary_path.exists():
-        boundary_path = workspace / "session-boundary.json"
-
-    if mode == SESSION_MODE_HARD and boundary_path.exists():
-        try:
-            data = json.loads(boundary_path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError, ValueError):
-            data = {}
-        closed_id = str(data.get("closed_feature_display") or data.get("closed_feature_id", "n/a"))
-        next_id = str(data.get("next_feature_display") or data.get("next_feature_id", "") or "n/a")
-        return (
-            "Session mode: hard_new_session. "
-            f"Boundary active (closed={closed_id}, next={next_id}). "
-            "Do not start next feature in this chat."
-        )
-
-    if mode == SESSION_MODE_SOFT and context_path.exists():
-        try:
-            data = json.loads(context_path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError, ValueError):
-            return "Session mode: soft_reset. Session context file exists but parse failed."
-        epoch = data.get("epoch", "n/a")
-        reset_required = bool(data.get("reset_required"))
-        closed_id = str(data.get("closed_feature_display") or data.get("closed_feature_id", "n/a"))
-        next_id = str(data.get("next_feature_display") or data.get("next_feature_id", "") or "n/a")
-        if reset_required:
-            return (
-                "Session mode: soft_reset. "
-                f"Context epoch switched to {epoch} after feature {closed_id}. "
-                f"Next feature hint: {next_id}. Ignore stale context from older feature turns."
-            )
-        return f"Session mode: soft_reset. Current context epoch={epoch}."
-
-    return f"Session mode: {mode}."
+    return f"Session mode: {mode}. Session state files are disabled; rely on session logs and task state."
 
 
 def main():
