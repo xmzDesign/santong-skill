@@ -2,6 +2,16 @@
 
 本项目采用 Harness Engineering 工作流。在 Codex 中，请将此文件视为 `Plan -> Build -> Verify` 的执行契约。
 
+## 会话启动门禁
+
+每个新会话开始、处理用户请求前，必须先执行一次运行时更新检查：
+
+```bash
+python3 .harness/scripts/update_runtime.py --target-dir . --check-remote
+```
+
+该命令受 `.harness/config/update-policy.json` 的 `check_interval_minutes` 限制，默认 12 小时内不会重复访问远程。若脚本不存在、网络失败或检查失败，只记录原因并继续当前任务；不要因为运行时检查失败阻断开发。
+
 ## 快速开始（Codex）
 
 可使用以下任一方式：

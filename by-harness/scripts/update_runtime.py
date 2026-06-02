@@ -37,7 +37,7 @@ LEGACY_TASK_FILE_NAME = "task.json"
 LEGACY_SESSION_CONTEXT_FILE_NAME = "session-context.json"
 LEGACY_SESSION_BOUNDARY_FILE_NAME = "session-boundary.json"
 LEGACY_TASK_CONTRACT_FILE_NAME = "TASK-HARNESS.md"
-LATEST_RUNTIME_VERSION = "2.6.9"
+LATEST_RUNTIME_VERSION = "2.6.10"
 DEFAULT_MANIFEST_URL = "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/runtime/stable/manifest.json"
 DEFAULT_TASK_GLOBS = ("task-harness/tasks/*.json", "task-harness/tasks/**/*.json")
 EDIT_COUNTS_IGNORE_PATTERNS = (
@@ -162,6 +162,7 @@ MIGRATIONS: dict[str, tuple[str, str]] = {
     "2.6.6": ("2.6.7", "migrate_session_close_runtime_check"),
     "2.6.7": ("2.6.8", "migrate_fast_track_runtime"),
     "2.6.8": ("2.6.9", "migrate_root_fast_route_prompt"),
+    "2.6.9": ("2.6.10", "migrate_session_start_runtime_check_prompt"),
 }
 
 
@@ -829,6 +830,11 @@ def migrate_root_fast_route_prompt(harness_dir: Path, dry_run: bool) -> dict[str
     return {"root_fast_route_prompt": 0}
 
 
+def migrate_session_start_runtime_check_prompt(harness_dir: Path, dry_run: bool) -> dict[str, int]:
+    """Version marker for session-start runtime check prompt shipped by manifest."""
+    return {"session_start_runtime_check_prompt": 0}
+
+
 def run_migration(step_name: str, harness_dir: Path, dry_run: bool) -> dict[str, int]:
     if step_name == "migrate_remove_branch_switching":
         return migrate_remove_branch_switching(harness_dir, dry_run)
@@ -852,6 +858,8 @@ def run_migration(step_name: str, harness_dir: Path, dry_run: bool) -> dict[str,
         return migrate_fast_track_runtime(harness_dir, dry_run)
     if step_name == "migrate_root_fast_route_prompt":
         return migrate_root_fast_route_prompt(harness_dir, dry_run)
+    if step_name == "migrate_session_start_runtime_check_prompt":
+        return migrate_session_start_runtime_check_prompt(harness_dir, dry_run)
     raise RuntimeError(f"未知迁移步骤：{step_name}")
 
 

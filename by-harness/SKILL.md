@@ -66,6 +66,14 @@ python3 {{SKILL_PATH}}/scripts/scaffold.py \
 bash .harness/scripts/init.sh
 ```
 
+项目根 `AGENTS.md` / `CLAUDE.md` 会要求每个新会话开始、处理用户请求前先运行：
+
+```bash
+python3 .harness/scripts/update_runtime.py --target-dir . --check-remote
+```
+
+该检查仍受 `.harness/config/update-policy.json` 的 `check_interval_minutes` 限制，默认 12 小时内不会重复访问远程；失败只记录原因，不阻断开发。
+
 不要在已有项目中默认使用 `--force`。只有用户明确要求覆盖时才使用。
 
 ## 3. 任务存储模型

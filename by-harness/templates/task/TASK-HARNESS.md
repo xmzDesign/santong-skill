@@ -36,6 +36,16 @@
 5. **fix**：若单元测试未通过，进入修复循环（最多 3 轮）
 6. **mark_pass**：单元测试通过、required QA Gate 通过、required Agent Review（如启用）无 accepted/actionable finding，且 `spec_path` / `contract_path` 文件真实存在后，才可将该 feature `passes=false -> true`
 
+## 会话启动更新检查
+
+每个新会话开始、处理用户请求前，必须先执行：
+
+```bash
+python3 .harness/scripts/update_runtime.py --target-dir . --check-remote
+```
+
+该命令仍受 `.harness/config/update-policy.json` 的 `check_interval_minutes` 限制，默认 12 小时内不会重复访问远程。脚本不存在、网络失败或检查失败时，只记录原因并继续当前任务，不阻断开发。
+
 ## Quick / Fast Track 分流（快速模式）
 
 明确、局部、可验证的改动可先进入快速分流，避免为小修复或中等局部改动生成完整 spec/contract。即使用户没有显式说 quick-fix 或 fast-track，只要是修复、调整、优化、补测试、改校验、改提示或处理报错这类自然语言改动，且没有显式指定 plan/build/qa/sprint，也必须先分类。进入前必须运行：

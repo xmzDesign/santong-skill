@@ -36,6 +36,7 @@
     },
     "rules": [
       "每个会话只做 1-2 个功能，不要贪多",
+      "每个新会话开始、处理用户请求前，先运行 python3 .harness/scripts/update_runtime.py --target-dir . --check-remote；该命令受 update-policy 的 check_interval_minutes 限制，失败只记录原因，不阻断开发",
       "开始前先运行 bash .harness/scripts/init.sh 了解当前状态（legacy 项目可用 bash .harness/init.sh）",
       "先读取 AGENTS.md（Harness 主闭环规则）",
       "再读取 .harness/docs/TASK-HARNESS.md（任务层规则）",
