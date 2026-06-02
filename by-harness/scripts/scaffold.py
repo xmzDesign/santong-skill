@@ -17,7 +17,7 @@ from datetime import date
 from pathlib import Path
 
 HARNESS_DIR_NAME = ".harness"
-HARNESS_RUNTIME_VERSION = "2.6.7"
+HARNESS_RUNTIME_VERSION = "2.6.9"
 MANAGED_BLOCK_BEGIN = "<!-- BEGIN BY-HARNESS MANAGED BLOCK -->"
 MANAGED_BLOCK_END = "<!-- END BY-HARNESS MANAGED BLOCK -->"
 EDIT_COUNTS_IGNORE_PATTERNS = (
@@ -447,7 +447,7 @@ def main():
     print("  3. 选择 passes=false 的 feature，执行 plan/build/qa 闭环")
     print(f"  4. 单元测试、required QA Gate 与 required Agent Review（如启用）通过且 spec/contract 已落盘后，才可更新 passes=true，并写入 {HARNESS_DIR_NAME}/task-harness/progress/YYYY-MM/*.md")
     print(f"  5. 会话结束执行：python3 {HARNESS_DIR_NAME}/scripts/session_close.py --target-dir . --feature-id <task-id> --outcome pass")
-    print(f"  6. 快速修复初判：python3 {HARNESS_DIR_NAME}/scripts/quick_fix_classifier.py --target-dir . --prompt '<bug 描述>'")
+    print(f"  6. 快速模式初判：python3 {HARNESS_DIR_NAME}/scripts/quick_fix_classifier.py --target-dir . --prompt '<改动描述>'")
     print(f"  7. Agent Review 收口：python3 {HARNESS_DIR_NAME}/scripts/agent_review.py --backend auto")
     print(f"  8. 自动续跑下个任务（当前分支）：python3 {HARNESS_DIR_NAME}/scripts/task_switch.py continue --target-dir .")
     print(f"  9. 配置并启用远程更新：编辑 {HARNESS_DIR_NAME}/config/update-policy.json")

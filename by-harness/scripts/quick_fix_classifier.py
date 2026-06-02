@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Classify whether a request can start in by-harness quick-fix mode."""
+"""Classify whether a request can start in by-harness quick or fast-track mode."""
 
 from __future__ import annotations
 
@@ -12,6 +12,10 @@ from pathlib import Path
 from typing import Any
 
 HARNESS_DIR_NAME = ".harness"
+QUICK_MAX_FILES = 5
+QUICK_MAX_LINES = 200
+FAST_MAX_FILES = 8
+FAST_MAX_LINES = 400
 
 QUICK_TERMS = (
     "bug",
@@ -40,6 +44,34 @@ QUICK_TERMS = (
     "测试失败",
     "日志",
     "错误提示",
+)
+
+FAST_TRACK_TERMS = (
+    "adjust",
+    "change",
+    "tweak",
+    "small feature",
+    "local logic",
+    "validation",
+    "mapper",
+    "mapping",
+    "transform",
+    "converter",
+    "internal config",
+    "ui interaction",
+    "test coverage",
+    "error handling",
+    "局部",
+    "调整",
+    "改一下",
+    "优化",
+    "校验",
+    "转换",
+    "映射",
+    "内部配置",
+    "前端交互",
+    "补测试",
+    "异常处理",
 )
 
 HIGH_RISK_TERMS = (
@@ -92,14 +124,18 @@ HIGH_RISK_PATH_PATTERNS = (
     r"(^|/)(auth|security|permission|rbac)(/|$)",
     r"(^|/)(billing|payment|quota|rate[-_]?limit)(/|$)",
     r"(^|/)(dto|api|proto|openapi|graphql)(/|$)",
-    r"(^|/)(config|configs|setting|settings)(/|$)",
     r"(^|/)(redis|cache|mq|kafka|transaction|lock)(/|$)",
     r"\.(sql|proto)$",
 )
 
+IGNORED_CHANGED_PATH_PATTERNS = (
+    r"(^|/)__pycache__(/|$)",
+    r"\.pyc$",
+)
+
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Classify by-harness quick-fix suitability.")
+    parser = argparse.ArgumentParser(description="Classify by-harness quick/fast-track suitability.")
     parser.add_argument("--target-dir", default=".", help="repository or .harness directory")
     parser.add_argument("--prompt", default="", help="user request or bug description")
     parser.add_argument(
@@ -114,8 +150,10 @@ def parse_args() -> argparse.Namespace:
         default=[],
         help="changed file path; repeat to override/augment git status discovery",
     )
-    parser.add_argument("--max-files", type=int, default=3, help="quick-fix changed-file threshold")
-    parser.add_argument("--max-lines", type=int, default=100, help="quick-fix changed-line threshold")
+    parser.add_argument("--max-files", type=int, default=QUICK_MAX_FILES, help="quick-fix changed-file threshold")
+    parser.add_argument("--max-lines", type=int, default=QUICK_MAX_LINES, help="quick-fix changed-line threshold")
+    parser.add_argument("--fast-max-files", type=int, default=FAST_MAX_FILES, help="fast-track changed-file threshold")
+    parser.add_argument("--fast-max-lines", type=int, default=FAST_MAX_LINES, help="fast-track changed-line threshold")
     parser.add_argument("--json", action="store_true", help="print machine-readable JSON only")
     return parser.parse_args()
 
@@ -196,11 +234,20 @@ def path_risk_hits(files: list[str]) -> list[str]:
     return hits
 
 
+def is_ignored_changed_path(path: str) -> bool:
+    normalized = path.replace("\\", "/").lower()
+    return any(re.search(pattern, normalized) for pattern in IGNORED_CHANGED_PATH_PATTERNS)
+
+
 def classify(args: argparse.Namespace) -> dict[str, Any]:
     root = repo_root_from_target(Path(args.target_dir))
     explicit_files = [str(item).strip() for item in args.changed_file if str(item).strip()]
     discovered_files = git_changed_files(root) if args.phase == "post-diff" else []
-    changed_files = sorted(dict.fromkeys([*discovered_files, *explicit_files]))
+    changed_files = sorted(
+        item
+        for item in dict.fromkeys([*discovered_files, *explicit_files])
+        if not is_ignored_changed_path(item)
+    )
     stats = git_numstat(root) if args.phase == "post-diff" else {
         "additions": 0,
         "deletions": 0,
@@ -209,44 +256,59 @@ def classify(args: argparse.Namespace) -> dict[str, Any]:
     stats["files"] = len(changed_files)
 
     quick_hits = term_hits(args.prompt, QUICK_TERMS)
+    fast_hits = term_hits(args.prompt, FAST_TRACK_TERMS)
     risk_flags = []
     risk_flags.extend(f"prompt:{term}" for term in term_hits(args.prompt, HIGH_RISK_TERMS))
     risk_flags.extend(f"path:{item}" for item in path_risk_hits(changed_files))
 
-    if len(changed_files) > args.max_files:
-        risk_flags.append(f"diff:file_count>{args.max_files}")
-    if args.phase == "post-diff" and stats["total_lines"] > args.max_lines:
-        risk_flags.append(f"diff:changed_lines>{args.max_lines}")
+    if len(changed_files) > args.fast_max_files:
+        risk_flags.append(f"diff:file_count>{args.fast_max_files}")
+    if args.phase == "post-diff" and stats["total_lines"] > args.fast_max_lines:
+        risk_flags.append(f"diff:changed_lines>{args.fast_max_lines}")
+
+    quick_within_threshold = (
+        len(changed_files) <= args.max_files
+        and (args.phase != "post-diff" or stats["total_lines"] <= args.max_lines)
+    )
+    fast_within_threshold = (
+        len(changed_files) <= args.fast_max_files
+        and (args.phase != "post-diff" or stats["total_lines"] <= args.fast_max_lines)
+    )
 
     signals = []
     if quick_hits:
         signals.extend(f"prompt:{term}" for term in quick_hits)
+    if fast_hits:
+        signals.extend(f"prompt-fast:{term}" for term in fast_hits)
     if changed_files:
         signals.append("git:changed_files_present")
     if 0 < len(changed_files) <= args.max_files:
-        signals.append("diff:file_count_within_threshold")
+        signals.append("diff:file_count_within_quick_threshold")
+    elif 0 < len(changed_files) <= args.fast_max_files:
+        signals.append("diff:file_count_within_fast_threshold")
     if stats["total_lines"] and stats["total_lines"] <= args.max_lines:
-        signals.append("diff:changed_lines_within_threshold")
+        signals.append("diff:changed_lines_within_quick_threshold")
+    elif stats["total_lines"] and stats["total_lines"] <= args.fast_max_lines:
+        signals.append("diff:changed_lines_within_fast_threshold")
 
     if risk_flags:
         confidence = "low"
         recommended = "standard_feature"
-    elif quick_hits and (not changed_files or len(changed_files) <= args.max_files):
-        if args.phase == "post-diff" and stats["total_lines"] > args.max_lines:
-            confidence = "low"
-            recommended = "standard_feature"
-        else:
-            confidence = "high"
-            recommended = "quick_fix"
-    elif changed_files and len(changed_files) <= args.max_files and stats["total_lines"] <= args.max_lines:
+    elif quick_hits and quick_within_threshold:
+        confidence = "high"
+        recommended = "quick_fix"
+    elif (quick_hits or fast_hits) and fast_within_threshold:
+        confidence = "high"
+        recommended = "fast_track"
+    elif changed_files and fast_within_threshold:
         confidence = "medium"
-        recommended = "standard_feature"
+        recommended = "fast_track"
     else:
         confidence = "low"
         recommended = "standard_feature"
 
     return {
-        "schema": "by-harness.quick_fix.classifier.v1",
+        "schema": "by-harness.quick_fix.classifier.v2",
         "target_dir": str(root),
         "phase": args.phase,
         "confidence": confidence,
@@ -256,14 +318,16 @@ def classify(args: argparse.Namespace) -> dict[str, Any]:
         "changed_files": changed_files,
         "changed_stats": stats,
         "thresholds": {
-            "max_files": args.max_files,
-            "max_lines": args.max_lines,
+            "quick_max_files": args.max_files,
+            "quick_max_lines": args.max_lines,
+            "fast_max_files": args.fast_max_files,
+            "fast_max_lines": args.fast_max_lines,
         },
     }
 
 
 def print_human(result: dict[str, Any]) -> None:
-    print("Quick-fix classification")
+    print("Quick/fast-track classification")
     print(f"  recommended_mode: {result['recommended_mode']}")
     print(f"  confidence: {result['confidence']}")
     print(f"  phase: {result['phase']}")
@@ -284,6 +348,8 @@ def print_human(result: dict[str, Any]) -> None:
             print(f"    - {item}")
     if result["recommended_mode"] == "quick_fix":
         print("  next: run the targeted fix, verify it, then close with session_close.py --quick-fix")
+    elif result["recommended_mode"] == "fast_track":
+        print("  next: run the local scoped change, verify it, post-diff check, then close with session_close.py --fast-track")
     elif result["confidence"] == "medium":
         print("  next: use standard by-harness plan/contract/build/qa flow; record assumptions instead of asking for clarification")
     else:

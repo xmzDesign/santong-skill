@@ -36,24 +36,25 @@
 5. **fix**：若单元测试未通过，进入修复循环（最多 3 轮）
 6. **mark_pass**：单元测试通过、required QA Gate 通过、required Agent Review（如启用）无 accepted/actionable finding，且 `spec_path` / `contract_path` 文件真实存在后，才可将该 feature `passes=false -> true`
 
-## Quick Fix 分流（明确小 bug）
+## Quick / Fast Track 分流（快速模式）
 
-明确、小、可验证的 bug 可先进入 quick-fix 分流，避免为一次小修复生成完整 spec/contract。进入前必须运行：
+明确、局部、可验证的改动可先进入快速分流，避免为小修复或中等局部改动生成完整 spec/contract。即使用户没有显式说 quick-fix 或 fast-track，只要是修复、调整、优化、补测试、改校验、改提示或处理报错这类自然语言改动，且没有显式指定 plan/build/qa/sprint，也必须先分类。进入前必须运行：
 
 ```bash
-python3 .harness/scripts/quick_fix_classifier.py --target-dir . --prompt "<bug 描述>"
+python3 .harness/scripts/quick_fix_classifier.py --target-dir . --prompt "<改动描述>"
 ```
 
 分流结果按以下规则执行：
 - `recommended_mode=quick_fix` 且 `confidence=high`：可直接轻量修复。
-- `confidence=medium`：不再询问用户，自动回到标准 feature 闭环。
+- `recommended_mode=fast_track` 且 `confidence=high|medium`：可走快速通道完成局部中等改动。
 - `recommended_mode=standard_feature` 或 `confidence=low`：必须回到标准闭环。
 
-quick-fix 的强制边界：
-- 修改不超过 3 个文件，post-diff 变更不超过 100 行。
+快速模式的强制边界：
+- quick-fix：明确小 bug、小文案、空值保护、日志、错误提示、单测/编译小修；修改不超过 5 个文件，post-diff 变更不超过 200 行。
+- fast-track：局部业务逻辑调整、内部校验规则、Mapper/转换逻辑、非公共配置、小型前端交互、测试补齐、局部异常处理；修改不超过 8 个文件，post-diff 变更不超过 400 行。
 - 不涉及 DB migration、权限/安全、计费、限流、缓存一致性、事务、幂等、外部 API、公共 DTO 或接口契约。
 - 修改后必须运行 `quick_fix_classifier.py --phase post-diff` 复核；一旦出现 risk_flags 或超阈值，立即补 spec/contract 并升级标准流程。
-- quick-fix 只写进度日志，不允许把 feature `passes` 改成 `true`。
+- quick-fix/fast-track 只写进度日志，不允许把 feature `passes` 改成 `true`。
 
 quick-fix 收口命令：
 
@@ -66,14 +67,25 @@ python3 .harness/scripts/session_close.py \
   --note "<修改文件、验证命令和结果>"
 ```
 
-日志写入 `.harness/task-harness/progress/YYYY-MM/<timestamp>-quickfix-<slug>.md`。如果 quick-fix 关联已有任务，可追加 `--feature-id <task-id>` 作为引用，但仍不得绕过该任务的 spec/contract/QA Gate 门禁。
+fast-track 收口命令：
+
+```bash
+python3 .harness/scripts/session_close.py \
+  --target-dir . \
+  --fast-track \
+  --title "<改动标题>" \
+  --outcome pass \
+  --note "<范围、风险判断、验证命令和结果>"
+```
+
+日志写入 `.harness/task-harness/progress/YYYY-MM/<timestamp>-quickfix-<slug>.md` 或 `<timestamp>-fasttrack-<slug>.md`。如果快速模式关联已有任务，可追加 `--feature-id <task-id>` 作为引用，但仍不得绕过该任务的 spec/contract/QA Gate 门禁。
 
 ## 任务清单修改规则
 
 - 对应单任务 JSON（例如 `.harness/task-harness/tasks/<batch-id>/<display-id>-<title>-<hash>.json`）中仅允许修改：
   - `status: todo|doing|done`
   - `passes: false -> true`（单元测试通过、required QA Gate 通过、required Agent Review 如启用已通过且 spec/contract 已落盘后）
-- quick-fix 收口不得修改任务定义或 `passes`；若要完成任务，必须回到标准闭环
+- quick-fix/fast-track 收口不得修改任务定义或 `passes`；若要完成任务，必须回到标准闭环
 - 若存在 `.harness/feature_list.json` 或 `.harness/task-harness/features/*.json`，其为 legacy 兼容数据，常规不直接手改
 - 禁止修改：
   - `id/category/priority/description/file/spec_path/contract_path/qa_report_path/steps/verification`
@@ -84,7 +96,7 @@ python3 .harness/scripts/session_close.py \
 1. 写入进度日志（`.harness/task-harness/progress/YYYY-MM/<timestamp>-<feature-id>.md`）
 2. 若该 feature 单元测试通过、required QA Gate 通过、required Agent Review（如启用）通过且 `spec_path` / `contract_path` 文件存在：更新 `passes=true`
 3. 运行会话收口脚本：`python3 .harness/scripts/session_close.py --target-dir . --feature-id <task-id> --outcome pass|fail|blocked|in-progress`
-4. quick-fix 可改用：`python3 .harness/scripts/session_close.py --target-dir . --quick-fix --title "<bug 标题>" --outcome pass --note "<验证命令和结果>"`
+4. quick-fix/fast-track 可改用：`python3 .harness/scripts/session_close.py --target-dir . --quick-fix|--fast-track --title "<标题>" --outcome pass --note "<范围、风险判断、验证命令和结果>"`
 5. 提交 git commit（建议一个 feature 一个 commit）
 6. 输出下一步建议（下一个 feature 或阻塞处理方案）
 7. 根据 `.harness/config/task.json` 的 `harness.session_control.mode` 自动执行会话切换：
@@ -110,6 +122,7 @@ python3 .harness/scripts/session_close.py \
 - `执行 20260508T153012Z-feat-login-rate-limit-a3f9c2：严格按 read task -> plan -> build -> qa gate -> fix -> mark_pass`
 - `按 harness 工作流修复指定任务 ID，最多 3 轮；若单测仍失败则继续下一个任务`
 - `quick-fix 修复一个明确小 bug，先分类，修完后 quick close`
+- `fast-track 做一个局部校验规则调整，先分类，修完后 fast close`
 
 ## 项目信息
 

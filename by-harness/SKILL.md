@@ -25,7 +25,7 @@ read task -> plan -> build -> qa -> fix -> mark_pass -> session_close
 | 初始化 harness | “初始化”“用 by-harness 初始化这个仓库” | 运行 `scripts/scaffold.py`，再提示执行或执行 `.harness/scripts/init.sh` |
 | 持续拆任务 | “持续拆任务”“拆 5 个任务”“把这个主题拆一下” | 运行 `scripts/decompose_tasks.py`，默认新增 v3 单任务文件 |
 | 执行某个任务 | “执行某个任务 ID”“继续当前任务” | 读取任务，按 plan/build/qa/agent-review/fix/mark_pass 闭环推进 |
-| 快速修复小 bug | “quick fix”“修一个明确小 bug”“这个报错小修一下” | 先运行 `.harness/scripts/quick_fix_classifier.py`；high 走 quick-fix，medium/low 自动回到标准闭环 |
+| 快速模式 | “quick fix”“fast-track”“修一下报错”“局部调整校验规则” | 未显式指定 plan/build/qa/sprint 的自然语言改动也先运行 `.harness/scripts/quick_fix_classifier.py`；high quick-fix 走轻量修复，high/medium fast-track 走局部快速通道，low 自动回到标准闭环 |
 | 会话收口 | “收口”“保存进度”“session_close” | 运行 `.harness/scripts/session_close.py` |
 | 自动续跑 | “继续下个任务”“自动续跑” | 运行 `.harness/scripts/task_switch.py continue --target-dir .` |
 | 老仓库升级 | “升级 harness”“同步 runtime”“更新脚手架” | 运行 `scripts/update_runtime.py`，优先备份与版本化迁移 |
@@ -137,26 +137,26 @@ python3 {{SKILL_PATH}}/scripts/rebalance_tasks.py --target-dir "<项目目录>"
 
 如果 3 轮后单元测试仍失败，保持 `passes=false`，记录原因、已尝试修复和下一步建议。
 
-## 6. Quick Fix 分流
+## 6. Quick / Fast Track 分流
 
-当用户请求的是明确小 bug 修复时，先运行分类器，而不是直接进入完整 feature 闭环：
+当用户请求的是明确、局部、可验证改动时，先运行分类器，而不是直接进入完整 feature 闭环。即使用户没有显式说 quick-fix 或 fast-track，只要请求是修复、调整、优化、补测试、改校验、改提示或处理报错这类自然语言改动，且没有显式指定 plan/build/qa/sprint，也必须先分类：
 
 ```bash
 python3 .harness/scripts/quick_fix_classifier.py \
   --target-dir . \
-  --prompt "<用户原始 bug 描述>"
+  --prompt "<用户原始改动描述>"
 ```
 
 分类器输出 `confidence`、`recommended_mode`、`risk_flags`、`changed_files` 和 diff 统计：
 
 - `confidence=high` 且 `recommended_mode=quick_fix`：可进入 quick-fix。
-- `confidence=medium`：不再询问用户，自动回到标准闭环。
+- `recommended_mode=fast_track` 且 `confidence=high|medium`：可进入 fast-track。
 - `confidence=low` 或 `recommended_mode=standard_feature`：必须走标准 `read task -> plan -> build -> qa -> fix -> mark_pass`。
 
-Quick-fix 允许范围：
+Quick/Fast Track 允许范围：
 
-- 明确报错、空值保护、typo、日志级别、错误提示、单测/编译小修复。
-- 预计修改不超过 3 个文件，post-diff 变更不超过 100 行。
+- quick-fix：明确报错、空值保护、typo、日志级别、错误提示、单测/编译小修复；预计不超过 5 个文件、post-diff 不超过 200 行。
+- fast-track：局部业务逻辑调整、内部校验规则、Mapper/转换逻辑、非公共配置、小型前端交互、测试补齐、局部异常处理；预计不超过 8 个文件、post-diff 不超过 400 行。
 - 不涉及 DB migration、权限/安全、计费、限流、缓存一致性、事务、幂等、外部 API、公共 DTO 或接口契约。
 
 执行后必须复核：
@@ -168,7 +168,7 @@ python3 .harness/scripts/quick_fix_classifier.py \
   --prompt "<用户原始 bug 描述>"
 ```
 
-如果 post-diff 出现 `risk_flags`、超过文件/行数阈值，或验证失败原因不明确，立即补 spec/contract 并升级到标准闭环。Quick-fix 只写进度日志，不得修改任务定义或把 feature `passes` 置为 `true`。
+如果 post-diff 出现 `risk_flags`、超过文件/行数阈值，或验证失败原因不明确，立即补 spec/contract 并升级到标准闭环。quick-fix/fast-track 只写进度日志，不得修改任务定义或把 feature `passes` 置为 `true`。
 
 Quick-fix 收口使用：
 
@@ -182,6 +182,17 @@ python3 .harness/scripts/session_close.py \
 ```
 
 如 quick-fix 关联已有任务，可追加 `--feature-id "<task-id>"` 作为日志引用，但仍不能绕过该任务的 spec/contract/QA Gate 门禁。
+
+Fast-track 收口使用：
+
+```bash
+python3 .harness/scripts/session_close.py \
+  --target-dir . \
+  --fast-track \
+  --title "<改动标题>" \
+  --outcome pass \
+  --note "<范围、风险判断、验证命令和结果>"
+```
 
 ## 7. 会话收口与续跑
 
@@ -201,7 +212,7 @@ python3 .harness/scripts/session_close.py \
 收口脚本会：
 
 - 写入 `.harness/task-harness/progress/YYYY-MM/<timestamp>-<task-id>.md` 独立进度日志。
-- quick-fix 写入 `.harness/task-harness/progress/YYYY-MM/<timestamp>-quickfix-<slug>.md`，并在日志中记录 `work_mode=quick_fix`。
+- quick-fix/fast-track 写入 `.harness/task-harness/progress/YYYY-MM/<timestamp>-quickfix|fasttrack-<slug>.md`，并在日志中记录 `work_mode=quick_fix|fast_track`。
 - legacy 项目兼容刷新 `.harness/task-harness/progress/latest.txt`。
 - 输出下一任务建议。
 
@@ -260,7 +271,7 @@ Java 后端采用分片 Java 总门禁，并融合真实项目验证过的落地
 - `AGENTS.md` 是主契约，定义 Plan / Build / Verify / Fix。
 - `.harness/docs/TASK-HARNESS.md` 是任务层契约，不得覆盖主契约。
 - 常规任务只更新对应单任务 JSON 的状态、进度和闭环工件，不随意改任务结构。
-- quick-fix 只用于小修复旁路日志，不得作为 feature 完成依据；需要完成 feature 时必须回到标准门禁。
+- quick-fix/fast-track 只用于快速旁路日志，不得作为 feature 完成依据；需要完成 feature 时必须回到标准门禁。
 - 规划方案必须遵守“如无必要，勿增实体”；历史项目小改动默认按最小成本实施，新增实体/表/DTO/Service/配置项必须写明必要性、替代方案、迁移成本和回滚影响。
 - 单元测试通过、required QA Gate 通过、required Agent Review（如启用）通过且 spec/contract 已落盘后才可 `passes=true`；advisory/manual QA 与 Agent Review 结果必须记录。
 - 任何已标记 `passes=true` 的 feature，如果缺少 `spec_path` 或 `contract_path` 对应文件，pre-completion hook 必须阻断完成。
@@ -272,7 +283,7 @@ Java 后端采用分片 Java 总门禁，并融合真实项目验证过的落地
 
 执行完成后，用简短结构回报：
 
-- 做了什么：初始化、拆任务、执行任务、quick-fix、收口或升级。
+- 做了什么：初始化、拆任务、执行任务、quick-fix/fast-track、收口或升级。
 - 改了哪里：列出关键文件或目录。
 - 验证结果：脚本输出、测试、dry-run 或未验证原因。
 - 下一步：给出一个最合适的命令或任务 ID。
@@ -283,6 +294,7 @@ Java 后端采用分片 Java 总门禁，并融合真实项目验证过的落地
 - `持续拆任务 主题：支付链路稳定性，拆 5 个`
 - `执行 20260508T153012Z-feat-login-rate-limit-a3f9c2，严格按 read task -> plan -> build -> qa -> fix -> mark_pass`
 - `quick-fix 修复一个明确小 bug，先分类，修完后 quick close`
+- `fast-track 调整一个局部校验规则，先分类，修完后 fast close`
 - `把当前会话收口，记录 qa 分数和下一步`
 - `升级这个项目里的 harness runtime`
 - `这个 Java 功能按 Java 总门禁检查 Service、金额、Redis、分页和配置`
