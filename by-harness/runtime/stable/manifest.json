@@ -1,7 +1,7 @@
 {
   "skill": "by-harness",
   "channel": "stable",
-  "version": "2.6.12",
+  "version": "2.6.13",
   "min_compatible_version": "1.0.0",
   "files": [
     {
@@ -32,7 +32,7 @@
     {
       "path": "scripts/update_runtime.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/scripts/update_runtime.py",
-      "sha256": "0b705320aeab96dab6fe50bd71de2a5279fcb1b82183c8ef814132725b2f48b0"
+      "sha256": "174b2a023201552f9615c597e0fc38bf6d53443c7031d20518473faa34e794cf"
     },
     {
       "path": "scripts/agent_review.py",

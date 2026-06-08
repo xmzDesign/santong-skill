@@ -33,7 +33,7 @@ LEGACY_POLICY_FILE_NAME = "update-policy.json"
 LEGACY_STATE_FILE_NAME = "update-state.json"
 LEGACY_TASK_FILE_NAME = "task.json"
 LEGACY_TASK_CONTRACT_FILE_NAME = "TASK-HARNESS.md"
-LATEST_RUNTIME_VERSION = "2.6.11"
+LATEST_RUNTIME_VERSION = "2.6.13"
 DEFAULT_MANIFEST_URL = "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/runtime/stable/manifest.json"
 DEFAULT_TASK_GLOBS = ("task-harness/tasks/*.json", "task-harness/tasks/**/*.json")
 EDIT_COUNTS_IGNORE_PATTERNS = (
@@ -164,6 +164,8 @@ MIGRATIONS: dict[str, tuple[str, str]] = {
     "2.6.8": ("2.6.9", "migrate_root_fast_route_prompt"),
     "2.6.9": ("2.6.10", "migrate_session_start_runtime_check_prompt"),
     "2.6.10": ("2.6.11", "migrate_remove_session_state_files"),
+    "2.6.11": ("2.6.12", "migrate_stop_hook_runtime"),
+    "2.6.12": ("2.6.13", "migrate_no_backup_update_runtime"),
 }
 
 
@@ -186,11 +188,12 @@ def parse_args() -> argparse.Namespace:
         help="覆盖 policy 的 manifest_url（便于测试或临时切换源）",
     )
     parser.add_argument("--dry-run", action="store_true", help="只打印变更计划，不落盘")
-    parser.add_argument("--no-backup", action="store_true", help="跳过升级前备份")
+    parser.add_argument("--backup", action="store_true", help="升级前显式创建备份文件（默认不创建）")
+    parser.add_argument("--no-backup", action="store_true", help="兼容旧参数；默认已不创建备份")
     parser.add_argument(
         "--backup-dir",
         default="",
-        help="自定义备份目录（默认 .harness/backups/update-YYYYMMDD-HHMMSS）",
+        help="自定义备份目录（仅 --backup 时生效，默认 .harness/backups/update-YYYYMMDD-HHMMSS）",
     )
     return parser.parse_args()
 
@@ -828,6 +831,16 @@ def migrate_remove_session_state_files(harness_dir: Path, dry_run: bool) -> dict
     }
 
 
+def migrate_stop_hook_runtime(harness_dir: Path, dry_run: bool) -> dict[str, int]:
+    """记录 Stop hook 运行时文件已通过 manifest 下发。"""
+    return {"stop_hook_runtime": 0}
+
+
+def migrate_no_backup_update_runtime(harness_dir: Path, dry_run: bool) -> dict[str, int]:
+    """记录更新脚本已改为默认不创建备份文件。"""
+    return {"no_backup_update_runtime": 0}
+
+
 def run_migration(step_name: str, harness_dir: Path, dry_run: bool) -> dict[str, int]:
     if step_name == "migrate_remove_branch_switching":
         return migrate_remove_branch_switching(harness_dir, dry_run)
@@ -855,6 +868,10 @@ def run_migration(step_name: str, harness_dir: Path, dry_run: bool) -> dict[str,
         return migrate_session_start_runtime_check_prompt(harness_dir, dry_run)
     if step_name == "migrate_remove_session_state_files":
         return migrate_remove_session_state_files(harness_dir, dry_run)
+    if step_name == "migrate_stop_hook_runtime":
+        return migrate_stop_hook_runtime(harness_dir, dry_run)
+    if step_name == "migrate_no_backup_update_runtime":
+        return migrate_no_backup_update_runtime(harness_dir, dry_run)
     raise RuntimeError(f"未知迁移步骤：{step_name}")
 
 
@@ -1217,20 +1234,20 @@ def apply_remote_update(
     target_version: str,
     files: list[dict[str, Any]],
     backup_root: Path,
-    no_backup: bool,
+    create_backup: bool,
     dry_run: bool,
     timeout_seconds: int,
     require_checksum: bool,
 ) -> tuple[int, dict[str, int]]:
-    backup_targets = [task_json_path(harness_dir), runtime_version_path(harness_dir), repo_root / "CLAUDE.md"]
-    backup_targets.extend(harness_dir / "scripts" / name for name in RUNTIME_SCRIPT_NAMES)
-    backup_targets.extend(secure_target_path(harness_dir, repo_root, rel) for rel in RUNTIME_DOC_REL_PATHS)
-    if no_backup:
-        print("Backup: skipped (--no-backup)")
-        backed_up = 0
-    else:
+    if create_backup:
+        backup_targets = [task_json_path(harness_dir), runtime_version_path(harness_dir), repo_root / "CLAUDE.md"]
+        backup_targets.extend(harness_dir / "scripts" / name for name in RUNTIME_SCRIPT_NAMES)
+        backup_targets.extend(secure_target_path(harness_dir, repo_root, rel) for rel in RUNTIME_DOC_REL_PATHS)
         backed_up = backup_files(harness_dir, backup_root, backup_targets, dry_run)
         print(f"Backup files: {backed_up} -> {backup_root}")
+    else:
+        print("Backup: skipped (default; use --backup to create one)")
+        backed_up = 0
 
     rendered = materialize_manifest_files(
         harness_dir,
@@ -1261,17 +1278,17 @@ def fallback_local_update(
     repo_root: Path,
     current_version: str,
     backup_root: Path,
-    no_backup: bool,
+    create_backup: bool,
     dry_run: bool,
 ) -> None:
-    backup_targets = [task_json_path(harness_dir), runtime_version_path(harness_dir), repo_root / "CLAUDE.md"]
-    backup_targets.extend(harness_dir / "scripts" / name for name in RUNTIME_SCRIPT_NAMES)
-    backup_targets.extend(secure_target_path(harness_dir, repo_root, rel) for rel in RUNTIME_DOC_REL_PATHS)
-    if no_backup:
-        print("Backup: skipped (--no-backup)")
-    else:
+    if create_backup:
+        backup_targets = [task_json_path(harness_dir), runtime_version_path(harness_dir), repo_root / "CLAUDE.md"]
+        backup_targets.extend(harness_dir / "scripts" / name for name in RUNTIME_SCRIPT_NAMES)
+        backup_targets.extend(secure_target_path(harness_dir, repo_root, rel) for rel in RUNTIME_DOC_REL_PATHS)
         backed_up = backup_files(harness_dir, backup_root, backup_targets, dry_run)
         print(f"Backup files: {backed_up} -> {backup_root}")
+    else:
+        print("Backup: skipped (default; use --backup to create one)")
 
     stats = run_known_migrations(harness_dir, current_version, LATEST_RUNTIME_VERSION, dry_run)
     layout = migrate_grouped_layout(harness_dir, dry_run)
@@ -1351,7 +1368,8 @@ def main() -> int:
         print("Warning: 仅可执行有限本地迁移；建议尽快配置远程更新源。")
     timeout_seconds = max(1, to_int(policy.get("request_timeout_seconds", 10), 10))
     require_checksum = bool(policy.get("require_checksum", True))
-    backup_root = resolve_backup_root(args, harness_dir)
+    create_backup = bool(args.backup and not args.no_backup)
+    backup_root = resolve_backup_root(args, harness_dir) if create_backup else harness_dir / "backups"
 
     # Automatic periodic mode: check policy + interval; auto-apply by bump rules.
     if args.check_remote:
@@ -1418,7 +1436,7 @@ def main() -> int:
                 target_version=target_version,
                 files=files,
                 backup_root=backup_root,
-                no_backup=args.no_backup,
+                create_backup=create_backup,
                 dry_run=args.dry_run,
                 timeout_seconds=timeout_seconds,
                 require_checksum=require_checksum,
@@ -1466,7 +1484,7 @@ def main() -> int:
                     target_version=target_version,
                     files=files,
                     backup_root=backup_root,
-                    no_backup=args.no_backup,
+                    create_backup=create_backup,
                     dry_run=args.dry_run,
                     timeout_seconds=timeout_seconds,
                     require_checksum=require_checksum,
@@ -1500,7 +1518,7 @@ def main() -> int:
         repo_root=repo_root,
         current_version=current_version,
         backup_root=backup_root,
-        no_backup=args.no_backup,
+        create_backup=create_backup,
         dry_run=args.dry_run,
     )
     print("Done.")

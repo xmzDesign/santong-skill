@@ -28,7 +28,7 @@ read task -> plan -> build -> qa -> fix -> mark_pass -> session_close
 | 快速模式 | “quick fix”“fast-track”“修一下报错”“局部调整校验规则” | 未显式指定 plan/build/qa/sprint 的自然语言改动也先运行 `.harness/scripts/quick_fix_classifier.py`；high quick-fix 走轻量修复，high/medium fast-track 走局部快速通道，low 自动回到标准闭环 |
 | 会话收口 | “收口”“保存进度”“session_close” | 运行 `.harness/scripts/session_close.py` |
 | 自动续跑 | “继续下个任务”“自动续跑” | 运行 `.harness/scripts/task_switch.py continue --target-dir .` |
-| 老仓库升级 | “升级 harness”“同步 runtime”“更新脚手架” | 运行 `scripts/update_runtime.py`，优先备份与版本化迁移 |
+| 老仓库升级 | “升级 harness”“同步 runtime”“更新脚手架” | 运行 `scripts/update_runtime.py`，默认不创建备份文件；确需回滚快照时显式传 `--backup` |
 | Java 规范约束 | “Java 硬规则”“Service 接口实现”“MapStruct/金额/Redis/分页规则” | 先读 `.harness/docs/java-dev-conventions.md` 入口，再按触发维度读取 `.harness/docs/java/rules/` 分片规则 |
 | 分布式 Java 约束 | “分布式编码规范”“幂等/重试/锁/事务/消息/缓存一致性” | 使用 `.harness/docs/java/rules/distributed-java-gate.md` 约束 spec/contract/build/qa |
 
