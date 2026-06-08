@@ -171,8 +171,20 @@ AMOUNT_NAME_RE = re.compile(
     r"(amount|amt|price|fee|cost|money|balance|payment|refund|charge|pay|total|subtotal|discount)",
     re.IGNORECASE,
 )
+# 金额误报抑制:出现这些比例/计数/版本等数值语义词时,不按金额字段处理(如 amountRatio、totalCount)
+NON_MONEY_HINT_RE = re.compile(
+    r"(ratio|rate|percent|scale|factor|weight|score|avg|average|count|qty|quantity|index|version|level|priority)",
+    re.IGNORECASE,
+)
+# 仅匹配完整的密钥语义词,带边界且不含裸 ak/sk/token,避免 tokenType、makeFlag 这类误报
 SECRET_NAME_RE = re.compile(
-    r"(password|passwd|secret|token|access_?key|secret_?key|private_?key|ak|sk)",
+    r"\b("
+    r"password|passwd|"
+    r"secret(?:_?key)?|"
+    r"access_?key|private_?key|api_?key|app_?key|"
+    r"access_?token|refresh_?token|client_?secret|api_?secret|app_?secret|"
+    r"credential"
+    r")\b",
     re.IGNORECASE,
 )
 SENSITIVE_LOG_RE = re.compile(
@@ -325,7 +337,7 @@ def scan_java(root: Path, path: Path, findings: list[Finding]):
             add_finding(findings, "fail", "MAP_RESULT_OUTPUT", root, path, line_no, "数据库查询结果禁止直接暴露 HashMap/Hashtable；请定义 DO/DTO 和 resultMap。", line)
         if entry_file and re.search(r"\b[A-Z]\w*AppServiceImpl\b", line):
             add_finding(findings, "fail", "JAVA_ENTRY_DEPENDS_ON_IMPL", root, path, line_no, "Controller / Provider / Job Handler 必须依赖 AppService 接口，禁止依赖 AppServiceImpl。", line)
-        if re.search(r"\b(?:double|Double|float|Float)\s+\w*", line) and AMOUNT_NAME_RE.search(line):
+        if re.search(r"\b(?:double|Double|float|Float)\s+\w*", line) and AMOUNT_NAME_RE.search(line) and not NON_MONEY_HINT_RE.search(line):
             add_finding(findings, "fail", "JAVA_MONEY_FLOAT", root, path, line_no, "金额字段必须使用 BigDecimal，禁止 double/float。", line)
         if SECRET_NAME_RE.search(line) and re.search(r"=\s*\"[^\"]{4,}\"", line):
             add_finding(findings, "fail", "JAVA_HARDCODED_SECRET", root, path, line_no, "疑似密钥配置必须外置并可审计，禁止硬编码字面量。", line)

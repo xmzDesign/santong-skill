@@ -1,7 +1,7 @@
 {
   "skill": "by-harness",
   "channel": "stable",
-  "version": "2.6.11",
+  "version": "2.6.12",
   "min_compatible_version": "1.0.0",
   "files": [
     {
@@ -12,7 +12,7 @@
     {
       "path": "scripts/quick_fix_classifier.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/scripts/quick_fix_classifier.py",
-      "sha256": "df42239371c4ff481192adea521b712ba4652dac8ab4ad06d934407b15d35181"
+      "sha256": "d7ab67bd54ac863817598ae33c0c29c12a8ad4893ba1cfe994829194e08209ff"
     },
     {
       "path": "scripts/ensure_task_branch.py",
@@ -172,17 +172,17 @@
     {
       "path": "root/.codex/hooks/pre-completion-check.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/codex/hooks/pre-completion-check.py",
-      "sha256": "35555f16898249b10988533f8723c577ff44e6b9f605a29beb2e6d3fd29d2afd"
+      "sha256": "8a009837a86e1b54791bafafdcc2a960aa7fae198882fa51456527b6c8dd66b0"
     },
     {
       "path": "root/.codex/hooks/convention-check.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/codex/hooks/convention-check.py",
-      "sha256": "487fdc569c4117cb8025bf01fd9e163d99f12a1a68be79185c7351ea33979ac6"
+      "sha256": "6db33aaa23051e9bffbfb66903cd8f91c2e738006951a827e7dd1e21af7d7161"
     },
     {
       "path": "root/.claude/settings.json",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/settings.json",
-      "sha256": "939d241ac76fa8184f43cea84a2e6caa3a4e3206b36a2b47dafb214cff2a789f",
+      "sha256": "8a4fba43bfff49dbd4299a75b53c4990707576d074d0e7cf8e107e98a9de7ef0",
       "merge_strategy": "claude_settings"
     },
     {
@@ -198,12 +198,12 @@
     {
       "path": "root/.claude/hooks/pre-completion-check.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/hooks/pre-completion-check.py",
-      "sha256": "35555f16898249b10988533f8723c577ff44e6b9f605a29beb2e6d3fd29d2afd"
+      "sha256": "8a009837a86e1b54791bafafdcc2a960aa7fae198882fa51456527b6c8dd66b0"
     },
     {
       "path": "root/.claude/hooks/convention-check.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/hooks/convention-check.py",
-      "sha256": "3987abf4609faedda50dbe65cbca9e90f09dfcc5ba31f313adf42d9b7b451e9e"
+      "sha256": "9f9232d484169c19803fea54fe9ab0c7cb326e9acbb0aef9a1299475b855e68c"
     },
     {
       "path": "root/.claude/agents/planner.md",

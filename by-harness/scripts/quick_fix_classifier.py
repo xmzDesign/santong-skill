@@ -8,6 +8,7 @@ import json
 import re
 import subprocess
 import sys
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -218,9 +219,30 @@ def normalize_text(value: str) -> str:
     return str(value or "").strip().lower()
 
 
+@lru_cache(maxsize=None)
+def _term_pattern(term: str):
+    """为风险/信号词预编译匹配正则。
+
+    ASCII 词使用单词边界,避免 auth 命中 author、lock 命中 blocking 这类子串假阳性;
+    含中文等非 ASCII 字符的词没有词边界概念,返回 None 退回子串匹配。
+    """
+    if any(ord(ch) > 127 for ch in term):
+        return None
+    return re.compile(rf"(?<![a-z0-9]){re.escape(term)}(?![a-z0-9])")
+
+
+def term_in_text(term: str, haystack: str) -> bool:
+    """判断风险词是否真正出现在文本中:ASCII 词按整词匹配,中文词按子串匹配。"""
+    pattern = _term_pattern(term)
+    if pattern is None:
+        return term in haystack
+    return bool(pattern.search(haystack))
+
+
 def term_hits(text: str, terms: tuple[str, ...]) -> list[str]:
+    """返回文本命中的风险/信号词;ASCII 词走单词边界,杜绝子串误命中。"""
     haystack = normalize_text(text)
-    return [term for term in terms if term in haystack]
+    return [term for term in terms if term_in_text(term, haystack)]
 
 
 def path_risk_hits(files: list[str]) -> list[str]:

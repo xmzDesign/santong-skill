@@ -267,16 +267,19 @@ def main():
         emit({})
         return
 
-    # Check if this is a TaskUpdate with status=completed
+    # 触发条件:TaskUpdate 标记 completed,或会话 Stop 收口前;两者都要校验完成门禁。
+    # Stop 事件没有 tool_name,必须单独识别,否则挂在 Stop 上的检查会直接空跑。
+    hook_event = input_data.get('hook_event_name', '')
     tool_name = input_data.get('tool_name', '')
     tool_input = input_data.get('tool_input', {})
 
-    if tool_name != 'TaskUpdate':
-        emit({})
-        return
-
-    status = tool_input.get('status', '')
-    if status != 'completed':
+    task_completed = (
+        tool_name == 'TaskUpdate'
+        and isinstance(tool_input, dict)
+        and tool_input.get('status') == 'completed'
+    )
+    stop_event = hook_event == 'Stop'
+    if not (task_completed or stop_event):
         emit({})
         return
 
