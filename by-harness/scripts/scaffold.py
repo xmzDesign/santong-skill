@@ -10,6 +10,7 @@ No runtime dependency on other skills.
 """
 
 import argparse
+import importlib.util
 import json
 import shutil
 import sys
@@ -17,7 +18,9 @@ from datetime import date
 from pathlib import Path
 
 HARNESS_DIR_NAME = ".harness"
-HARNESS_RUNTIME_VERSION = "2.6.13"
+RUNTIME_CACHE_DIR_NAME = "runtime-cache"
+CACHE_SKILL_NAME = "by-harness"
+HARNESS_RUNTIME_VERSION = "2.6.14"
 MANAGED_BLOCK_BEGIN = "<!-- BEGIN BY-HARNESS MANAGED BLOCK -->"
 MANAGED_BLOCK_END = "<!-- END BY-HARNESS MANAGED BLOCK -->"
 EDIT_COUNTS_IGNORE_PATTERNS = (
@@ -27,11 +30,36 @@ EDIT_COUNTS_IGNORE_PATTERNS = (
     ".harness/session-context.json",
     ".harness/config/session-boundary.json",
     ".harness/session-boundary.json",
+    ".harness/runtime-cache/",
 )
 AGENT_DOC_ALIASES = {
     "AGENTS.md": ("AGENTS.md", "AGENT.md", "agents.md", "agent.md"),
     "CLAUDE.md": ("CLAUDE.md", "claude.md"),
 }
+RUNTIME_SCRIPT_NAMES = (
+    "session_close.py",
+    "quick_fix_classifier.py",
+    "ensure_task_branch.py",
+    "task_switch.py",
+    "task_store.py",
+    "update_runtime.py",
+    "upgrade_legacy_repo.py",
+    "agent_review.py",
+    "qa_runner.py",
+    "qa_report.py",
+    "qa_gate.py",
+    "testcontainers_doctor.py",
+)
+RUNTIME_HOOK_FILES = (
+    ("harness/hooks/loop-detector.py", "root/.claude/hooks/loop-detector.py", ".claude/hooks/loop-detector.py"),
+    ("harness/hooks/pre-completion-check.py", "root/.claude/hooks/pre-completion-check.py", ".claude/hooks/pre-completion-check.py"),
+    ("harness/hooks/context-injector.py", "root/.claude/hooks/context-injector.py", ".claude/hooks/context-injector.py"),
+    ("harness/hooks/convention-check.py", "root/.claude/hooks/convention-check.py", ".claude/hooks/convention-check.py"),
+    ("harness/codex/hooks/context-injector.py", "root/.codex/hooks/context-injector.py", ".codex/hooks/context-injector.py"),
+    ("harness/codex/hooks/loop-detector.py", "root/.codex/hooks/loop-detector.py", ".codex/hooks/loop-detector.py"),
+    ("harness/codex/hooks/pre-completion-check.py", "root/.codex/hooks/pre-completion-check.py", ".codex/hooks/pre-completion-check.py"),
+    ("harness/codex/hooks/convention-check.py", "root/.codex/hooks/convention-check.py", ".codex/hooks/convention-check.py"),
+)
 JAVA_RULE_FILES = (
     "docs/java/rules/00-core.md",
     "docs/java/rules/java-ddd.md",
@@ -59,6 +87,76 @@ def parse_args():
 
 def get_skill_dir() -> Path:
     return Path(__file__).resolve().parent.parent
+
+
+def load_python_runtime_wrapper(skill_dir: Path) -> str:
+    """从 update_runtime.py 读取稳定 runtime wrapper 模板。"""
+    update_runtime_path = skill_dir / "scripts" / "update_runtime.py"
+    spec = importlib.util.spec_from_file_location("by_harness_update_runtime", update_runtime_path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"Cannot load update_runtime module: {update_runtime_path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    wrapper = getattr(module, "PYTHON_RUNTIME_WRAPPER", "")
+    if not wrapper:
+        raise RuntimeError("update_runtime.py missing PYTHON_RUNTIME_WRAPPER")
+    return str(wrapper)
+
+
+def runtime_cache_file_path(harness_dir: Path, version: str, rel_path: str) -> Path:
+    """把 manifest path 映射到初始化项目的 ignored runtime cache。"""
+    raw = str(rel_path or "").strip().replace("\\", "/")
+    if not raw or raw.startswith("/") or ".." in raw.split("/"):
+        raise RuntimeError(f"invalid runtime cache path: {rel_path}")
+    return harness_dir / RUNTIME_CACHE_DIR_NAME / CACHE_SKILL_NAME / version / raw
+
+
+def write_if_changed(path: Path, data: bytes, executable: bool = False) -> bool:
+    """仅在内容变化时写文件,减少重复触碰工作区。"""
+    if path.exists() and path.read_bytes() == data:
+        return False
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(data)
+    if executable:
+        path.chmod(path.stat().st_mode | 0o755)
+    return True
+
+
+def seed_runtime_cache_file(harness_dir: Path, rel_path: str, source_path: Path) -> bool:
+    """把真实 runtime 文件预热到 ignored cache 中。"""
+    target = runtime_cache_file_path(harness_dir, HARNESS_RUNTIME_VERSION, rel_path)
+    return write_if_changed(target, source_path.read_bytes(), executable=source_path.suffix in {".py", ".sh"})
+
+
+def install_python_runtime_wrapper(target_path: Path, wrapper: str) -> bool:
+    """在项目 tracked 位置安装稳定 Python wrapper。"""
+    return write_if_changed(target_path, wrapper.encode("utf-8"), executable=True)
+
+
+def seed_external_runtime_cache(skill_dir: Path, target_dir: Path, harness_dir: Path) -> tuple[int, int]:
+    """预热 ignored runtime cache,并把 tracked Python runtime 文件替换为稳定 wrapper。"""
+    wrapper = load_python_runtime_wrapper(skill_dir)
+    cached = 0
+    wrappers = 0
+    for script_name in RUNTIME_SCRIPT_NAMES:
+        source = skill_dir / "scripts" / script_name
+        if not source.exists():
+            continue
+        rel_path = f"scripts/{script_name}"
+        if seed_runtime_cache_file(harness_dir, rel_path, source):
+            cached += 1
+        if install_python_runtime_wrapper(harness_dir / "scripts" / script_name, wrapper):
+            wrappers += 1
+
+    for template_rel, manifest_path, target_rel in RUNTIME_HOOK_FILES:
+        source = skill_dir / "templates" / template_rel
+        if not source.exists():
+            continue
+        if seed_runtime_cache_file(harness_dir, manifest_path, source):
+            cached += 1
+        if install_python_runtime_wrapper(target_dir / target_rel, wrapper):
+            wrappers += 1
+    return cached, wrappers
 
 
 def substitute(template: str, args) -> str:
@@ -407,21 +505,8 @@ def main():
         else:
             skipped += 1
 
-    # Ship runtime helpers into initialized project
-    for runtime_script in (
-        "session_close.py",
-        "quick_fix_classifier.py",
-        "ensure_task_branch.py",
-        "task_switch.py",
-        "task_store.py",
-        "update_runtime.py",
-        "upgrade_legacy_repo.py",
-        "agent_review.py",
-        "qa_runner.py",
-        "qa_report.py",
-        "qa_gate.py",
-        "testcontainers_doctor.py",
-    ):
+    # Ship runtime helpers once, then replace tracked Python files with stable wrappers.
+    for runtime_script in RUNTIME_SCRIPT_NAMES:
         if ship_runtime_script(skill_dir, harness_dir, runtime_script, args):
             created += 1
         else:
@@ -435,6 +520,9 @@ def main():
 
     merge_settings(target_dir, templates_harness / "settings.json")
     merge_codex_hooks(target_dir, templates_harness / "codex" / "hooks.json")
+    cached, wrappers = seed_external_runtime_cache(skill_dir, target_dir, harness_dir)
+    print(f"  CACHE: {cached} runtime files")
+    print(f"  WRAP: {wrappers} runtime entrypoints")
     if ensure_edit_counts_gitignore(target_dir):
         created += 1
 

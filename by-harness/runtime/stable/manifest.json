@@ -1,7 +1,7 @@
 {
   "skill": "by-harness",
   "channel": "stable",
-  "version": "2.6.13",
+  "version": "2.6.14",
   "min_compatible_version": "1.0.0",
   "files": [
     {
@@ -32,7 +32,7 @@
     {
       "path": "scripts/update_runtime.py",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/scripts/update_runtime.py",
-      "sha256": "174b2a023201552f9615c597e0fc38bf6d53443c7031d20518473faa34e794cf"
+      "sha256": "78e62d915622abf5cf9c6a8df5e2e7f3318520e827c027b55c4cdeeb5f825c08"
     },
     {
       "path": "scripts/agent_review.py",
@@ -137,14 +137,14 @@
     {
       "path": "root/AGENTS.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/AGENTS.md",
-      "sha256": "fe3016e08265810541f5238dd90fa0770fa8f7e79c7e59fc238c566d62d362fa",
+      "sha256": "6643393d0cbbe218ea7e301dc99bc0fb829e9257c989cc52536c464aca2fa778",
       "render_project_context": true,
       "merge_strategy": "markdown_block"
     },
     {
       "path": "root/CLAUDE.md",
       "url": "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/templates/harness/CLAUDE.md",
-      "sha256": "f4f11d5ea4fa87c854ad31a02d44b59f43e91d0bed0f13268eded78312aca6ac",
+      "sha256": "4aa1d528bf232a018198e3050125a4cdc28abc3a2d35de296bcc2604a8c078a1",
       "render_project_context": true,
       "merge_strategy": "markdown_block"
     },

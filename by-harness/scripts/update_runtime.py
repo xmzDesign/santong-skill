@@ -2,7 +2,8 @@
 """Versioned runtime updater for by-harness projects.
 
 This updater supports:
-1) Runtime version tracking via `.harness/config/runtime-version.json`
+1) Runtime version tracking via ignored `.harness/runtime-cache/runtime-version.json`
+   with `.harness/config/runtime-version.json` as the tracked bootstrap version
 2) Periodic remote manifest checks
 3) Auto-apply based on update policy
 4) Incremental migrations by local version chain
@@ -22,6 +23,8 @@ from pathlib import Path
 from typing import Any
 
 HARNESS_DIR_NAME = ".harness"
+RUNTIME_CACHE_DIR_NAME = "runtime-cache"
+CACHE_SKILL_NAME = "by-harness"
 VERSION_FILE_NAME = "config/runtime-version.json"
 POLICY_FILE_NAME = "config/update-policy.json"
 STATE_FILE_NAME = "config/update-state.json"
@@ -33,7 +36,7 @@ LEGACY_POLICY_FILE_NAME = "update-policy.json"
 LEGACY_STATE_FILE_NAME = "update-state.json"
 LEGACY_TASK_FILE_NAME = "task.json"
 LEGACY_TASK_CONTRACT_FILE_NAME = "TASK-HARNESS.md"
-LATEST_RUNTIME_VERSION = "2.6.13"
+LATEST_RUNTIME_VERSION = "2.6.14"
 DEFAULT_MANIFEST_URL = "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/runtime/stable/manifest.json"
 DEFAULT_TASK_GLOBS = ("task-harness/tasks/*.json", "task-harness/tasks/**/*.json")
 EDIT_COUNTS_IGNORE_PATTERNS = (
@@ -43,6 +46,7 @@ EDIT_COUNTS_IGNORE_PATTERNS = (
     ".harness/session-context.json",
     ".harness/config/session-boundary.json",
     ".harness/session-boundary.json",
+    ".harness/runtime-cache/",
 )
 RUNTIME_SCRIPT_NAMES = (
     "init.sh",
@@ -166,7 +170,190 @@ MIGRATIONS: dict[str, tuple[str, str]] = {
     "2.6.10": ("2.6.11", "migrate_remove_session_state_files"),
     "2.6.11": ("2.6.12", "migrate_stop_hook_runtime"),
     "2.6.12": ("2.6.13", "migrate_no_backup_update_runtime"),
+    "2.6.13": ("2.6.14", "migrate_external_runtime_cache"),
 }
+
+PYTHON_RUNTIME_WRAPPER = """#!/usr/bin/env python3
+\"\"\"Stable by-harness runtime wrapper.
+
+The project keeps this small wrapper under version control. The real runtime
+file is loaded from .harness/runtime-cache, which is ignored by Git so routine
+runtime updates do not create feature-branch conflicts.
+\"\"\"
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import sys
+import urllib.request
+from pathlib import Path
+
+HARNESS_DIR_NAME = ".harness"
+CACHE_SKILL_NAME = "by-harness"
+DEFAULT_MANIFEST_URL = "https://raw.githubusercontent.com/xmzDesign/santong-skill/main/by-harness/runtime/stable/manifest.json"
+
+
+def find_repo_root(start: Path) -> Path:
+    \"\"\"定位包含 .harness 的项目根目录。\"\"\"
+    for current in (start, *start.parents):
+        if (current / HARNESS_DIR_NAME).exists():
+            return current
+    return start
+
+
+def relative_to(path: Path, base: Path) -> str | None:
+    \"\"\"返回 path 相对 base 的 POSIX 路径,无法相对时返回 None。\"\"\"
+    try:
+        return path.relative_to(base).as_posix()
+    except ValueError:
+        return None
+
+
+def manifest_path_for_wrapper(repo_root: Path, wrapper_path: Path) -> str:
+    \"\"\"把 wrapper 文件位置映射回 manifest 中的 runtime path。\"\"\"
+    harness_dir = repo_root / HARNESS_DIR_NAME
+    rel = relative_to(wrapper_path, harness_dir / "scripts")
+    if rel:
+        return f"scripts/{rel}"
+    rel = relative_to(wrapper_path, repo_root / ".codex" / "hooks")
+    if rel:
+        return f"root/.codex/hooks/{rel}"
+    rel = relative_to(wrapper_path, repo_root / ".claude" / "hooks")
+    if rel:
+        return f"root/.claude/hooks/{rel}"
+    raise RuntimeError(f"unsupported by-harness wrapper path: {wrapper_path}")
+
+
+def load_json(path: Path) -> dict:
+    \"\"\"读取 JSON object,失败时返回空对象。\"\"\"
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, json.JSONDecodeError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def load_policy(harness_dir: Path) -> dict:
+    \"\"\"读取 update policy,用于找到远程 manifest 地址。\"\"\"
+    policy = load_json(harness_dir / "config" / "update-policy.json")
+    return policy if policy else {"manifest_url": DEFAULT_MANIFEST_URL, "request_timeout_seconds": 30}
+
+
+def cache_root(harness_dir: Path) -> Path:
+    \"\"\"返回 by-harness runtime cache 根目录。\"\"\"
+    return harness_dir / "runtime-cache" / CACHE_SKILL_NAME
+
+
+def cache_state_path(harness_dir: Path) -> Path:
+    \"\"\"返回 runtime cache 当前版本状态文件。\"\"\"
+    return harness_dir / "runtime-cache" / "runtime-version.json"
+
+
+def candidate_versions(harness_dir: Path) -> list[str]:
+    \"\"\"返回可尝试的本地 cache 版本,优先使用状态文件和 tracked 版本文件。\"\"\"
+    versions: list[str] = []
+    for path in (cache_state_path(harness_dir), harness_dir / "config" / "runtime-version.json"):
+        version = str(load_json(path).get("runtime_version", "")).strip()
+        if version and version not in versions:
+            versions.append(version)
+    root = cache_root(harness_dir)
+    if root.exists():
+        for child in sorted(root.iterdir(), reverse=True):
+            if child.is_dir() and child.name not in versions:
+                versions.append(child.name)
+    return versions
+
+
+def cache_file(harness_dir: Path, version: str, manifest_path: str) -> Path:
+    \"\"\"返回 manifest path 对应的 cache 文件路径。\"\"\"
+    return cache_root(harness_dir) / version / manifest_path
+
+
+def fetch_bytes(url: str, timeout_seconds: int) -> bytes:
+    \"\"\"下载远程内容。\"\"\"
+    req = urllib.request.Request(url, headers={"User-Agent": "by-harness-runtime-wrapper/1.0"})
+    with urllib.request.urlopen(req, timeout=timeout_seconds) as resp:
+        return resp.read()
+
+
+def fetch_manifest(policy: dict) -> dict:
+    \"\"\"读取远程 manifest。\"\"\"
+    manifest_url = str(policy.get("manifest_url") or DEFAULT_MANIFEST_URL).strip()
+    timeout_seconds = int(policy.get("request_timeout_seconds") or 30)
+    data = json.loads(fetch_bytes(manifest_url, timeout_seconds).decode("utf-8"))
+    if not isinstance(data, dict):
+        raise RuntimeError("by-harness manifest must be a JSON object")
+    return data
+
+
+def find_manifest_item(manifest: dict, manifest_path: str) -> dict:
+    \"\"\"从 manifest 中找到当前 wrapper 对应的 runtime 文件条目。\"\"\"
+    for item in manifest.get("files", []):
+        if isinstance(item, dict) and str(item.get("path", "")).strip() == manifest_path:
+            return item
+    raise RuntimeError(f"runtime file not found in manifest: {manifest_path}")
+
+
+def write_cache_state(harness_dir: Path, version: str) -> None:
+    \"\"\"记录本地 cache 已准备好的 runtime 版本。\"\"\"
+    path = cache_state_path(harness_dir)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(
+            {"skill": CACHE_SKILL_NAME, "runtime_version": version, "updated_by": "runtime-wrapper"},
+            ensure_ascii=False,
+            indent=2,
+        )
+        + "\\n",
+        encoding="utf-8",
+    )
+
+
+def ensure_cached_runtime(repo_root: Path, wrapper_path: Path) -> Path:
+    \"\"\"确保真实 runtime 文件存在于 cache 中,必要时按 manifest 下载。\"\"\"
+    harness_dir = repo_root / HARNESS_DIR_NAME
+    manifest_path = manifest_path_for_wrapper(repo_root, wrapper_path)
+    for version in candidate_versions(harness_dir):
+        target = cache_file(harness_dir, version, manifest_path)
+        if target.exists():
+            return target
+
+    policy = load_policy(harness_dir)
+    manifest = fetch_manifest(policy)
+    version = str(manifest.get("version", "")).strip()
+    if not version:
+        raise RuntimeError("by-harness manifest missing version")
+    item = find_manifest_item(manifest, manifest_path)
+    url = str(item.get("url", "")).strip()
+    if not url:
+        raise RuntimeError(f"runtime manifest item missing url: {manifest_path}")
+    timeout_seconds = int(policy.get("request_timeout_seconds") or 30)
+    data = fetch_bytes(url, timeout_seconds)
+    expected = str(item.get("sha256", "")).strip().lower()
+    if expected and hashlib.sha256(data).hexdigest() != expected:
+        raise RuntimeError(f"runtime sha256 mismatch: {manifest_path}")
+    target = cache_file(harness_dir, version, manifest_path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(data)
+    target.chmod(target.stat().st_mode | 0o755)
+    write_cache_state(harness_dir, version)
+    return target
+
+
+def main() -> int:
+    \"\"\"加载真实 runtime 文件并保持原始命令参数继续执行。\"\"\"
+    wrapper_path = Path(__file__).resolve()
+    repo_root = find_repo_root(wrapper_path.parent)
+    target = ensure_cached_runtime(repo_root, wrapper_path)
+    os.execv(sys.executable, [sys.executable, str(target), *sys.argv[1:]])
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+"""
 
 
 def parse_args() -> argparse.Namespace:
@@ -409,7 +596,102 @@ def runtime_version_path(harness_dir: Path) -> Path:
     return resolve_preferred_path(harness_dir, VERSION_FILE_NAME, LEGACY_VERSION_FILE_NAME)
 
 
+def runtime_cache_root(harness_dir: Path) -> Path:
+    """返回 by-harness runtime cache 根目录。"""
+    return harness_dir / RUNTIME_CACHE_DIR_NAME / CACHE_SKILL_NAME
+
+
+def runtime_cache_state_path(harness_dir: Path) -> Path:
+    """返回 runtime cache 当前版本状态文件。"""
+    return harness_dir / RUNTIME_CACHE_DIR_NAME / "runtime-version.json"
+
+
+def runtime_cache_file_path(harness_dir: Path, version: str, rel_path: str) -> Path:
+    """把 manifest path 映射到被 gitignore 的 cache 文件路径。"""
+    raw = str(rel_path or "").strip().replace("\\", "/")
+    if not raw or raw.startswith("/") or ".." in raw.split("/"):
+        raise RuntimeError(f"invalid runtime cache path: {rel_path}")
+    return runtime_cache_root(harness_dir) / version / raw
+
+
+def write_runtime_cache_version(harness_dir: Path, version: str, dry_run: bool, updated_by: str) -> bool:
+    """把远程 runtime 版本写入 ignored cache state,避免业务分支修改 tracked 版本文件。"""
+    path = runtime_cache_state_path(harness_dir)
+    if path.exists():
+        try:
+            current = load_json(path)
+            if str(current.get("runtime_version", "")).strip() == version:
+                return False
+        except (json.JSONDecodeError, OSError, ValueError):
+            pass
+
+    payload = {
+        "skill": "by-harness",
+        "runtime_version": version,
+        "updated_at": now_iso(),
+        "updated_by": updated_by,
+    }
+    if dry_run:
+        print(f"[dry-run] write runtime cache version: {path} -> {version}")
+    else:
+        dump_json(path, payload)
+    return True
+
+
+def is_runtime_cache_manifest_path(rel_path: str) -> bool:
+    """判断 manifest 文件是否应该安装到 ignored runtime cache。"""
+    raw = str(rel_path or "").strip().replace("\\", "/")
+    if raw.startswith("scripts/") and raw.endswith(".py"):
+        return True
+    return bool(
+        re.match(r"^root/\.(?:codex|claude)/hooks/[^/]+\.py$", raw)
+    )
+
+
+def runtime_wrapper_target(repo_root: Path, harness_dir: Path, rel_path: str) -> Path:
+    """返回 cacheable manifest path 对应的项目 wrapper 位置。"""
+    return secure_target_path(harness_dir, repo_root, rel_path)
+
+
+def wrapper_needs_update(path: Path, data: bytes) -> bool:
+    """判断 wrapper 文件是否需要写入,避免重复触碰无变化文件。"""
+    if not path.exists():
+        return True
+    try:
+        return path.read_bytes() != data
+    except OSError:
+        return True
+
+
+def ensure_python_runtime_wrappers(harness_dir: Path, repo_root: Path, rel_paths: list[str], dry_run: bool) -> int:
+    """为 cacheable Python runtime 文件写入稳定 wrapper。"""
+    wrapper_bytes = PYTHON_RUNTIME_WRAPPER.encode("utf-8")
+    changed = 0
+    for rel_path in sorted(dict.fromkeys(rel_paths)):
+        target = runtime_wrapper_target(repo_root, harness_dir, rel_path)
+        if not wrapper_needs_update(target, wrapper_bytes):
+            continue
+        if dry_run:
+            print(f"[dry-run] write runtime wrapper: {target}")
+        else:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(wrapper_bytes)
+            target.chmod(target.stat().st_mode | 0o755)
+        changed += 1
+    return changed
+
+
 def infer_current_version(harness_dir: Path) -> tuple[str, str]:
+    cache_state_path = runtime_cache_state_path(harness_dir)
+    if cache_state_path.exists():
+        try:
+            payload = load_json(cache_state_path)
+            v = str(payload.get("runtime_version", "")).strip()
+            if parse_semver(v):
+                return v, str(cache_state_path.relative_to(harness_dir))
+        except (json.JSONDecodeError, OSError, ValueError):
+            pass
+
     version_path = runtime_version_path(harness_dir)
     if version_path.exists():
         try:
@@ -841,6 +1123,12 @@ def migrate_no_backup_update_runtime(harness_dir: Path, dry_run: bool) -> dict[s
     return {"no_backup_update_runtime": 0}
 
 
+def migrate_external_runtime_cache(harness_dir: Path, dry_run: bool) -> dict[str, int]:
+    """记录运行时文件已迁移为 wrapper 加 ignored cache 模式。"""
+    ignore_changed = ensure_edit_counts_gitignore(harness_dir.parent, dry_run)
+    return {"external_runtime_cache": 0, "runtime_cache_gitignore": int(ignore_changed)}
+
+
 def run_migration(step_name: str, harness_dir: Path, dry_run: bool) -> dict[str, int]:
     if step_name == "migrate_remove_branch_switching":
         return migrate_remove_branch_switching(harness_dir, dry_run)
@@ -872,6 +1160,8 @@ def run_migration(step_name: str, harness_dir: Path, dry_run: bool) -> dict[str,
         return migrate_stop_hook_runtime(harness_dir, dry_run)
     if step_name == "migrate_no_backup_update_runtime":
         return migrate_no_backup_update_runtime(harness_dir, dry_run)
+    if step_name == "migrate_external_runtime_cache":
+        return migrate_external_runtime_cache(harness_dir, dry_run)
     raise RuntimeError(f"未知迁移步骤：{step_name}")
 
 
@@ -1026,18 +1316,27 @@ def secure_target_path(harness_dir: Path, repo_root: Path, rel_path: str) -> Pat
 def materialize_manifest_files(
     harness_dir: Path,
     repo_root: Path,
+    target_version: str,
     files: list[dict[str, Any]],
     *,
     timeout_seconds: int,
     require_checksum: bool,
-) -> list[tuple[Path, bytes, str]]:
+) -> tuple[list[tuple[Path, bytes, str]], list[str]]:
     rendered: list[tuple[Path, bytes, str]] = []
+    cacheable_paths: list[str] = []
     for item in files:
         if not isinstance(item, dict):
             raise RuntimeError("manifest file item must be an object")
         rel_path = str(item.get("path", "")).strip()
-        target = secure_target_path(harness_dir, repo_root, rel_path)
+        cacheable = is_runtime_cache_manifest_path(rel_path)
+        target = (
+            runtime_cache_file_path(harness_dir, target_version, rel_path)
+            if cacheable
+            else secure_target_path(harness_dir, repo_root, rel_path)
+        )
         merge_strategy = str(item.get("merge_strategy", "") or item.get("merge", "")).strip()
+        if cacheable and merge_strategy:
+            raise RuntimeError(f"runtime cache item cannot use merge_strategy: {rel_path}")
 
         if "content" in item:
             content = item.get("content")
@@ -1062,7 +1361,9 @@ def materialize_manifest_files(
         if bool(item.get("render_project_context", False)):
             data = render_project_context(data, harness_dir)
         rendered.append((target, data, merge_strategy))
-    return rendered
+        if cacheable:
+            cacheable_paths.append(rel_path)
+    return rendered, cacheable_paths
 
 
 def hook_group_signature(group: dict[str, Any]) -> str:
@@ -1249,26 +1550,29 @@ def apply_remote_update(
         print("Backup: skipped (default; use --backup to create one)")
         backed_up = 0
 
-    rendered = materialize_manifest_files(
+    rendered, cacheable_paths = materialize_manifest_files(
         harness_dir,
         repo_root,
+        target_version,
         files,
         timeout_seconds=timeout_seconds,
         require_checksum=require_checksum,
     )
     updated_files = write_rendered_files(rendered, dry_run)
     print(f"Manifest files applied: {updated_files}")
+    wrappers = ensure_python_runtime_wrappers(harness_dir, repo_root, cacheable_paths, dry_run)
+    print(f"Runtime wrappers updated: {wrappers}")
 
     stats = run_known_migrations(harness_dir, current_version, target_version, dry_run)
     layout = migrate_grouped_layout(harness_dir, dry_run)
     stats["layout_moved"] = stats.get("layout_moved", 0) + layout.get("layout_moved", 0)
-    wrote_version = write_runtime_version(
+    wrote_version = write_runtime_cache_version(
         harness_dir,
         target_version,
         dry_run,
-        updated_by="update_runtime.py(remote)",
+        updated_by="update_runtime.py(remote-cache)",
     )
-    print(f"Runtime version file updated: {'yes' if wrote_version else 'no-change'}")
+    print(f"Runtime cache version updated: {'yes' if wrote_version else 'no-change'}")
     return backed_up, stats
 
 
@@ -1499,18 +1803,18 @@ def main() -> int:
                 "Remote runtime is older than current; skip version overwrite: "
                 f"current={current_version} remote={target_version}"
             )
-            print("Done.")
-            return 0
-        print(f"Remote runtime is already latest: {target_version}")
-        wrote = write_runtime_version(
-            harness_dir,
-            target_version,
-            args.dry_run,
-            updated_by="update_runtime.py(remote-manual-noop)",
-        )
-        print(f"Runtime version file updated: {'yes' if wrote else 'no-change'}")
         print("Done.")
         return 0
+    print(f"Remote runtime is already latest: {target_version}")
+    wrote = write_runtime_cache_version(
+        harness_dir,
+        target_version,
+        args.dry_run,
+        updated_by="update_runtime.py(remote-cache-manual-noop)",
+    )
+    print(f"Runtime cache version updated: {'yes' if wrote else 'no-change'}")
+    print("Done.")
+    return 0
 
     print("Manual mode: manifest_url not configured, run local migration fallback only.")
     fallback_local_update(

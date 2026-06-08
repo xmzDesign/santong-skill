@@ -241,9 +241,9 @@ python3 {{SKILL_PATH}}/scripts/update_runtime.py --target-dir "<项目目录>"
 
 升级行为：
 
-- 先备份关键配置、脚本和运行时文档。
-- 读取 `.harness/config/runtime-version.json`。
-- 有 `manifest_url` 时从远程 manifest 拉取并校验 checksum。
+- 默认不创建备份文件；确需升级前快照时显式传 `--backup`。
+- 读取 `.harness/runtime-cache/runtime-version.json`，没有 cache state 时再读 `.harness/config/runtime-version.json`。
+- 有 `manifest_url` 时从远程 manifest 拉取并校验 checksum；Python runtime 与 hook 写入 `.harness/runtime-cache/`，项目 tracked 位置只保留稳定 wrapper，避免多分支重复产生 runtime diff。
 - 没有 `manifest_url` 时只执行本地兼容迁移。
 - 当前版本高于内置或远程版本时，只告警，不降级覆盖。
 
